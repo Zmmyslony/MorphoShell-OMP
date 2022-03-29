@@ -35,7 +35,5 @@ getCorrespondingTrianglesForNodes(const std::vector<Triangle> &triangles, const 
 void calcDeformationForces(std::vector<Node> &nodes, std::vector<Triangle> &triangles, const SettingsStruct &settings,
         const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes);
 
-void calcDeformationForces(std::vector<Node> &, std::vector<Triangle> &, const SettingsStruct &);
-
 
 

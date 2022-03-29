@@ -1315,22 +1315,22 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 logStream.open();
                 logStream << std::fixed << "Wrote VTK output at " << getRealTime() << ", stepcount = " << stepcount
                           << ", simulation time = " << time + settings.TimeStep << ", current dial-in factor = "
-                          << currDialInFactor << std::scientific << std::endl;
-                logStream << "\tcalcTriangleGeometries execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end1 - begin).count() << " us"
-                          << std::endl;
-                logStream << "\tcalcSecFFsAndRelatedQuantities execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end1).count() << " us"
-                          << std::endl;
-                logStream << "\tcalcDeformationForces execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2).count() << " us"
-                          << std::endl;
-                logStream << "\tcalcNonDeformationForces_and_ImposeBCS execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - end3).count() << " us"
-                          << std::endl;
-                logStream << "\tTotal execution time "
+                          << currDialInFactor << std::scientific;
+//                logStream << "\tcalcTriangleGeometries execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end1 - begin).count() << " us"
+//                          << std::endl;
+//                logStream << "\tcalcSecFFsAndRelatedQuantities execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end1).count() << " us"
+//                          << std::endl;
+//                logStream << "\tcalcDeformationForces execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2).count() << " us"
+//                          << std::endl;
+//                logStream << "\tcalcNonDeformationForces_and_ImposeBCS execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - end3).count() << " us"
+//                          << std::endl;
+                logStream << ", last step's execution time "
                           << std::chrono::duration_cast<std::chrono::microseconds>(end4 - begin).count() << " us"
-                          << std::endl << std::endl;
+                          << std::endl;
                 logStream.close();
 
                 forceDistFile.open(outputDirName + "/force_displacement_vals.txt", std::ofstream::app);
