@@ -31,13 +31,24 @@ at each timestep.*/
 #endif
 
 #include "../../Eigen/Dense"
+#include <omp.h>
 
 #include "zeroForces.hpp"
 #include "../Node.hpp"
 #include "../SettingsStruct.hpp"
 
-void zeroForces(std::vector<Node> &nodes, const SettingsStruct &settings) {
-    for (auto &element: nodes) {
-        element.force << 0.0, 0.0, 0.0;
+void zeroForces(std::vector<Node> &nodes) {
+    omp_set_num_threads(8);
+#pragma omp parallel for
+    for (int i = 0; i < nodes.size(); i++) {
+        nodes[i].force << 0.0, 0.0, 0.0;
+    }
+}
+
+void zeroVector(std::vector<Eigen::Vector3d> &vector) {
+    omp_set_num_threads(8);
+#pragma omp parallel for
+    for (int i = 0; i < vector.size(); i++) {
+        vector[i] << 0.0, 0.0, 0.0;
     }
 }

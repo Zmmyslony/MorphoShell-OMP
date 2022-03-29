@@ -33,6 +33,8 @@ triangular element, such as vertices, area etc.*/
 
 #include <vector>
 #include "../Eigen/Dense"
+#include "Node.hpp"
+#include "SettingsStruct.hpp"
 
 #include "CustomOutStreamClass.hpp"
 
@@ -214,8 +216,11 @@ public:
 
     Eigen::Matrix<double, 3, 3> getOutwardTriangleNormals();
 
-    Eigen::Matrix<double, 3, 1> getBendingForce(const Eigen::Matrix<double, 3, 3>& normalDerivatives, int row);
+    Eigen::Matrix<double, 3, 1> getBendingForce(const Eigen::Matrix<double, 3, 3> &normalDerivatives, int row);
 
+    void updateMetric(const std::vector<Node> &nodes);
+
+    void updateGeometricProperties(const std::vector<Node> &nodes);
 };
 
 #endif

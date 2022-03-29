@@ -90,7 +90,7 @@ Eigen::Matrix<double, 3, 3> Triangle::getOutwardTriangleNormals() {
     return outwardTriangleNormals;
 }
 
-Eigen::Matrix<double, 3, 1> Triangle::getBendingForce(const Eigen::Matrix<double, 3, 3>& normalDerivatives, int row) {
+Eigen::Matrix<double, 3, 1> Triangle::getBendingForce(const Eigen::Matrix<double, 3, 3> &normalDerivatives, int row) {
     Eigen::Matrix<double, 2, 2> secFFDerivPreFacMat;
 
     secFFDerivPreFacMat(0, 0) = matForPatchSecDerivs(row, 0);
@@ -108,5 +108,36 @@ Eigen::Matrix<double, 3, 1> Triangle::getBendingForce(const Eigen::Matrix<double
     Eigen::Vector3d bendingForce;
     bendingForce = -initArea * (energyDensityDerivWRTSecFF * secFFDerivPreFacMat).trace() * faceNormal;
     return bendingForce;
+}
 
+void Triangle::updateMetric(const std::vector<Node> &nodes) {
+    currSides.col(0) = nodes[vertexLabels(1)].pos - nodes[vertexLabels(0)].pos;
+    currSides.col(1) = nodes[vertexLabels(2)].pos - nodes[vertexLabels(0)].pos;
+    defGradient = currSides * invInitSidesMat;
+
+    // Calculate corresponding metric, and its det and inverse.
+    metric = defGradient.transpose() * defGradient;
+    detInvMetric = 1.0 / metric.determinant();
+    Eigen::Matrix<double, 2, 2> metricAdjMatrix;
+    metricAdjMatrix << metric(1, 1), -metric(0, 1),
+            -metric(0, 1), metric(0, 0);
+    invMetric = detInvMetric * metricAdjMatrix;
+}
+
+void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
+    Eigen::Matrix<double, 3, 6> matrixOfPatchNodeCoords;
+    // Loop over patch nodes for this triangle and get their positions.
+    for (int n = 0; n < 6; ++n) {
+        if (n < 3) {
+            matrixOfPatchNodeCoords.col(n) = nodes[vertexLabels(n)].pos;
+        } else {
+            matrixOfPatchNodeCoords.col(n) = nodes[nonVertexPatchNodesLabels(n - 3)].pos;
+        }
+    }
+
+    patchSecDerivs = matrixOfPatchNodeCoords * matForPatchSecDerivs;
+
+    faceNormal = currSides.col(0).cross(currSides.col(1));
+    invCurrArea = 2.0 / faceNormal.norm();
+    faceNormal = 0.5 * faceNormal * invCurrArea; // Normalising
 }

@@ -2,11 +2,6 @@ cmake_minimum_required(VERSION 3.20)
 project(ShelloMorph)
 
 find_package(OpenMP REQUIRED)
-if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -32,6 +27,7 @@ add_executable(ShelloMorph ${SOURCE_FILES})
 
 target_include_directories(ShelloMorph PRIVATE ${LIBCONFIG_DIR})
 target_link_libraries(ShelloMorph PRIVATE ${LIBCONFIGPP_LIB})
+target_link_libraries(ShelloMorph PRIVATE OpenMP::OpenMP_CXX)
 
 
 

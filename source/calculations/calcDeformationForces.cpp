@@ -40,50 +40,71 @@ Function to calculate the current force due to strain and bending on each
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 #include "../SettingsStruct.hpp"
+#include "../functions/zeroForces.hpp"
+
+std::vector<std::vector<std::pair<int, int>>>
+getCorrespondingTrianglesForNodes(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes) {
+    std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes(nodes.size());
+    for (int i = 0; i < triangles.size(); i++) {
+        for (int j = 0; j < 3; j++) {
+            correspondingTrianglesForNodes[triangles[i].vertexLabels(j)].emplace_back(i, j);
+            correspondingTrianglesForNodes[triangles[i].nonVertexPatchNodesLabels(j)].emplace_back(i, j + 3);
+        }
+    }
+    return correspondingTrianglesForNodes;
+}
 
 void calcDeformationForces(
         std::vector<Node> &nodes,
         std::vector<Triangle> &triangles,
-        const SettingsStruct &settings) {
+        const SettingsStruct &settings,
+        const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
 
-    // Energy prefactors that are the same for each triangle.
     double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
-
-    std::vector<std::vector<Eigen::Vector3d>> listOfStretchingForces(triangles.size(),
-                                                                     std::vector<Eigen::Vector3d>(3));
-    std::vector<std::vector<Eigen::Vector3d>> listOfBendingForces(triangles.size(),
-                                                                  std::vector<Eigen::Vector3d>(
-                                                                          6));
-    // Loop over triangles.
+    std::vector<std::vector<Eigen::Vector3d>>>
     omp_set_num_threads(8);
 #pragma omp parallel for
-    for (int i = 0; i < triangles.size(); ++i) {
+    for (int i = 0; i < triangles.size(); i++) {
         triangles[i].updateHalfPK1Stress(stretchingPreFac);
         Eigen::Matrix<double, 3, 3> stretchForces = triangles[i].getStretchingForces();
 
         for (int v = 0; v < 3; ++v) {
-            listOfStretchingForces[i][v] = stretchForces.col(v);
+            nodes[triangles[i].vertexLabels(v)].force += stretchForces.col(v);
         }
 
         Eigen::Matrix<double, 3, 3> outwardTriNormals = triangles[i].getOutwardTriangleNormals();
         Eigen::Matrix<double, 3, 3> normalDerivPiece =
                 0.5 * triangles[i].invCurrArea * (triangles[i].patchSecDerivs.transpose() * outwardTriNormals);
 
-        for (int n = 0; n < 6; ++n) {
-            listOfBendingForces[i][n] = triangles[i].getBendingForce(normalDerivPiece, n);
+        for (int n = 0; n < 3; ++n) {
+            nodes[triangles[i].vertexLabels(n)].force += triangles[i].getBendingForce(normalDerivPiece, n);
+            nodes[triangles[i].nonVertexPatchNodesLabels(n)].force += triangles[i].getBendingForce(normalDerivPiece, n + 3);
         }
     }
+}
 
+void calcDeformationForces(
+        std::vector<Node> &nodes,
+        std::vector<Triangle> &triangles,
+        const SettingsStruct &settings) {
 
-    for (int i = 0; i < triangles.size(); i++) {
-        for (int n = 0; n < 6; n++) {
-            if (n < 3) {
-                nodes[triangles[i].vertexLabels(n)].force += listOfStretchingForces[i][n];
-                nodes[triangles[i].vertexLabels(n)].force += listOfBendingForces[i][n];
-            }
-            else {
-                nodes[triangles[i].nonVertexPatchNodesLabels(n - 3)].force += listOfBendingForces[i][n];
-            }
+    double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
+
+    for (auto &triangle: triangles) {
+        triangle.updateHalfPK1Stress(stretchingPreFac);
+        Eigen::Matrix<double, 3, 3> stretchForces = triangle.getStretchingForces();
+
+        for (int v = 0; v < 3; ++v) {
+            nodes[triangle.vertexLabels(v)].force += stretchForces.col(v);
+        }
+
+        Eigen::Matrix<double, 3, 3> outwardTriNormals = triangle.getOutwardTriangleNormals();
+        Eigen::Matrix<double, 3, 3> normalDerivPiece =
+                0.5 * triangle.invCurrArea * (triangle.patchSecDerivs.transpose() * outwardTriNormals);
+
+        for (int n = 0; n < 3; ++n) {
+            nodes[triangle.vertexLabels(n)].force += triangle.getBendingForce(normalDerivPiece, n);
+            nodes[triangle.nonVertexPatchNodesLabels(n)].force += triangle.getBendingForce(normalDerivPiece, n + 3);
         }
     }
 }

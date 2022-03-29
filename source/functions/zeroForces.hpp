@@ -28,4 +28,6 @@ Header file for zeroForces.cpp function.
 #include "../Node.hpp"
 #include "../SettingsStruct.hpp"
 
-void zeroForces(std::vector<Node> &, const SettingsStruct &);
+void zeroForces(std::vector<Node> &nodes);
+
+void zeroVector(std::vector<Eigen::Vector3d> &vector);
