@@ -1013,6 +1013,9 @@ cases for this code, where only a single set of programmed tensors is supplied.*
         double s1 = 12345678.9;
         //double sTest = 98765432.1;
 
+        std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(
+                triangles, nodes);
+
         while (DialInFactorCounter <= DialInFactorValuesToHoldAt.size() - 2) {
             int highestNode = -99;
             int lowestNode = -99;
@@ -1248,16 +1251,18 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                                                           sequenceOf_ProgSecFFs, settings);
 
             std::chrono::steady_clock::time_point end1 = std::chrono::steady_clock::now();
+
             /* Calculate secFF estimates for triangles, and related quantities such
             as the derivative of the bending energy wrt the secFF components.*/
             calcSecFFsAndRelatedQuantities(triangles, settings);
             std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
+
             // Calculate current strain and bending force on each node.
-            calcDeformationForces(nodes, triangles, settings);
+            calcDeformationForces(nodes, triangles, settings, correspondingTrianglesForNodes);
             std::chrono::steady_clock::time_point end3 = std::chrono::steady_clock::now();
 
-           /* Add force contributions from e.g. damping, loads, 'prod' perturbation, and
-            account for BCs e.g. clamping. */
+            /* Add force contributions from e.g. damping, loads, 'prod' perturbation, and
+             account for BCs e.g. clamping. */
             upperAndLowerTotSlideForces = calcNonDeformationForces_and_ImposeBCS(nodes, time, settings);
             std::chrono::steady_clock::time_point end4 = std::chrono::steady_clock::now();
             settings.upperTotSlideForce = upperAndLowerTotSlideForces.first;
@@ -1280,11 +1285,6 @@ cases for this code, where only a single set of programmed tensors is supplied.*
             and the triangle geometry data match in the output, which is desirable!*/
             if ((stepcount % settings.InversePrintRate == 0 && settings.InversePrintRate > 0) ||
                 settings.slideJustReachedEquil == 1) {
-                std::cout << std::endl << "calcTriangleGeometries execution time " << std::chrono::duration_cast<std::chrono::microseconds> (end1 - begin).count() << "[us]" << std::endl;
-                std::cout << "calcSecFFsAndRelatedQuantities execution time " << std::chrono::duration_cast<std::chrono::microseconds> (end2 - end1).count() << "[us]" << std::endl;
-                std::cout << "calcDeformationForces execution time " << std::chrono::duration_cast<std::chrono::microseconds> (end3 - end2).count() << "[us]" << std::endl;
-                std::cout << "calcNonDeformationForces_and_ImposeBCS execution time " << std::chrono::duration_cast<std::chrono::microseconds> (end4 - end3).count() << "[us]" << std::endl;
-                std::cout << "Total execution time " << std::chrono::duration_cast<std::chrono::microseconds> (end4 - begin).count() << "[us]" << std::endl;
                 try {
                     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings);
@@ -1316,6 +1316,21 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 logStream << std::fixed << "Wrote VTK output at " << getRealTime() << ", stepcount = " << stepcount
                           << ", simulation time = " << time + settings.TimeStep << ", current dial-in factor = "
                           << currDialInFactor << std::scientific << std::endl;
+                logStream << "\tcalcTriangleGeometries execution time "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end1 - begin).count() << " us"
+                          << std::endl;
+                logStream << "\tcalcSecFFsAndRelatedQuantities execution time "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end1).count() << " us"
+                          << std::endl;
+                logStream << "\tcalcDeformationForces execution time "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2).count() << " us"
+                          << std::endl;
+                logStream << "\tcalcNonDeformationForces_and_ImposeBCS execution time "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - end3).count() << " us"
+                          << std::endl;
+                logStream << "\tTotal execution time "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - begin).count() << " us"
+                          << std::endl << std::endl;
                 logStream.close();
 
                 forceDistFile.open(outputDirName + "/force_displacement_vals.txt", std::ofstream::app);

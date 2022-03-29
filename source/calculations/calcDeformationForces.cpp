@@ -61,27 +61,39 @@ void calcDeformationForces(
         const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
 
     double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
-    std::vector<std::vector<Eigen::Vector3d>>>
+//    std::vector<std::vector<Eigen::Vector3d>> forcesForEachTriangle(triangles.size(), std::vector<Eigen::Vector3d>(6));
+    std::vector<Eigen::Vector3d> forcesForEachTriangle(6 * triangles.size());
     omp_set_num_threads(8);
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         triangles[i].updateHalfPK1Stress(stretchingPreFac);
         Eigen::Matrix<double, 3, 3> stretchForces = triangles[i].getStretchingForces();
 
-        for (int v = 0; v < 3; ++v) {
-            nodes[triangles[i].vertexLabels(v)].force += stretchForces.col(v);
-        }
-
         Eigen::Matrix<double, 3, 3> outwardTriNormals = triangles[i].getOutwardTriangleNormals();
         Eigen::Matrix<double, 3, 3> normalDerivPiece =
                 0.5 * triangles[i].invCurrArea * (triangles[i].patchSecDerivs.transpose() * outwardTriNormals);
 
         for (int n = 0; n < 3; ++n) {
-            nodes[triangles[i].vertexLabels(n)].force += triangles[i].getBendingForce(normalDerivPiece, n);
-            nodes[triangles[i].nonVertexPatchNodesLabels(n)].force += triangles[i].getBendingForce(normalDerivPiece, n + 3);
+//            forcesForEachTriangle[i][n] = triangles[i].getBendingForce(normalDerivPiece, n) + stretchForces.col(n);
+            forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n) + stretchForces.col(n);
+        }
+        for (int n = 3; n < 6; ++n) {
+//            forcesForEachTriangle[i][n] = triangles[i].getBendingForce(normalDerivPiece, n);
+            forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n);
+        }
+    }
+
+    omp_set_num_threads(8);
+#pragma omp parallel for
+    for (int i = 0; i < nodes.size(); i++) {
+        for (auto &trianglesForNode: correspondingTrianglesForNodes[i]) {
+//            nodes[i].force += forcesForEachTriangle[trianglesForNode.first][trianglesForNode.second];
+            int index = 6 * trianglesForNode.first + trianglesForNode.second;
+            nodes[i].force += forcesForEachTriangle[index];
         }
     }
 }
+
 
 void calcDeformationForces(
         std::vector<Node> &nodes,
