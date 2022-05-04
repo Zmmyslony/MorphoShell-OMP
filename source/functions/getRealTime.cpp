@@ -38,7 +38,7 @@ std::string getRealTime() {
     std::stringstream realTimeStream;
 
     // Format chosen is day/month/year
-    realTimeStream << std::put_time(&realTimeStruct, "%d/%m/%y %H:%M");
+    realTimeStream << std::put_time(&realTimeStruct, "%d/%m/%y %H:%M:%S");
 
     return realTimeStream.str();
 
