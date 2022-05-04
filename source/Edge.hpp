@@ -32,7 +32,7 @@ two triangles sharing the edge, and the labels of those triangles.*/
 #ifndef _EDGE_CLASS_TAG_
 #define _EDGE_CLASS_TAG_
 
-#include "../Eigen/Dense"
+#include <Eigen/Dense>
 
 #include "CustomOutStreamClass.hpp"
 

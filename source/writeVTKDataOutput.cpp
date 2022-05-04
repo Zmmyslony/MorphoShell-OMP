@@ -37,7 +37,7 @@ The directory the files are put in is created in main().
 #define EIGEN_NO_DEBUG
 #endif
 
-#include "../Eigen/Dense"
+#include <Eigen/Dense>
 
 #include <cstddef>
 #include <string>

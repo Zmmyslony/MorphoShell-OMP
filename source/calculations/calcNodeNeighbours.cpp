@@ -34,7 +34,7 @@ by edges).
 #endif
 
 #include <cstddef>
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 
 #include "calcNodeNeighbours.hpp"

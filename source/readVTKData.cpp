@@ -57,7 +57,7 @@ std::cout << teststring << std::endl;
 #include <string>
 #include <vector>
 #include <limits>
-#include "../Eigen/Dense"
+#include <Eigen/Dense>
 #include <stdexcept>
 
 #include "readVTKData.hpp"

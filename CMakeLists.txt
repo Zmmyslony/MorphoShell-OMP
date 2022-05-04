@@ -6,7 +6,8 @@ find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_STANDARD 17)
 
 find_path(LIBCONFIG_DIR libconfig.h)
-find_library(LIBCONFIGPP_LIB libconfig++)
+find_library(LIBCONFIGPP_LIB config++)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(SOURCE_FILES
         source/main.cpp source/advanceDynamics.cpp source/advanceDynamics.hpp source/calculations/calc_nonVertexPatchNodes_and_MatForPatchDerivs.cpp
@@ -28,6 +29,5 @@ add_executable(ShelloMorph ${SOURCE_FILES})
 target_include_directories(ShelloMorph PRIVATE ${LIBCONFIG_DIR})
 target_link_libraries(ShelloMorph PRIVATE ${LIBCONFIGPP_LIB})
 target_link_libraries(ShelloMorph PRIVATE OpenMP::OpenMP_CXX)
-
-
+target_link_libraries (ShelloMorph PRIVATE Eigen3::Eigen)
 

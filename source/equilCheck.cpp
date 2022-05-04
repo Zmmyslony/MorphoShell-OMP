@@ -32,7 +32,7 @@ scale - the (stretching) sound speed.*/
 #define EIGEN_NO_DEBUG
 #endif
 
-#include "../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 #include <cmath>
 

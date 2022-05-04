@@ -34,7 +34,7 @@ will be used later to calculate bending forces.*/
 #define EIGEN_DONT_PARALLELIZE
 #endif
 
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 #include <omp.h>
 

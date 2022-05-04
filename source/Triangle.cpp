@@ -26,7 +26,7 @@ they are left in the header file for clarity there.*/
 
 #include <iostream>
 #include <iomanip>
-#include "../Eigen/Dense"
+#include <Eigen/Dense>
 
 #include "Triangle.hpp"
 

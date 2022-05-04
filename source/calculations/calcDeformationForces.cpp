@@ -32,7 +32,7 @@ Function to calculate the current force due to strain and bending on each
 #define EIGEN_DONT_PARALLELIZE
 #endif
 
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 #include <omp.h>
 

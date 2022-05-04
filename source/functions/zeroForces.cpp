@@ -30,7 +30,7 @@ at each timestep.*/
 #define EIGEN_NO_DEBUG
 #endif
 
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <omp.h>
 
 #include "zeroForces.hpp"

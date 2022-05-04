@@ -32,7 +32,7 @@ triangular element, such as vertices, area etc.*/
 #define _TRIANGLE_CLASS_TAG_
 
 #include <vector>
-#include "../Eigen/Dense"
+#include <Eigen/Dense>
 #include "Node.hpp"
 #include "SettingsStruct.hpp"
 

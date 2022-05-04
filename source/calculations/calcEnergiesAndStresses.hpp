@@ -28,7 +28,7 @@ Header file for calcEnergiesAndStresses.cpp function
 #define EIGEN_NO_DEBUG
 #endif
 
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 
 #include "../Triangle.hpp"

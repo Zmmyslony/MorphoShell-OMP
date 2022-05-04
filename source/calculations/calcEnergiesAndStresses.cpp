@@ -37,7 +37,7 @@ stress stuff.
 #define EIGEN_DONT_PARALLELIZE
 #endif
 
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 #include <cmath>
 #include <omp.h>

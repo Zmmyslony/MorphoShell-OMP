@@ -35,7 +35,7 @@ form for each triangle are also calculated.*/
 #endif
 
 #include <cstddef>
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 #include <cmath>
 #include <omp.h>

@@ -35,7 +35,7 @@ integrated Gauss and geodesic curvature (i.e. the LHS of Gauss-Bonnet).*/
 #define EIGEN_DONT_PARALLELIZE
 #endif
 
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 #include <cmath> // For sqrt and acos
 #include <omp.h>

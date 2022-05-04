@@ -33,7 +33,7 @@ having each triangle contribute 1/3 of its initial mass to each of its vertcies.
 #endif
 
 #include <vector>
-#include "../Eigen/Dense"
+#include <Eigen/Dense>
 #include <cmath>
 
 #include "setRemainingInitCond_and_NodeMasses.hpp"

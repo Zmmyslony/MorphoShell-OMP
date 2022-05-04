@@ -26,7 +26,7 @@ Header file for readVTKData.cpp function.
 #include <cstddef>
 #include <string>
 #include <vector>
-#include "../Eigen/Dense"
+#include <Eigen/Dense>
 
 #include "Node.hpp"
 #include "Triangle.hpp"

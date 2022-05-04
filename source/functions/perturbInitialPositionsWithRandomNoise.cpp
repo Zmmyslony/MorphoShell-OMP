@@ -34,7 +34,7 @@ approximate smallest element size, to ensure the right kind of scale.*/
 #endif
 
 #include <vector>
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <random>
 #include <ctime>
 

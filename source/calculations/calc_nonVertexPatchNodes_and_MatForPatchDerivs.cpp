@@ -39,7 +39,7 @@ later.
 
 #include <cstddef>
 #include <vector>
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>

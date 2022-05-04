@@ -28,7 +28,7 @@ Header file for writeVTKDataOutput.cpp function.
 #define EIGEN_NO_DEBUG
 #endif
 
-#include "../Eigen/Dense"
+#include <Eigen/Dense>
 #include <cstddef>
 #include <string>
 #include <vector>

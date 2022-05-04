@@ -33,7 +33,7 @@ having it as a vertex), and store these as node member data.*/
 #endif
 
 #include <cstddef>
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 
 #include "calcTrianglesIncidentOnNodes.hpp"

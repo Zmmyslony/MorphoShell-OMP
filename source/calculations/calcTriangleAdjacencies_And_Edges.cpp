@@ -39,7 +39,7 @@ nodes, its adjacent triangles etc.
 #define EIGEN_DONT_PARALLELIZE
 #endif
 
-#include "../../Eigen/Dense"
+#include <Eigen/Dense>
 #include <vector>
 #include <cstddef> // For std::size_t
 #include <algorithm> // For std::find

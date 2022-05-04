@@ -74,7 +74,7 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include <iomanip> // For setting time and date format, and std::out precision if needed
 #include <libconfig.h++> // Used for settings file
 #include <chrono>
-#include "../Eigen/Dense" // Used for matrices of numbers
+#include <Eigen/Dense> // Used for matrices of numbers
 
 
 #include "CustomOutStreamClass.hpp"
