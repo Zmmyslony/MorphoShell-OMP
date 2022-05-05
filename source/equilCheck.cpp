@@ -35,6 +35,8 @@ scale - the (stretching) sound speed.*/
 #include <Eigen/Dense>
 #include <vector>
 #include <cmath>
+#include <algorithm>
+#include <omp.h>
 
 #include "equilCheck.hpp"
 #include "Node.hpp"
@@ -50,27 +52,25 @@ StatusEnum equilCheck(
         CustomOutStreamClass &logStream) {
 
     // Maximum (over nodes) non-damping force.
-    double maxNonDampForce = 0.0;
-    double tempNonDampForce;
-    int maxNonDampForceNode = -1;
+//    double maxNonDampForce = 0.0;
+//    int maxNonDampForceNode = -1;
 
     // Max( node speed divided by local stretching sound (wave) speed ).
-    double max_NodeSpeedOverLocalStretchingWaveSpeed = 0.0;
-    int maxRelativeSpeedNode = -1;
+//    double maxRelativeSpeed = 0.0;
+//    int maxRelativeSpeedNode = -1;
 
-    // Calculate node non-damping forces and speed ratios.
+    std::vector<double> nodeNonDampingForce(nodes.size());
+    std::vector<double> incidentProgTau(nodes.size());
+    std::vector<double> velocity(nodes.size());
+
+    omp_set_num_threads(8);
+#pragma omp parallel for
     for (int i = 0; i < settings.NumNodes; ++i) {
-
         if (!settings.isGradientDescentDynamicsEnabled) {
-            tempNonDampForce = (nodes[i].force +
+            nodeNonDampingForce[i] = (nodes[i].force +
                                 (settings.NumDampFactor * nodes[i].mass * nodes[i].vel / settings.InitDensity)).norm();
         } else {
-            tempNonDampForce = nodes[i].force.norm();
-        }
-
-        if (maxNonDampForce < tempNonDampForce) {
-            maxNonDampForce = tempNonDampForce;
-            maxNonDampForceNode = i;
+            nodeNonDampingForce[i] = nodes[i].force.norm();
         }
 
         /* Calculate the local node speed : stretching wave speed ratio, based
@@ -82,23 +82,26 @@ StatusEnum equilCheck(
         when they are combined to find the distance to move a node by. So only
         their combination is non-arbitrary in size.*/
 
-        double smallestIncidentProgTau = triangles[nodes[i].incidentTriLabels(0)].dialledProgTau;
+        incidentProgTau[i] = triangles[nodes[i].incidentTriLabels(0)].dialledProgTau;
 
-        for (int t = 0; t < nodes[i].incidentTriLabels.size(); ++t) {
-            if (smallestIncidentProgTau > triangles[nodes[i].incidentTriLabels(t)].dialledProgTau) {
-                smallestIncidentProgTau = triangles[nodes[i].incidentTriLabels(t)].dialledProgTau;
+        for (int t = 1; t < nodes[i].incidentTriLabels.size(); ++t) {
+            double currentProgTau = triangles[nodes[i].incidentTriLabels(t)].dialledProgTau;
+            if (incidentProgTau[i] > currentProgTau) {
+                incidentProgTau[i] = currentProgTau;
             }
         }
 
-        double nodeSpeedOverLocalStretchingWaveSpeed =
-                nodes[i].vel.norm() / sqrt(smallestIncidentProgTau * settings.ShearModulus / settings.InitDensity);
-
-        if (max_NodeSpeedOverLocalStretchingWaveSpeed < nodeSpeedOverLocalStretchingWaveSpeed) {
-            max_NodeSpeedOverLocalStretchingWaveSpeed = nodeSpeedOverLocalStretchingWaveSpeed;
-            maxRelativeSpeedNode = i;
-        }
-
+        velocity[i] = nodes[i].vel.norm();
     }
+
+    int maxNonDampForceNode = std::max_element(nodeNonDampingForce.begin(), nodeNonDampingForce.end()) - nodeNonDampingForce.begin();
+    double maxNonDampForce = *std::max_element(nodeNonDampingForce.begin(), nodeNonDampingForce.end());
+
+    double smallestIncidentProgTau = *std::max_element(incidentProgTau.begin(), incidentProgTau.end());
+    double stretchingWaveSpeed = sqrt(smallestIncidentProgTau * settings.ShearModulus / settings.InitDensity);
+
+    int maxRelativeSpeedNode = std::max_element(velocity.begin(), velocity.end()) - velocity.begin();
+    double maxRelativeSpeed = *std::max_element(velocity.begin(), velocity.end()) / stretchingWaveSpeed;
 
     /* Now check whether non-damping force and speed ratios are below chosen
     `equilibrium' thresholds.*/
@@ -106,10 +109,10 @@ StatusEnum equilCheck(
     logStream << "Ratio of max non-damping force to characteristic force = "
               << maxNonDampForce / settings.charForceScale << " (node " << maxNonDampForceNode << ")" << "\n";
     logStream << "Max ratio of node speed to local stretching wave speed = "
-              << max_NodeSpeedOverLocalStretchingWaveSpeed << " (node " << maxRelativeSpeedNode << ")" << "\n";
+              << maxRelativeSpeed << " (node " << maxRelativeSpeedNode << ")" << "\n";
 
     if ((maxNonDampForce / settings.charForceScale) < settings.Equil_Force_To_CharForce_Ratio_Threshold
-        && max_NodeSpeedOverLocalStretchingWaveSpeed < settings.Equil_Speed_To_SoundSpeed_Ratio_Threshold) {
+        && maxRelativeSpeed < settings.Equil_Speed_To_SoundSpeed_Ratio_Threshold) {
 
         logStream << "Equilibrium reached" << std::endl;
         logStream.close();
