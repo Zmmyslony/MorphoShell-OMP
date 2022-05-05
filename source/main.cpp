@@ -94,7 +94,7 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "calculations/calcNodeNeighbours.hpp"
 #include "calculations/calc_nonVertexPatchNodes_and_MatForPatchDerivs.hpp"
 #include "setRemainingInitCond_and_NodeMasses.hpp"
-#include "StatusEnum.hpp"
+#include "SimulationStatus.hpp"
 #include "functions/perturbInitialPositionsWithRandomNoise.hpp"
 #include "functions/zeroForces.hpp"
 #include "calculations/calcSecFFsAndRelatedQuantities.hpp"
@@ -102,7 +102,7 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "calculations/calcNonDeformationForces_and_ImposeBCS.hpp"
 #include "advanceDynamics.hpp"
 #include "writeVTKDataOutput.hpp"
-#include "equilCheck.hpp"
+#include "EquilibriumCheck.hpp"
 #include "calculations/calcCurvatures.hpp"
 #include "calculations/calcEnergiesAndStresses.hpp"
 #include "functions/kahanSum.hpp"
@@ -486,7 +486,7 @@ shuffling the labels for those with negative-z-component normals, before
 recalculating the initial normals, areas etc. Note, a more complex procedure
 will be required for non-planar initial geometries. The magic numbers in the
 argument list are just debugging values that should not matter here.*/
-    calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waiting_for_equil, -12345, 98765,
+    calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, -12345, 98765,
                                                   sequenceOf_progMetricInfo, sequenceOf_InvProgMetrics,
                                                   sequenceOf_ProgTaus, sequenceOf_ProgSecFFs, settings);
     Eigen::Vector3d tempZAxisVec;
@@ -499,7 +499,7 @@ argument list are just debugging values that should not matter here.*/
         }
     }
     std::cout << "CHECK THIS - should shuffle normals before patch matrix calc I think?" << std::endl;
-    calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waiting_for_equil, -12345, 98765,
+    calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, -12345, 98765,
                                                   sequenceOf_progMetricInfo, sequenceOf_InvProgMetrics,
                                                   sequenceOf_ProgTaus, sequenceOf_ProgSecFFs, settings);
 
@@ -732,7 +732,7 @@ given in the input file.
 */
     double timeSinceLastEquilCheck = -98765.0; // Reset to zero every time equil is checked, or every time a new DialInFactor value is reached.
     double timeSinceCurrDiallingInPhaseStarted = -7654321.0; // Reset to zero every time equil is reached and a new `dialling in' phase starts.
-    StatusEnum status; // Indicates whether the simulation is currently in a 'dialling in' phase, or is not dialling and is instead waiting for equilibrium, or whether equilibrium has been reached but the next dialling phase has not yet begun.
+    SimulationStatus status; // Indicates whether the simulation is currently in a 'dialling in' phase, or is not dialling and is instead waiting for equilibrium, or whether equilibrium has been reached but the next dialling phase has not yet begun.
     std::size_t DialInFactorCounter = 123456; // Keeps track of which DialInFactor value in DialInFactorValuesToHoldAt was last dialled *from* (not held at, which is the next value along in the list)
     double currDialInFactor = -54321.0; // Keeps track of current value
 
@@ -904,7 +904,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 timeSinceCurrDiallingInPhaseStarted = 0.0;
 
                 // Calculate all necessary geometry for the ansatz state.
-                calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waiting_for_equil, currDialInFactor,
+                calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, currDialInFactor,
                                                               progTensorSequenceCounter, sequenceOf_progMetricInfo,
                                                               sequenceOf_InvProgMetrics, sequenceOf_ProgTaus,
                                                               sequenceOf_ProgSecFFs, settings);
@@ -992,7 +992,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
         /* Handle cases where settings.DialInStepTime is zero or very small. This is
         a slightly hacky way to ensure that no dialling actually occurs, and the
-        simulation jumps to a status = waiting_for_equil state. The magic number is
+        simulation jumps to a status = waitingForEquilibrium state. The magic number is
         just chosen to be recognisable for debugging.*/
         if (settings.DialInStepTime < settings.TimeStep) {
             settings.DialInStepTime = 0.0;
@@ -1146,7 +1146,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     settings.totalSlideForceToMuTSqRatioEquilThreshold
                     && settings.constSlideWeightFac < 0) {
                     if (timeSinceLastEquilCheck > settings.TimeBetweenEquilChecks) {
-                        if (equilCheck(nodes, triangles, settings, logStream) == equil_reached) {
+                        if (equilibriumCheck(nodes, triangles, settings, logStream) == equilibriumReached) {
                             settings.slideJustReachedEquil = 1;
                             settings.upperSlideWeight +=
                                     settings.slideWeightDialSpeedFac * (settings.TimeStep / bendingLongTime) *
@@ -1216,7 +1216,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                                                               progTensorSequenceCounter, sequenceOf_progMetricInfo,
                                                               sequenceOf_InvProgMetrics, sequenceOf_ProgTaus,
                                                               sequenceOf_ProgSecFFs, settings);
-                status = waiting_for_equil;
+                status = waitingForEquilibrium;
                 // NB an EquilCheck has not actually just occurred, but this has the
                 //desired effect of ensuring that each DialInFactor value is held
                 //for at least one TimeBetweenEquilChecks.
@@ -1361,14 +1361,14 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 /* If last check for equilibrium or last reaching of a new DialInFactor
                  value was more than TimeBetweenEquilChecks ago, check for equilibrium.
                  Also print total stretching and bending energies.*/
-                if (timeSinceLastEquilCheck > settings.TimeBetweenEquilChecks && status == waiting_for_equil) {
+                if (timeSinceLastEquilCheck > settings.TimeBetweenEquilChecks && status == waitingForEquilibrium) {
                     logStream.open();
                     logStream << "Checking for equilibrium at " << getRealTime() << ", stepcount = " << stepcount
                               << ", simulation time = " << time << ", current dial-in factor = " << currDialInFactor
                               << std::endl;
                     logStream.close();
 
-                    status = equilCheck(nodes, triangles, settings, logStream);
+                    status = equilibriumCheck(nodes, triangles, settings, logStream);
                     timeSinceLastEquilCheck = 0.0;
 
                     calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
@@ -1388,7 +1388,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
                 /* If equilibrium reached, write output data to file, and move to next
                 'dialling in' phase. */
-                if (status == equil_reached) {
+                if (status == equilibriumReached) {
                     try {
                         calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                                        interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings);

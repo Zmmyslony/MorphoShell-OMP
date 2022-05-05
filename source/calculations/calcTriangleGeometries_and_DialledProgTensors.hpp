@@ -29,13 +29,13 @@ Header file for calcTriangleGeometries_and_DialledProgTensors.cpp function.
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../StatusEnum.hpp"
+#include "../SimulationStatus.hpp"
 #include "../SettingsStruct.hpp"
 
 void calcTriangleGeometries_and_DialledProgTensors(
         const std::vector<Node> &,
         std::vector<Triangle> &,
-        const StatusEnum &,
+        const SimulationStatus &,
         const double &,
         const size_t &,
         const std::vector<std::vector<Eigen::Vector3d>> &,

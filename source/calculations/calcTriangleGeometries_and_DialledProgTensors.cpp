@@ -43,7 +43,7 @@ form for each triangle are also calculated.*/
 #include "calcTriangleGeometries_and_DialledProgTensors.hpp"
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../StatusEnum.hpp"
+#include "../SimulationStatus.hpp"
 #include "../SettingsStruct.hpp"
 
 
@@ -130,7 +130,7 @@ void updateGeometricPropertiesOfAllTriangles(std::vector<Triangle> &triangles, c
 void calcTriangleGeometries_and_DialledProgTensors(
         const std::vector<Node> &nodes,
         std::vector<Triangle> &triangles,
-        const StatusEnum &status,
+        const SimulationStatus &status,
         const double &currDialInFactor,
         const size_t &progTensorSequenceCounter,
         const std::vector<std::vector<Eigen::Vector3d> > &programmedMetricInfoSequence,

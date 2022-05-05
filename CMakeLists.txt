@@ -17,11 +17,11 @@ set(SOURCE_FILES
         source/calculations/calcSecFFsAndRelatedQuantities.cpp source/calculations/calcSecFFsAndRelatedQuantities.hpp source/calculations/calcTriangleAdjacencies_And_Edges.cpp
         source/calculations/calcTriangleAdjacencies_And_Edges.hpp source/calculations/calcTriangleGeometries_and_DialledProgTensors.cpp source/calculations/calcTriangleGeometries_and_DialledProgTensors.hpp
         source/calculations/calcTrianglesIncidentOnNodes.cpp source/calculations/calcTrianglesIncidentOnNodes.hpp source/CustomOutStreamClass.cpp source/CustomOutStreamClass.hpp source/Edge.cpp
-        source/Edge.hpp source/equilCheck.cpp source/equilCheck.hpp source/functions/extract_Just_Filename.cpp source/functions/extract_Just_Filename.hpp source/functions/getRealTime.cpp
+        source/Edge.hpp source/EquilibriumCheck.cpp source/EquilibriumCheck.hpp source/functions/extract_Just_Filename.cpp source/functions/extract_Just_Filename.hpp source/functions/getRealTime.cpp
         source/functions/getRealTime.hpp source/initialDirAndFileHandling.cpp source/initialDirAndFileHandling.hpp source/functions/kahanSum.cpp source/functions/kahanSum.hpp source/Node.cpp
         source/Node.hpp source/functions/perturbInitialPositionsWithRandomNoise.cpp source/functions/perturbInitialPositionsWithRandomNoise.hpp source/readSettingsFile.cpp
         source/readSettingsFile.hpp source/readVTKData.cpp source/readVTKData.hpp source/setRemainingInitCond_and_NodeMasses.cpp source/setRemainingInitCond_and_NodeMasses.hpp
-        source/SettingsStruct.hpp source/StatusEnum.hpp source/Triangle.cpp source/Triangle.hpp source/writeVTKDataOutput.cpp source/writeVTKDataOutput.hpp source/functions/zeroForces.cpp
+        source/SettingsStruct.hpp source/SimulationStatus.hpp source/Triangle.cpp source/Triangle.hpp source/writeVTKDataOutput.cpp source/writeVTKDataOutput.hpp source/functions/zeroForces.cpp
         source/functions/zeroForces.hpp source/SettingsStruct.cpp)
 
 add_executable(ShelloMorph ${SOURCE_FILES})

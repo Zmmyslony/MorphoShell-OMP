@@ -110,7 +110,7 @@ void readVTKData(
 
     // Get number of nodes and resize nodes container accordingly.
     init_DataFile >> settings.NumNodes;
-    if (!(settings.NumNodes > 0)) {
+    if (settings.NumNodes <= 0) {
         throw std::runtime_error(
                 "Error: Problem with (or before) line giving number of nodes in non-ansatz data file.");
     } else {

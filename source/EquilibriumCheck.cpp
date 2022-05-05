@@ -38,26 +38,18 @@ scale - the (stretching) sound speed.*/
 #include <algorithm>
 #include <omp.h>
 
-#include "equilCheck.hpp"
+#include "EquilibriumCheck.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "StatusEnum.hpp"
+#include "SimulationStatus.hpp"
 #include "SettingsStruct.hpp"
 #include "CustomOutStreamClass.hpp"
 
-StatusEnum equilCheck(
+SimulationStatus equilibriumCheck(
         const std::vector<Node> &nodes,
         const std::vector<Triangle> &triangles,
         const SettingsStruct &settings,
         CustomOutStreamClass &logStream) {
-
-    // Maximum (over nodes) non-damping force.
-//    double maxNonDampForce = 0.0;
-//    int maxNonDampForceNode = -1;
-
-    // Max( node speed divided by local stretching sound (wave) speed ).
-//    double maxRelativeSpeed = 0.0;
-//    int maxRelativeSpeedNode = -1;
 
     std::vector<double> nodeNonDampingForce(nodes.size());
     std::vector<double> incidentProgTau(nodes.size());
@@ -116,10 +108,10 @@ StatusEnum equilCheck(
 
         logStream << "Equilibrium reached" << std::endl;
         logStream.close();
-        return equil_reached;
+        return equilibriumReached;
     } else {
         logStream << "Equilibrium not reached" << std::endl;
         logStream.close();
-        return waiting_for_equil;
+        return waitingForEquilibrium;
     }
 }

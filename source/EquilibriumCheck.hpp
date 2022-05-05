@@ -1,4 +1,4 @@
-/*
+/* 
 /////////////////////////////////////////////////////
 Copyright (C) 2020, Daniel Duffy, dld34@cam.ac.uk. All rights reserved.
 Please cite Daniel Duffy and Dr John Biggins if you use any part of this 
@@ -20,16 +20,16 @@ You should have received a copy of the GNU General Public License
 along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////
 
-Header file for enumeration of 'status', which refers to whether the
-simulation is currently in a 'dialling in' phase, or is not dialling and is
-instead waiting for equilibrium, or whether equilibrium has been reached but
-the next dialling phase has not yet begun.*/
+Header file for equilibriumCheck.cpp function.
+*/
 
-#ifndef _STATUS_ENUM_TAG_
-#define _STATUS_ENUM_TAG_ 1
+#include <vector>
 
-enum StatusEnum {
-    dialling, waiting_for_equil, equil_reached
-};
+#include "Node.hpp"
+#include "Triangle.hpp"
+#include "SimulationStatus.hpp"
+#include "SettingsStruct.hpp"
+#include "CustomOutStreamClass.hpp"
 
-#endif
+SimulationStatus equilibriumCheck(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const SettingsStruct &settings,
+                                  CustomOutStreamClass &logStream);
