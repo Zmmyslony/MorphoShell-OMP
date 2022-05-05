@@ -55,7 +55,6 @@ void calcSecFFsAndRelatedQuantities(
             settings.SheetThickness * settings.SheetThickness * settings.SheetThickness * settings.ShearModulus / 12.0;
 
     // secFF estimate
-    omp_set_num_threads(8);
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         Eigen::Vector3d vectorOfSecFFComps = triangles[i].patchSecDerivs.transpose() * triangles[i].faceNormal;

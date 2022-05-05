@@ -48,7 +48,6 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
     double totUpperSlideForce = 0;
     double totLowerSlideForce = 0;
 
-    omp_set_num_threads(8);
 #pragma omp parallel for reduction (+: totUpperSlideForce, totLowerSlideForce)
     for (int i = 0; i < nodes.size(); i++) {
         if (!settings.isGradientDescentDynamicsEnabled) {

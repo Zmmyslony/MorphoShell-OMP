@@ -36,6 +36,7 @@ struct SettingsStruct {
 
     // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
     // Z-coordinates of bottom and top slides.
+    int numberOfCores = 1;
     double initSlideZCoord_lower;
     double initSlideZCoord_upper;
     double currSlideZCoord_upper;

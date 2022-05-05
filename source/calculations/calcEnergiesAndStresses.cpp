@@ -67,7 +67,6 @@ void calcEnergiesAndStresses(
 
 
     // Loop over triangles and calculate potential energies and energy densities.
-    omp_set_num_threads(8);
 #pragma omp parallel for
     for (int i = 0; i < settings.NumTriangles; ++i) {
         stretchEnergyDensities[i] = stretchingPreFac * triangles[i].dialledProgTau *

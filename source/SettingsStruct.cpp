@@ -74,7 +74,8 @@ int *SettingsStruct::getParameterAddressInt(const std::string &parameterName) {
             {"NumNodes",              &NumNodes},
             {"NumTriangles",          &NumTriangles},
             {"NumEdges",              &NumEdges},
-            {"numBoundaryNodes",      &numBoundaryNodes}
+            {"numBoundaryNodes",      &numBoundaryNodes},
+            {"numberOfCores",         &numberOfCores}
     };
     int *parameterAddress = intMap[parameterName];
     return parameterAddress;

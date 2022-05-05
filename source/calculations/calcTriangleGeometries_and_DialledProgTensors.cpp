@@ -48,7 +48,6 @@ form for each triangle are also calculated.*/
 
 
 void updateMetrics(std::vector<Triangle> &triangles, const std::vector<Node> &nodes) {
-    omp_set_num_threads(8);
 #pragma omp parallel for schedule(static)
     for (int i = 0; i < triangles.size(); ++i) {
         triangles[i].updateMetric(nodes);
@@ -119,7 +118,6 @@ updateDeterminantOfDialledInverseProgrammedMetric(int index, std::vector<Triangl
 }
 
 void updateGeometricPropertiesOfAllTriangles(std::vector<Triangle> &triangles, const std::vector<Node> &nodes) {
-    omp_set_num_threads(8);
 #pragma omp parallel for schedule(static)
     for (int i = 0; i < triangles.size(); i++) {
         triangles[i].updateGeometricProperties(nodes);
@@ -144,7 +142,6 @@ void calcTriangleGeometries_and_DialledProgTensors(
 
     updateMetrics(triangles, nodes);
 
-    omp_set_num_threads(8);
 #pragma omp parallel for schedule(static)
     for (int i = 0; i < triangles.size(); i++) {
         if (status == dialling) {
@@ -170,7 +167,7 @@ void calcTriangleGeometries_and_DialledProgTensors(
 
 
 
-//    omp_set_num_threads(8);
+//    omp_set_num_threads(settings.numberOfCores);
 //#pragma omp parallel for schedule(static)
 //    for (int i = 0; i < settings.NumTriangles; ++i) {
 //        /* If dialling in is in progress (as opposed to waiting for equilibrium),

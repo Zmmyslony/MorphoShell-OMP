@@ -55,7 +55,6 @@ SimulationStatus equilibriumCheck(
     std::vector<double> incidentProgTau(nodes.size());
     std::vector<double> velocity(nodes.size());
 
-    omp_set_num_threads(8);
 #pragma omp parallel for
     for (int i = 0; i < settings.NumNodes; ++i) {
         if (!settings.isGradientDescentDynamicsEnabled) {

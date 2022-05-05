@@ -38,7 +38,6 @@ at each timestep.*/
 #include "../SettingsStruct.hpp"
 
 void zeroForces(std::vector<Node> &nodes) {
-    omp_set_num_threads(8);
 #pragma omp parallel for
     for (int i = 0; i < nodes.size(); i++) {
         nodes[i].force << 0.0, 0.0, 0.0;
@@ -46,7 +45,6 @@ void zeroForces(std::vector<Node> &nodes) {
 }
 
 void zeroVector(std::vector<Eigen::Vector3d> &vector) {
-    omp_set_num_threads(8);
 #pragma omp parallel for
     for (int i = 0; i < vector.size(); i++) {
         vector[i] << 0.0, 0.0, 0.0;

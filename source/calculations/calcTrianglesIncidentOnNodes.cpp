@@ -65,7 +65,6 @@ void calcTrianglesIncidentOnNodes(std::vector<Node> &nodes, const std::vector<Tr
 
     /* Now we know how many triangles are incident on each node, we put the
     labels in the corresponding node member data Eigen::VectorXd.*/
-//    omp_set_num_threads(8);
 //#pragma omp parallel for
     for (int i = 0; i < settings.NumNodes; ++i) {
 

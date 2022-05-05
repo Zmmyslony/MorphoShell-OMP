@@ -58,7 +58,6 @@ void calcCurvatures(
     // Objects used to calculate angle deficits.
     const double PI = 3.14159265358979323846;
 
-    omp_set_num_threads(8);
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         /* Old, more naive and direct approach using usual shape operator. */
@@ -111,7 +110,6 @@ void calcCurvatures(
 
     // Calculate angle deficits at nodes, if specified in settings file.
     if (settings.isAngleDeficitsPrinted) {
-        omp_set_num_threads(8);
 #pragma omp parallel for
         for (int n = 0; n < settings.NumNodes; ++n) {
             if (!nodes[n].isOnBoundary) {
@@ -121,7 +119,6 @@ void calcCurvatures(
             }
         }
 
-        omp_set_num_threads(8);
 #pragma omp parallel for
         for (int i = 0; i < triangles.size(); i++) {
             Eigen::Vector3d side2 = triangles[i].currSides.col(1) - triangles[i].currSides.col(0);
@@ -139,24 +136,6 @@ void calcCurvatures(
             angleDeficits[triangles[i].vertexLabels(2)] -= acos(
                     (triangles[i].currSides.col(1).dot(side2)) / (sideLength1 * sideLength2));
         }
-
-//        for (int t = 0; t < settings.NumTriangles; ++t) {
-//
-//            Eigen::Vector3d side2 = triangles[t].currSides.col(1) - triangles[t].currSides.col(0);
-//
-//            double sideLength0 = triangles[t].currSides.col(0).norm();
-//            double sideLength1 = triangles[t].currSides.col(1).norm();
-//            double sideLength2 = side2.norm();
-//
-//            angleDeficits[triangles[t].vertexLabels(0)] -= acos(
-//                    (triangles[t].currSides.col(0).dot(triangles[t].currSides.col(1))) / (sideLength0 * sideLength1));
-//
-//            angleDeficits[triangles[t].vertexLabels(1)] -= acos(
-//                    -(triangles[t].currSides.col(0).dot(side2)) / (sideLength0 * sideLength2));
-//
-//            angleDeficits[triangles[t].vertexLabels(2)] -= acos(
-//                    (triangles[t].currSides.col(1).dot(side2)) / (sideLength1 * sideLength2));
-//        }
 
         /* Also fill vectors holding interior and exterior angle deficits
         separately.*/
