@@ -62,7 +62,7 @@ void calcDeformationForces(
 
     double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
     std::vector<Eigen::Vector3d> forcesForEachTriangle(6 * triangles.size());
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         triangles[i].updateHalfPK1Stress(stretchingPreFac);
         Eigen::Matrix<double, 3, 3> stretchForces = triangles[i].getStretchingForces();
@@ -79,7 +79,7 @@ void calcDeformationForces(
         }
     }
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for
     for (int i = 0; i < nodes.size(); i++) {
         for (auto &trianglesForNode: correspondingTrianglesForNodes[i]) {
             int index = 6 * trianglesForNode.first + trianglesForNode.second;

@@ -221,6 +221,8 @@ public:
     void updateMetric(const std::vector<Node> &nodes);
 
     void updateGeometricProperties(const std::vector<Node> &nodes);
+
+    void calculateSecondFundamentalForm(double bendingPreFac, double JPreFactor);
 };
 
 #endif

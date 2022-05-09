@@ -83,7 +83,7 @@ void calcEnergiesAndStresses(
         double J = settings.GentFactor * tempScalar / (settings.SheetThickness * settings.SheetThickness);
 
         double preGentBendEnergyDensity = tempScalar * ((tempMat1 * tempMat1).trace() + tr_tempMat1 * tr_tempMat1);
-        bendEnergyDensities[i] = preGentBendEnergyDensity + preGentBendEnergyDensity * preGentBendEnergyDensity / J;
+        bendEnergyDensities[i] = preGentBendEnergyDensity + pow(preGentBendEnergyDensity, 2) / J;
 
         bendEnergies[i] = triangles[i].initArea * bendEnergyDensities[i];
 
@@ -116,13 +116,10 @@ void calcEnergiesAndStresses(
         cauchyStressEigenvecs.at(i).col(1) = eigenSolver.eigenvectors().col((2 + minMagEigenvalIdx) % 3);
     }
 
-
+#pragma omp parallel for
     for (int n = 0; n < settings.NumNodes; ++n) {
-        kineticEnergies.at(n) = 0.5 * nodes[n].mass * nodes[n].vel.dot(nodes[n].vel);
+        kineticEnergies[n] = 0.5 * nodes[n].mass * nodes[n].vel.dot(nodes[n].vel);
     }
-
-
-
 }
 
 

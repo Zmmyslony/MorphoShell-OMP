@@ -75,6 +75,7 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include <libconfig.h++> // Used for settings file
 #include <chrono>
 #include <Eigen/Dense> // Used for matrices of numbers
+#include <omp.h>
 
 
 #include "CustomOutStreamClass.hpp"
@@ -106,6 +107,7 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "calculations/calcCurvatures.hpp"
 #include "calculations/calcEnergiesAndStresses.hpp"
 #include "functions/kahanSum.hpp"
+#include "InitialisationFunctions.h"
 
 //Create useful debug tools.
 /*
@@ -122,7 +124,6 @@ assert( x > 100 );
 ///////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
-
 /* Create a string to contain some things that will later be written to the log
 file, as long as all goes to plan and the code gets that far. The first thing to
 add to this string is a record of what command line arguments where given, and
@@ -796,8 +797,8 @@ if an ansatz is used. */
 
 /* Initialise time and step counter. Set logStream to more useful
 format and precision for e.g. energy printouts. */
-    double time = 0.0;
-    int stepcount = 0;
+    double time = 0;
+    int stepCount = 0;
     logStream << std::scientific << std::setprecision(8);
 
     std::ofstream forceDistFile;
@@ -1019,7 +1020,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
         while (DialInFactorCounter <= DialInFactorValuesToHoldAt.size() - 2) {
             int highestNode = -99;
             int lowestNode = -99;
-            if (stepcount == 0) {
+            if (stepCount == 0) {
                 settings.initSlideZCoord_lower = nodes[0].pos(2);
                 settings.initSlideZCoord_upper = nodes[0].pos(2);
                 for (int n = 0; n < settings.NumNodes; ++n) {
@@ -1174,7 +1175,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                                      settings.SheetThickness / bendingLongTime;
 
                 for (int n = 0; n < settings.NumNodes; ++n) {
-                    if (nodes[n].isSeideDisplacementEnabled || stepcount == 0) {
+                    if (nodes[n].isSeideDisplacementEnabled || stepCount == 0) {
 
                         double tCone = settings.SheetThickness / sqrt(settings.lambda);
 
@@ -1283,7 +1284,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
             Can be switched off with settings.PrintFrequency < 0.0.
             Doing the write-out at this point in the loop means the node positions
             and the triangle geometry data match in the output, which is desirable!*/
-            if ((stepcount % settings.InversePrintRate == 0 && settings.InversePrintRate > 0) ||
+            if ((stepCount % settings.InversePrintRate == 0 && settings.InversePrintRate > 0) ||
                 settings.slideJustReachedEquil == 1) {
                 try {
                     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
@@ -1302,7 +1303,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                             angleDeficits[n] = 0;
                         }
                     }
-                    writeVTKDataOutput(nodes, triangles, stepcount, time, currDialInFactor, progTensorSequenceCounter,
+                    writeVTKDataOutput(nodes, triangles, stepCount, time, currDialInFactor, progTensorSequenceCounter,
                                        gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
                                        boundaryNodeAngleDeficits, stretchEnergyDensities, bendEnergyDensities,
                                        stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
@@ -1313,24 +1314,26 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     return -1;
                 }
                 logStream.open();
-                logStream << std::fixed << "Wrote VTK output at " << getRealTime() << ", stepcount = " << stepcount
+                logStream << std::fixed << "Wrote VTK output at " << getRealTime() << ", stepCount = " << stepCount
                           << ", simulation time = " << time + settings.TimeStep << ", current dial-in factor = "
                           << currDialInFactor << std::scientific;
-//                logStream << "\tcalcTriangleGeometries execution time "
-//                          << std::chrono::duration_cast<std::chrono::microseconds>(end1 - begin).count() << " us"
-//                          << std::endl;
-//                logStream << "\tcalcSecFFsAndRelatedQuantities execution time "
-//                          << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end1).count() << " us"
-//                          << std::endl;
-//                logStream << "\tcalcDeformationForces execution time "
-//                          << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2).count() << " us"
-//                          << std::endl;
-//                logStream << "\tcalcNonDeformationForces_and_ImposeBCS execution time "
-//                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - end3).count() << " us"
-//                          << std::endl;
                 logStream << ", last step's execution time "
                           << std::chrono::duration_cast<std::chrono::microseconds>(end4 - begin).count() << " us"
                           << std::endl;
+
+                logStream << "\tcalcTriangleGeometries execution time "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end1 - begin).count() << " us"
+                          << std::endl;
+                logStream << "\tcalcSecFFsAndRelatedQuantities execution time "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end1).count() << " us"
+                          << std::endl;
+                logStream << "\tcalcDeformationForces execution time "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2).count() << " us"
+                          << std::endl;
+                logStream << "\tcalcNonDeformationForces_and_ImposeBCS execution time "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - end3).count() << " us"
+                          << std::endl;
+
                 logStream.close();
 
                 forceDistFile.open(outputDirName + "/force_displacement_vals.txt", std::ofstream::app);
@@ -1363,7 +1366,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                  Also print total stretching and bending energies.*/
                 if (timeSinceLastEquilCheck > settings.TimeBetweenEquilChecks && status == waitingForEquilibrium) {
                     logStream.open();
-                    logStream << "Checking for equilibrium at " << getRealTime() << ", stepcount = " << stepcount
+                    logStream << "Checking for equilibrium at " << getRealTime() << ", stepCount = " << stepCount
                               << ", simulation time = " << time << ", current dial-in factor = " << currDialInFactor
                               << std::endl;
                     logStream.close();
@@ -1397,7 +1400,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                                                     stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                                     cauchyStressEigenvals, cauchyStressEigenvecs, settings);
                         }
-                        writeVTKDataOutput(nodes, triangles, stepcount, time, currDialInFactor,
+                        writeVTKDataOutput(nodes, triangles, stepCount, time, currDialInFactor,
                                            progTensorSequenceCounter, gaussCurvatures, meanCurvatures, angleDeficits,
                                            interiorNodeAngleDeficits, boundaryNodeAngleDeficits, stretchEnergyDensities,
                                            bendEnergyDensities, stretchEnergies, bendEnergies, kineticEnergies,
@@ -1411,8 +1414,8 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                         return -1;
                     }
                     logStream.open();
-                    logStream << "Equilibrium reached. Wrote VTK output at " << getRealTime() << ", stepcount = "
-                              << stepcount << ", simulation time = " << time << ", current dial-in factor = "
+                    logStream << "Equilibrium reached. Wrote VTK output at " << getRealTime() << ", stepCount = "
+                              << stepCount << ", simulation time = " << time << ", current dial-in factor = "
                               << currDialInFactor << std::endl;
                     status = dialling;
                     timeSinceCurrDiallingInPhaseStarted = 0.0;
@@ -1437,7 +1440,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
             try { advanceDynamics(nodes, triangles, settings, logStream); }
             catch (const std::runtime_error &error) {
                 logStream.open();
-                logStream << "At " << getRealTime() << ", stepcount = " << stepcount << ", time = " << time
+                logStream << "At " << getRealTime() << ", stepCount = " << stepCount << ", time = " << time
                           << ", dial-in factor = " << currDialInFactor
                           << " a force was suspiciously large, there is probably a problem. Writing VTK output and then aborting."
                           << std::endl;
@@ -1450,7 +1453,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                                                 stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                                 cauchyStressEigenvals, cauchyStressEigenvecs, settings);
                     }
-                    writeVTKDataOutput(nodes, triangles, stepcount, time, currDialInFactor, progTensorSequenceCounter,
+                    writeVTKDataOutput(nodes, triangles, stepCount, time, currDialInFactor, progTensorSequenceCounter,
                                        gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
                                        boundaryNodeAngleDeficits, stretchEnergyDensities, bendEnergyDensities,
                                        stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
@@ -1469,7 +1472,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
             time += settings.TimeStep;
             timeSinceLastEquilCheck += settings.TimeStep;
             timeSinceCurrDiallingInPhaseStarted += settings.TimeStep;
-            stepcount += 1;
+            stepCount += 1;
         }
 
         if (sequenceOf_progMetricInfo.size() > 2 && progTensorSequenceCounter < sequenceOf_progMetricInfo.size() - 2) {
@@ -1481,7 +1484,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
 // Print some helpful final things.
     logStream.open();
-    logStream << "Reached simulation time = " << time << " using " << stepcount << " time steps" << std::endl;
+    logStream << "Reached simulation time = " << time << " using " << stepCount << " time steps" << std::endl;
     logStream.close();
 
     return 0;

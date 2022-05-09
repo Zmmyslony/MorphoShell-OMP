@@ -22,7 +22,7 @@ set(SOURCE_FILES
         source/Node.hpp source/functions/perturbInitialPositionsWithRandomNoise.cpp source/functions/perturbInitialPositionsWithRandomNoise.hpp source/readSettingsFile.cpp
         source/readSettingsFile.hpp source/readVTKData.cpp source/readVTKData.hpp source/setRemainingInitCond_and_NodeMasses.cpp source/setRemainingInitCond_and_NodeMasses.hpp
         source/SettingsStruct.hpp source/SimulationStatus.hpp source/Triangle.cpp source/Triangle.hpp source/writeVTKDataOutput.cpp source/writeVTKDataOutput.hpp source/functions/zeroForces.cpp
-        source/functions/zeroForces.hpp source/SettingsStruct.cpp)
+        source/functions/zeroForces.hpp source/SettingsStruct.cpp source/InitialisationFunctions.h source/InitialisationFunctions.cpp)
 
 add_executable(ShelloMorph ${SOURCE_FILES})
 

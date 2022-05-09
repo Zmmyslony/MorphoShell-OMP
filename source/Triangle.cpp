@@ -117,11 +117,12 @@ void Triangle::updateMetric(const std::vector<Node> &nodes) {
 
     // Calculate corresponding metric, and its det and inverse.
     metric = defGradient.transpose() * defGradient;
-    detInvMetric = 1.0 / metric.determinant();
-    Eigen::Matrix<double, 2, 2> metricAdjMatrix;
-    metricAdjMatrix << metric(1, 1), -metric(0, 1),
-            -metric(0, 1), metric(0, 0);
-    invMetric = detInvMetric * metricAdjMatrix;
+    detInvMetric = 1 / metric.determinant();
+//    Eigen::Matrix<double, 2, 2> metricAdjMatrix;
+//    metricAdjMatrix << metric(1, 1), -metric(0, 1),
+//            -metric(0, 1), metric(0, 0);
+//    invMetric = detInvMetric * metricAdjMatrix;
+    invMetric = metric.inverse();
 }
 
 void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
@@ -140,4 +141,31 @@ void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
     faceNormal = currSides.col(0).cross(currSides.col(1));
     invCurrArea = 2.0 / faceNormal.norm();
     faceNormal = 0.5 * faceNormal * invCurrArea; // Normalising
+}
+
+
+void Triangle::calculateSecondFundamentalForm(double bendingPreFac, double JPreFactor) {
+    Eigen::Vector3d vectorOfSecFFComps = patchSecDerivs.transpose() * faceNormal;
+
+    secFF(0, 0) = vectorOfSecFFComps(0);
+    secFF(0, 1) = vectorOfSecFFComps(1);
+    secFF(1, 0) = vectorOfSecFFComps(1);
+    secFF(1, 1) = vectorOfSecFFComps(2);
+
+    Eigen::Matrix<double, 2, 2> tempMat1 =
+            dialledInvProgMetric * (secFF - dialledProgSecFF);
+    Eigen::Matrix<double, 2, 2> tempMat2 = tempMat1 * dialledInvProgMetric;
+    double tr_tempMat1 = tempMat1.trace();
+    double tempScalar = bendingPreFac * detDialledInvProgMetric;
+
+    double J = tempScalar * JPreFactor;
+
+    // Now calculate bending energy density for this 
+    double preGentBendEnergyDensity = tempScalar * ((tempMat1 * tempMat1).trace() + tr_tempMat1 * tr_tempMat1);
+    double gentDerivFac = (1 + 2 * preGentBendEnergyDensity / J);
+
+    /* Calculate the derivative of the bending energy density with respect
+    to the secFF. */
+    energyDensityDerivWRTSecFF =
+            gentDerivFac * 2 * tempScalar * (tempMat2 + tr_tempMat1 * dialledInvProgMetric);
 }
