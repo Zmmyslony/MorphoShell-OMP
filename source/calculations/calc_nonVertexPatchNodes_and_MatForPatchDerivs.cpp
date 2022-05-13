@@ -44,15 +44,14 @@ later.
 #include <cmath>
 #include <stdexcept>
 #include <iostream>
-#include <string> // For std::to_string
+#include <string>
 #include <omp.h>
-
 
 #include "calc_nonVertexPatchNodes_and_MatForPatchDerivs.hpp"
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../SettingsStruct.hpp"
-#include "../CustomOutStreamClass.hpp"
+//#include "../SettingsStruct.hpp"
+//#include "../CustomOutStreamClass.hpp"
 
 
 void calc_nonVertexPatchNodes_and_MatForPatchDerivs(

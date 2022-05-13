@@ -1321,18 +1321,18 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                           << std::chrono::duration_cast<std::chrono::microseconds>(end4 - begin).count() << " us"
                           << std::endl;
 
-                logStream << "\tcalcTriangleGeometries execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end1 - begin).count() << " us"
-                          << std::endl;
-                logStream << "\tcalcSecFFsAndRelatedQuantities execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end1).count() << " us"
-                          << std::endl;
-                logStream << "\tcalcDeformationForces execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2).count() << " us"
-                          << std::endl;
-                logStream << "\tcalcNonDeformationForces_and_ImposeBCS execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - end3).count() << " us"
-                          << std::endl;
+//                logStream << "\tcalcTriangleGeometries execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end1 - begin).count() << " us"
+//                          << std::endl;
+//                logStream << "\tcalcSecFFsAndRelatedQuantities execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end1).count() << " us"
+//                          << std::endl;
+//                logStream << "\tcalcDeformationForces execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2).count() << " us"
+//                          << std::endl;
+//                logStream << "\tcalcNonDeformationForces_and_ImposeBCS execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - end3).count() << " us"
+//                          << std::endl;
 
                 logStream.close();
 
