@@ -38,13 +38,10 @@ form for each triangle are also calculated.*/
 #include <Eigen/Dense>
 #include <vector>
 #include <cmath>
-#include <omp.h>
 
 #include "calcTriangleGeometries_and_DialledProgTensors.hpp"
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../SimulationStatus.hpp"
-#include "../SettingsStruct.hpp"
 
 
 void updateMetrics(std::vector<Triangle> &triangles, const std::vector<Node> &nodes) {

@@ -30,7 +30,7 @@ present. */
 
 std::string extract_Just_Filename(const std::string &inputString) {
 
-    const size_t lastSlashLocation = inputString.find_last_of("/");
+    const size_t lastSlashLocation = inputString.find_last_of('/');
 
     //If no slash found, or if it is the last character just return the input
     //string

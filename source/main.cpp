@@ -75,7 +75,6 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include <libconfig.h++> // Used for settings file
 #include <chrono>
 #include <Eigen/Dense> // Used for matrices of numbers
-#include <omp.h>
 
 
 #include "CustomOutStreamClass.hpp"
@@ -107,7 +106,6 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "calculations/calcCurvatures.hpp"
 #include "calculations/calcEnergiesAndStresses.hpp"
 #include "functions/kahanSum.hpp"
-#include "InitialisationFunctions.h"
 
 //Create useful debug tools.
 /*
@@ -548,9 +546,9 @@ sequence.*/
             smallestTri = i;
         }
 
-        for (size_t p = 0; p < sequenceOf_ProgTaus.size(); ++p) {
-            if (smallestSizeOverRootTau > smallestAltitude / sqrt(sequenceOf_ProgTaus[p][i])) {
-                smallestSizeOverRootTau = smallestAltitude / sqrt(sequenceOf_ProgTaus[p][i]);
+        for (auto & sequenceOf_ProgTau : sequenceOf_ProgTaus) {
+            if (smallestSizeOverRootTau > smallestAltitude / sqrt(sequenceOf_ProgTau[i])) {
+                smallestSizeOverRootTau = smallestAltitude / sqrt(sequenceOf_ProgTau[i]);
             }
         }
     }

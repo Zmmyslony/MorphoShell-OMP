@@ -40,12 +40,10 @@ stress stuff.
 #include <Eigen/Dense>
 #include <vector>
 #include <cmath>
-#include <omp.h>
 
 #include "calcEnergiesAndStresses.hpp"
 #include "../Triangle.hpp"
 #include "../Node.hpp"
-#include "../SettingsStruct.hpp"
 
 void calcEnergiesAndStresses(
         const std::vector<Node> &nodes,

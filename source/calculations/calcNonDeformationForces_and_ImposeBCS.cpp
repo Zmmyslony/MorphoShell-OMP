@@ -36,11 +36,9 @@ accounted for.*/
 #include <Eigen/Dense>
 #include <vector>
 #include <cmath>
-#include <omp.h>
 
 #include "calcNonDeformationForces_and_ImposeBCS.hpp"
 #include "../Node.hpp"
-//#include "../SettingsStruct.hpp"
 
 std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Node> &nodes, const double &time,
                                                                  const SettingsStruct &settings) {
