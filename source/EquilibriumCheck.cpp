@@ -36,7 +36,6 @@ scale - the (stretching) sound speed.*/
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include <omp.h>
 
 #include "EquilibriumCheck.hpp"
 #include "Node.hpp"

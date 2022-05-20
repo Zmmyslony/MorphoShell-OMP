@@ -34,13 +34,11 @@ by edges).
 #endif
 
 #include <cstddef>
-#include <Eigen/Dense>
 #include <vector>
 
 #include "calcNodeNeighbours.hpp"
 #include "../Node.hpp"
 #include "../Edge.hpp"
-#include "../SettingsStruct.hpp"
 
 void calcNodeNeighbours(std::vector<Node> &nodes, const std::vector<Edge> &edges, const SettingsStruct &settings){
 

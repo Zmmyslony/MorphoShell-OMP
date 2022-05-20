@@ -38,11 +38,9 @@ integrated Gauss and geodesic curvature (i.e. the LHS of Gauss-Bonnet).*/
 #include <Eigen/Dense>
 #include <vector>
 #include <cmath> // For sqrt and acos
-#include <omp.h>
 
 #include "calcCurvatures.hpp"
 #include "../Triangle.hpp"
-#include "../SettingsStruct.hpp"
 
 void calcCurvatures(
         const std::vector<Node> &nodes,

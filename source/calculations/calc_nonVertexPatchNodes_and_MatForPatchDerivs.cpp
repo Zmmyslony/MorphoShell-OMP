@@ -44,15 +44,11 @@ later.
 #include <cmath>
 #include <stdexcept>
 #include <iostream>
-#include <string> // For std::to_string
-#include <omp.h>
-
+#include <string>
 
 #include "calc_nonVertexPatchNodes_and_MatForPatchDerivs.hpp"
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../SettingsStruct.hpp"
-#include "../CustomOutStreamClass.hpp"
 
 
 void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
@@ -85,8 +81,8 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
                     }
 
 
-                    for (size_t u = 0; u < possiblePatchNodeLabels.size(); ++u) {
-                        if (thisNodeLabel == possiblePatchNodeLabels[u]) {
+                    for (int possiblePatchNodeLabel : possiblePatchNodeLabels) {
+                        if (thisNodeLabel == possiblePatchNodeLabel) {
                             isNodeAlreadyAccountedFor = true;
                         }
                     }

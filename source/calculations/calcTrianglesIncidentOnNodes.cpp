@@ -33,13 +33,11 @@ having it as a vertex), and store these as node member data.*/
 #endif
 
 #include <cstddef>
-#include <Eigen/Dense>
 #include <vector>
 
 #include "calcTrianglesIncidentOnNodes.hpp"
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../SettingsStruct.hpp"
 
 void calcTrianglesIncidentOnNodes(std::vector<Node> &nodes, const std::vector<Triangle> &triangles,
                                   const SettingsStruct &settings) {

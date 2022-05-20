@@ -34,12 +34,10 @@ Function to calculate the current force due to strain and bending on each
 
 #include <Eigen/Dense>
 #include <vector>
-#include <omp.h>
 
 #include "calcDeformationForces.hpp"
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../SettingsStruct.hpp"
 #include "../functions/zeroForces.hpp"
 
 std::vector<std::vector<std::pair<int, int>>>

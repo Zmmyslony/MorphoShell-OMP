@@ -76,6 +76,7 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include <chrono>
 #include <Eigen/Dense> // Used for matrices of numbers
 
+
 #include "CustomOutStreamClass.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
@@ -545,9 +546,9 @@ sequence.*/
             smallestTri = i;
         }
 
-        for (size_t p = 0; p < sequenceOf_ProgTaus.size(); ++p) {
-            if (smallestSizeOverRootTau > smallestAltitude / sqrt(sequenceOf_ProgTaus[p][i])) {
-                smallestSizeOverRootTau = smallestAltitude / sqrt(sequenceOf_ProgTaus[p][i]);
+        for (auto & sequenceOf_ProgTau : sequenceOf_ProgTaus) {
+            if (smallestSizeOverRootTau > smallestAltitude / sqrt(sequenceOf_ProgTau[i])) {
+                smallestSizeOverRootTau = smallestAltitude / sqrt(sequenceOf_ProgTau[i]);
             }
         }
     }
@@ -1318,18 +1319,18 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                           << std::chrono::duration_cast<std::chrono::microseconds>(end4 - begin).count() << " us"
                           << std::endl;
 
-                logStream << "\tcalcTriangleGeometries execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end1 - begin).count() << " us"
-                          << std::endl;
-                logStream << "\tcalcSecFFsAndRelatedQuantities execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end1).count() << " us"
-                          << std::endl;
-                logStream << "\tcalcDeformationForces execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2).count() << " us"
-                          << std::endl;
-                logStream << "\tcalcNonDeformationForces_and_ImposeBCS execution time "
-                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - end3).count() << " us"
-                          << std::endl;
+//                logStream << "\tcalcTriangleGeometries execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end1 - begin).count() << " us"
+//                          << std::endl;
+//                logStream << "\tcalcSecFFsAndRelatedQuantities execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end1).count() << " us"
+//                          << std::endl;
+//                logStream << "\tcalcDeformationForces execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end3 - end2).count() << " us"
+//                          << std::endl;
+//                logStream << "\tcalcNonDeformationForces_and_ImposeBCS execution time "
+//                          << std::chrono::duration_cast<std::chrono::microseconds>(end4 - end3).count() << " us"
+//                          << std::endl;
 
                 logStream.close();
 

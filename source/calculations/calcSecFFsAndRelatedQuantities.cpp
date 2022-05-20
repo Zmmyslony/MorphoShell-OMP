@@ -36,7 +36,6 @@ will be used later to calculate bending forces.*/
 
 #include <Eigen/Dense>
 #include <vector>
-#include <omp.h>
 
 #include "calcSecFFsAndRelatedQuantities.hpp"
 #include "../Node.hpp"

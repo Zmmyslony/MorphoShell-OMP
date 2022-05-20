@@ -31,11 +31,9 @@ at each timestep.*/
 #endif
 
 #include <Eigen/Dense>
-#include <omp.h>
 
 #include "zeroForces.hpp"
 #include "../Node.hpp"
-#include "../SettingsStruct.hpp"
 
 void zeroForces(std::vector<Node> &nodes) {
 #pragma omp parallel for

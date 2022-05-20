@@ -34,13 +34,11 @@ approximate smallest element size, to ensure the right kind of scale.*/
 #endif
 
 #include <vector>
-#include <Eigen/Dense>
 #include <random>
 #include <ctime>
 
 #include "perturbInitialPositionsWithRandomNoise.hpp"
 #include "../Node.hpp"
-#include "../SettingsStruct.hpp"
 
 void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, const SettingsStruct &settings) {
 

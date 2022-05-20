@@ -41,7 +41,6 @@ nodes, its adjacent triangles etc.
 
 #include <Eigen/Dense>
 #include <vector>
-#include <cstddef> // For std::size_t
 #include <algorithm> // For std::find
 #include <limits> // For INT_MAX
 #include <stdexcept>
@@ -50,7 +49,6 @@ nodes, its adjacent triangles etc.
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 #include "../Edge.hpp"
-#include "../SettingsStruct.hpp"
 
 void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                                        std::vector<Edge> &edges, SettingsStruct &settings) {
