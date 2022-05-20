@@ -75,8 +75,6 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include <libconfig.h++> // Used for settings file
 #include <chrono>
 #include <Eigen/Dense> // Used for matrices of numbers
-#include <omp.h>
-
 
 #include "CustomOutStreamClass.hpp"
 #include "Node.hpp"
@@ -107,7 +105,6 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "calculations/calcCurvatures.hpp"
 #include "calculations/calcEnergiesAndStresses.hpp"
 #include "functions/kahanSum.hpp"
-#include "InitialisationFunctions.h"
 
 //Create useful debug tools.
 /*
