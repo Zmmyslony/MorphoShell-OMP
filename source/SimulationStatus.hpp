@@ -25,8 +25,8 @@ simulation is currently in a 'dialling in' phase, or is not dialling and is
 instead waiting for equilibrium, or whether equilibrium has been reached but
 the next dialling phase has not yet begun.*/
 
-#ifndef _STATUS_ENUM_TAG_
-#define _STATUS_ENUM_TAG_ 1
+#ifndef _SIMULATION_STATUS_ENUM_TAG_
+#define _SIMULATION_STATUS_ENUM_TAG_
 
 enum SimulationStatus {
     dialling, waitingForEquilibrium, equilibriumReached

@@ -30,7 +30,7 @@ two triangles sharing the edge, and the labels of those triangles.*/
 #endif
 
 #ifndef _EDGE_CLASS_TAG_
-#define _EDGE_CLASS_TAG_
+#define EDGE_CLASS_TAG_
 
 #include <Eigen/Dense>
 
@@ -46,16 +46,16 @@ public:
     // Label so this edge 'knows' which it is
     int label;
 
-    /* Labels (and indexes in the nodes container vector) of the nodes that the
+    /* Labels (and indexes in the nodes' container vector) of the nodes that the
     edge is defined to start and end at.*/
     Eigen::Vector2i nodeLabels;
 
-    /* Labels (and indices in the triangles container vector) of the (either 1 or
+    /* Labels (and indices in the triangles' container vector) of the (either 1 or
     2) triangles that this edge is an edge of. We term these triangles 'adjacent'
     to the edge.*/
     Eigen::VectorXi adjTriLabels;
 
-    /* Labels (and indexes in the nodes container vector) of the 'other' nodes
+    /* Labels (and indexes in the nodes' container vector) of the 'other' nodes
     that the triangles left and right of the edge have as vertices (i.e. that
     are not one of the edge nodes)*/
     //int otherNodeLabel_L;

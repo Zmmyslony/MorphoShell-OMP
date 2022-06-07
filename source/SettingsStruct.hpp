@@ -21,11 +21,11 @@ along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////
 
 This is the header file for the struct that that will be hold settings
-and user-set parameters, and passed arround between functions etc. It also holds
+and user-set parameters, and passed around between functions etc. It also holds
 some values which are not settings as such, like the number of nodes (determined
 by initial data). It should always be passed by reference, and almost always
 const (though occasionally one could want to change 'settings' within a function
-- e.g. timestep may change.*/
+- e.g. time step may change.*/
 
 #ifndef _SETTINGSSTRUCT_TAG_
 #define _SETTINGSSTRUCT_TAG_
@@ -50,7 +50,7 @@ struct SettingsStruct {
     // Coefficient of slide friction
     double slideFrictionCoeff;
     // If using an ansatz, all nodes less than this many thicknesses vertically
-    // above the node with the lowest intial (ansatz) z coord will be clamped.
+    // above the node with the lowest initial (ansatz) z coord will be clamped.
     // Set to negative value to turn off.
     double ThicknessesAboveLowestNodeToClampUpTo;
     double BendingLongTime;
@@ -65,8 +65,8 @@ struct SettingsStruct {
     double totalSlideForceToMuTSqRatioEquilThreshold; // Control how fussy the slide is about being in equilibrium (material equilibrium checked for separately).
     double InitialSlideWeightForCtrldForceInUnitsOfMuTsq; // Initial weight of slide in units of mu t^2, when doing a controlled force experiment.
     int slideJustReachedEquil; // 0 unless equil just reached, then set to 1 to trigger printout, then immediately returned to 0.
-    double slideDampingParam; // Ratio between total force on upper slide and it's velocity (we do viscous dynamics for the slide).
-    double upperSlideWeight; // Slide weight as multiple of charForceScale. If doing conrolled-force experiment, slideSpeedPrefactor set's dial speed of this weight rather than slide displacement.
+    double slideDampingParam; // Ratio between total force on upper slide, and it's velocity (we do viscous dynamics for the slide).
+    double upperSlideWeight; // Slide weight as multiple of charForceScale. If doing controlled-force experiment, slideSpeedPrefactor set's dial speed of this weight rather than slide displacement.
     // Upper slide's downwards velocity, in a controlled-force experiment.
     double upperSlideVel;
     // Total upwards force on upper slide, only needs to be stored here for controlled-force experiment.
@@ -95,7 +95,7 @@ struct SettingsStruct {
     will be generated over the course of one dial-in step. Output will be printed
     every DialInStepTime / Timestep, rounded to the nearest integer > 0. Must be
     specified with a decimal point as it is a double. Switch off these prints
-    entirely by setting PrintFrequency to a negative number. Currently
+    entirely by setting PrintFrequency to a negative number. Currently,
     PrintFrequency values in [0.0, 1.0) are not permitted. */
     double PrintFrequency;
 
@@ -105,15 +105,15 @@ struct SettingsStruct {
     reaching final states because it does not play well with isDialingFromAnsatzEnabled.*/
     bool isLCEModeEnabled;
 
-    /* Bool to determine whether or not the output files include stretching and
+    /* Bool to determine whether the output files include stretching and
     bending energy densities for each triangle in addition to curvatures.*/
     bool isEnergyDensitiesPrinted;
 
-    /* Bool to determine whether or not the output files include triangle areas.
+    /* Bool to determine whether the output files include triangle areas.
     */
     bool isTriangleAreasPrinted;
 
-    /* Bool to determine whether or not the output files include the 'angular
+    /* Bool to determine whether the output files include the 'angular
     deficit' for each node: 2*Pi - Sum(incident triangle angles).*/
     bool isAngleDeficitsPrinted;
 
@@ -122,7 +122,7 @@ struct SettingsStruct {
 
     /* Numerical damping factor, such that damping force on a node is equal to
      -mass*velocity*NumDampFactor/InitDensity
-    The value is chosen based on a toy stretching + bending model, so as to
+    The value is chosen based on a toy stretching + bending model, to
     approximately critically damp the longest wavelength bending mode. The
     value can be tuned from the settings file using two dimensionless prefactors.
     The first is used during dialling in, the second is used instead when waiting
@@ -141,7 +141,7 @@ struct SettingsStruct {
     some scale, the bend energy density is taken to be a function of Wb, such
     that it grows much more sharply with curvature. This is intended to reflect
     the physical fact that curvatures on the scale of the thickness should be
-    much more strongly penalised than they are by Wb. Thus the energy
+    much more strongly penalised than they are by Wb. Thus, the energy
     density scale where the behaviour transitions should be something like Wb
     evaluated for a curvature of 1/thickness. We take it to be that scale,
     multiplied by the tunable GentFactor below, which should therefore be rougly
@@ -172,12 +172,12 @@ empirically to avoid `blowing up'. */
     (the flat sheet trivial programmed tensors, or *possibly* those from a later
     point in the progTensors sequence if an ansatz was used) are
     just set to the values they would be dialling TO, so that no dialling
-    of these quantities happens between the intial (starting) entry in
+    of these quantities happens between the initial (starting) entry in
     the progTensor sequence and the next. progTau however IS dialled in as
     normal. Upon reaching the next entry in the sequence, normal behaviour
     resumes so there will be a phase of waiting for equilibrium,
     followed potentially by normal dialling in of further progTensors in
-    the sequence, if there are any more in the sequence.
+    the sequence, if there are anymore in the sequence.
     To use it, you probably want to supply an ansatz file with its
     currDialInFactor CHANGED TO = 0. See main() for more details, including the
     intended use case. */
@@ -212,7 +212,7 @@ empirically to avoid `blowing up'. */
     the tunable (and dimensionless)
     settings.TimeBetweenEquilChecksPrefactor in the settings file.
     TimeBetweenEquilChecks will be set to this value * settings.DialInStepTime.
-    settings.DialInStepTime is determined by the code so as to approximately
+    settings. DialInStepTime is determined by the code to approximately
     equal the characteristic decay time for the longest wavelength bending mode
     when it is critically damped. The value can be tuned in the settings file
     with a dimensionless prefactor. */
@@ -272,7 +272,7 @@ empirically to avoid `blowing up'. */
     // Initial( reference) state density.
     double InitDensity;
 
-    /* Square root of smallest initial element area, used in calculating timestep
+    /* Square root of the smallest initial element area, used in calculating time step
     and characteristic force scale for testing equilibrium. */
     double ApproxMinInitElemSize;
 

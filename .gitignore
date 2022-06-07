@@ -4,3 +4,4 @@
 /.vs/
 /Eigen/
 /out/
+/cmake-build-release-mingw/

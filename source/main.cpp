@@ -72,8 +72,9 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include <cmath> // Used for some simple maths functions
 #include <vector>// Used for some vectors
 #include <iomanip> // For setting time and date format, and std::out precision if needed
-#include <libconfig.h++> // Used for settings file
 #include <chrono>
+
+#include <libconfig.h++> // Used for settings file
 #include <Eigen/Dense> // Used for matrices of numbers
 
 
@@ -205,7 +206,7 @@ it immediately afterwards.*/
     }
 
 /* Set format and precision of logStream, and print some things related to what
-has already occured above.*/
+has already occurred above.*/
     logStream << std::defaultfloat << std::setprecision(6);
     logStream << initWriteToLogStr << std::endl;
     logStream.close();
@@ -301,7 +302,7 @@ accuracy in the treatment of the boundary in e.g. the 2nd F.F. approx, and due
 to possible bugs in this rather special case.*/
     if (settings.NumTriangles < 50) {
         logStream << "Your mesh has a small number of triangles. \nBeware that the code "
-                     "is likely to be less accurate in this case, \nand unforseen bugs are more "
+                     "is likely to be less accurate in this case, \nand unforeseen bugs are more "
                      "likely in extreme cases." << std::endl;
     }
     logStream.close();
@@ -454,7 +455,7 @@ code is based on 'patch fitting', which is simple, and has been shown to
 converge. Consider a triangle t. It has three vertices, and three other nearby
 vertices are selected, subject to the following quadratic fitting being
 well-conditioned.
-The unique quadratic surface (a function of the 2D parametrisation coods) that
+The unique quadratic surface (a function of the 2D parametrisation coords) that
 goes through all 6 of these points in the current state is then found and
 assigned to triangle t. The 2nd F.F. for this 'patch' could be calculated in
 full and averaged over the patch, although this complicates matters. Instead, we
@@ -864,7 +865,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 ensuring gentle dynamics. This is probably non-ideal though, because
                 the progMetric and progSecFF along that dialling path may then
                 deviate significantly from the form that you want to arrive at, and
-                that you thought you started close to, pumping unecessary energy in
+                that you thought you started close to, pumping unnecessary energy in
                 to the system and wasting time.
                 There may be other uses for this feature too.*/
                 if (settings.ForInitialPortionOfProgTensorsSequence_DialProgTauButJumpProgMetricAndProgSecFF) {
@@ -1030,7 +1031,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                         settings.initSlideZCoord_upper = nodes[n].pos(2);
                         highestNode = n;
                     }
-                    // Can instead choose initial slide separaton directly from settings file, to help avoid 'jumping' when starting a
+                    // Can instead choose initial slide separation directly from settings file, to help avoid 'jumping' when starting a
                     // squashing run part way through from a previous run's output.
                     if (settings.SpecifyInitSlideZCoord_upper > -99.0) {
                         settings.initSlideZCoord_upper = settings.SpecifyInitSlideZCoord_upper;

@@ -23,7 +23,7 @@ along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 Function to calculate stretching and bending potential energy density for each
 triangle, and then the corresponding energy, filling NumTriangles-long vectors
 with these. Also does the same for the node kinetic energies. We also calculate
-my strain tensor and a correpsonding scalar strain measure in this function,
+my strain tensor and a corresponding scalar strain measure in this function,
 which is in a sense a kind of non-dimensionalised stretch energy! And also some
 stress stuff.
 */

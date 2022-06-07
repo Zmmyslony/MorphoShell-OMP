@@ -39,7 +39,6 @@ nodes, its adjacent triangles etc.
 #define EIGEN_DONT_PARALLELIZE
 #endif
 
-#include <Eigen/Dense>
 #include <vector>
 #include <algorithm> // For std::find
 #include <limits> // For INT_MAX
@@ -64,10 +63,10 @@ void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vect
     for easy printing out to std::cout etc. */
     std::vector<std::vector<int> > tempAdjTriLabels(settings.NumTriangles);
 
-    // We do the same thing for the triangles' edge labels member data
+    // We do the same thing for the triangles' edge labels' member data
     std::vector<std::vector<int> > tempTriEdgeLabels(settings.NumTriangles);
 
-    /* We don't yet know how many edges there are, but it will be a lot most of
+    /* We don't yet know how many edges there are, but it will be a lot of most of
     the time, so we use reserve suitable space using an upper bound on the
     number of edges. */
     edges.reserve(3 * settings.NumTriangles);
@@ -139,7 +138,7 @@ void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vect
     do the entries for all the boundary edges. Note we could maybe be less
     wasteful here, cutting the j loop off once all edges accounted for, but
     this whole operation only happens once and therefore life is too short to
-    worry about such small optimisations. Also readability is more important
+    worry about such small optimisations. Also, readability is more important
     here anyway.*/
     for (int i = 0; i < settings.NumTriangles; ++i) {
 
@@ -293,7 +292,7 @@ void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vect
         }
     }
 
-    /* Finally do some checking of some simple things as a bug check.
+    /* Finally, do some checking of some simple things as a bug check.
     Note the third condition is not mathematically prohibited but would
     indicate a very concerning mesh where some triangles share no edges with
     other triangles. More checks would be possible here; some are better than

@@ -64,7 +64,7 @@ SimulationStatus equilibriumCheck(
         }
 
         /* Calculate the local node speed : stretching wave speed ratio, based
-        on the smallest (most stringent) progTau (and hence stiffness) of any of
+        on the smallest (most stringent) progTau (and hence stiffness) of
         the triangles incident on this node. Note that for Gradient Descent
         dynamics, this quantity is essentially meaningless, because only the
         step size has meaning. You can see this in the fact that the 'timestep'

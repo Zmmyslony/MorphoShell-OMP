@@ -53,7 +53,7 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
         }
 
         /* Perturbing 'prod' force, to prompt the sheet to buckle in the upward
-        direction, and ensure evolution actally begins. The particular shape
+        direction, and ensure evolution actually begins. The particular shape
         has no special justification, except that many target shapes have a
         bulge or protrusion vaguely in the middle, e.g. a nose. The shear
         modulus factor ensures the force has the correct dimensions and an order
@@ -86,7 +86,7 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
         // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
         // Force from "glass slides".
         double slideVertForce;
-        if (settings.GlassCones == false) {
+        if (!settings.GlassCones) {
             // Use the if() statement with the && for single ridge experiment if you want to allow tip to go through the lower slide.
             //if( nodes[i].pos(2) < settings.initSlideZCoord_lower && nodes[i].pos(0)*nodes[i].pos(0) + nodes[i].pos(1)*nodes[i].pos(1) > (0.95*1.8)*(0.95*1.8) ){
             if (nodes[i].pos(2) < settings.initSlideZCoord_lower) {

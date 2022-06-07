@@ -37,7 +37,7 @@ std::string extract_Just_Filename(const std::string &inputString) {
     if (lastSlashLocation == std::string::npos || lastSlashLocation == inputString.size() - 1) {
         return inputString;
     }
-        //Otherwise return the part of the string after the last slash
+        //Otherwise, return the part of the string after the last slash
     else {
         return inputString.substr(lastSlashLocation + 1);
     }

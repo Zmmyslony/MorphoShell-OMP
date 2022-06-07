@@ -52,7 +52,6 @@ std::cout << teststring << std::endl;
 #endif
 
 #include <iostream>
-#include <string>
 #include <vector>
 #include <limits>
 #include <Eigen/Dense>
@@ -334,10 +333,10 @@ void readVTKData(
     automatically by a std::ifstream. */
     if (init_DataFile.bad() || init_DataFile.fail()) {
         throw std::runtime_error(
-                "Error: Unkown problem with non-ansatz data file. One of .bad(), .fail() was true - investigate! "
+                "Error: Unknown problem with non-ansatz data file. One of .bad(), .fail() was true - investigate! "
                 "E.g. you may not have supplied enough node clamp/load indicator data in the file, so the file may have reached its end prematurely.");
     }
-    init_DataFile >> tempString; // Attempts to read whatever's left, which should be nothing!
+    init_DataFile >> tempString; // Attempts to read whatever is left, which should be nothing!
     if (!init_DataFile.eof()) {
         throw std::runtime_error(
                 "Error: Did not reach end of non-ansatz data file as expected. Check that it has exactly the correct format.");
@@ -402,7 +401,7 @@ void readVTKData(
         ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
         int ansatzStatedNumNodes;
         ansatz_DataFile >> ansatzStatedNumNodes;
-        if (!(ansatzStatedNumNodes == settings.NumNodes)) {
+        if (ansatzStatedNumNodes != settings.NumNodes) {
             throw std::runtime_error(
                     "Error: Problem with (or before) line giving number of nodes in ansatz data file. "
                     "E.g. you may have supplied ansatz and initial data files with inconsistent numbers of nodes.");
@@ -426,7 +425,7 @@ void readVTKData(
         std::ifstream. */
         if (ansatz_DataFile.bad() || ansatz_DataFile.fail()) {
             throw std::runtime_error(
-                    "Error: Unkown problem with ansatz data file. One of .bad(), .fail() was true - investigate! "
+                    "Error: Unknown problem with ansatz data file. One of .bad(), .fail() was true - investigate! "
                     " E.g. you may not have supplied enough ansatz node positions, so the file reached its end prematurely.");
         }
         ansatz_DataFile.close();

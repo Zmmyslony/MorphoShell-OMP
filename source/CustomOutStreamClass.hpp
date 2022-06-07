@@ -38,7 +38,7 @@ file to get written to std::cout e.g. for easy viewing in a terminal.
 */
 
 #ifndef _CUSTOM_OUT_STREAM_CLASS_TAG_
-#define _CUSTOM_OUT_STREAM_CLASS_TAG_
+#define CUSTOM_OUT_STREAM_CLASS_TAG_
 
 #include <iostream>
 #include <fstream>
@@ -62,10 +62,10 @@ public:
     void close();
 
     // Getter function to return a reference to the fileName.
-    const std::string &get_outputFileName() const;
+    [[nodiscard]] const std::string &get_outputFileName() const;
 
     // Getter function to return a reference to the outputFileStream.
-    const std::ofstream &get_outputFileStream() const;
+    [[nodiscard]] const std::ofstream &get_outputFileStream() const;
 
     /* For regular output of variables etc.
     This is defined here since the function is templated so defining it just in

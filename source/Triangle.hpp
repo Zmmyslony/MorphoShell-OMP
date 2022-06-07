@@ -59,7 +59,7 @@ public:
     in no particular order*/
     Eigen::Vector3i vertexLabels;
 
-    /* Labels (and indices in the triangles container vector) of the 3 edges of
+    /* Labels (and indices in the triangles' container vector) of the 3 edges of
     this triangle.*/
     Eigen::Vector3i edgeLabels;
 
@@ -69,7 +69,7 @@ public:
     calculation.*/
     Eigen::VectorXd initNonBoundEdgeLengthFracs;
 
-    /* Labels (and indices in the triangles container vector) of the other
+    /* Labels (and indices in the triangles' container vector) of the other
     triangles that share an edge with this triangle.*/
     Eigen::VectorXi edgeSharingTriLabels;
 
@@ -157,7 +157,7 @@ public:
 
     /* Estimated Second Fundamental Form matrix (secFF) of the deformed surface,
     defined (as with the deformation gradient) with respect to the 'material'
-    coodinate system, i.e. the coordinate chart that used to be the (x,y)
+    coordinate system, i.e. the coordinate chart that used to be the (x,y)
     cartesians of the flat initial state, and then deformed with the sheet. This
     is a 2x2 symmetric matrix. */
     Eigen::Matrix<double, 2, 2> secFF;

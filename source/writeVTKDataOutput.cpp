@@ -141,7 +141,7 @@ void writeVTKDataOutput(
 
     /* Now print non-dimensionalised stretch and bend energies, if specified in
     settings file. Print also our strain measure, which is not completely
-    dissimilar to a non-dimensional stretch energy. Also Cauchy stress info.*/
+    dissimilar to a non-dimensional stretch energy. Also, Cauchy stress info.*/
     if (settings.isEnergyDensitiesPrinted) {
 
         outFile << "SCALARS nonDimStretchEnergyDensity double 1" << "\n"

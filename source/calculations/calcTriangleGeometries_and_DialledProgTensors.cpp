@@ -105,7 +105,7 @@ void updateDialledInverseProgrammedMetricFromAnsatz(Triangle &triangle,
 }
 
 
-void updateDialledSecondFundamantalForm(int index, std::vector<Triangle> &triangles, double currDialInFactor,
+void updateDialledSecondFundemantalForm(int index, std::vector<Triangle> &triangles, double currDialInFactor,
                                         double rootCurrDialInFactor, const size_t &progTensorSequenceCounter,
                                         const std::vector<std::vector<double> > &programmedTausSequence,
                                         const std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedSecondFundamentalFormSequence) {
@@ -120,7 +120,7 @@ void updateDialledSecondFundamantalForm(int index, std::vector<Triangle> &triang
 }
 
 
-void updateDialledSecondFundamantalForm(Triangle &triangle, double currDialInFactor,
+void updateDialledSecondFundamentalForm(Triangle &triangle, double currDialInFactor,
                                         double rootCurrDialInFactor,
                                         const double &programmedTauCurrentStep,
                                         const double &programmedTauNextStep,
@@ -190,10 +190,10 @@ void calcTriangleGeometries_and_DialledProgTensors(
                                                                programmedMetricSequence[progTensorSequenceCounter +
                                                                                         1][i]);
             }
-//            updateDialledSecondFundamantalForm(i, triangles, currDialInFactor, rootCurrDialInFactor,
+//            updateDialledSecondFundamentalForm(i, triangles, currDialInFactor, rootCurrDialInFactor,
 //                                               progTensorSequenceCounter, programmedTausSequence,
 //                                               programmedSecondFundamentalFormSequence);
-            updateDialledSecondFundamantalForm(triangles[i], currDialInFactor, rootCurrDialInFactor,
+            updateDialledSecondFundamentalForm(triangles[i], currDialInFactor, rootCurrDialInFactor,
                                                programmedTausSequence[progTensorSequenceCounter][i],
                                                programmedTausSequence[progTensorSequenceCounter + 1][i],
                                                programmedSecondFundamentalFormSequence[progTensorSequenceCounter][i],

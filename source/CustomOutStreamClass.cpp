@@ -78,12 +78,12 @@ example of such a function. Then we overload the binary operator << to take
 any such function, and use it as a SECOND argument. No first argument is
 required because we're implementing this as a member function, so the first
 argument is taken to be the calling object automatically!
-Hence some_my_ostream << std::endl takes some instance of my_ostream and feeds
+Hence, some_my_ostream << std::endl takes some instance of my_ostream and feeds
 that to its overloaded << operator, with the function (pointer I guess?)
 std::endl as the second. What the << operator then does is apply the function
 it took as an argument (std::endl here) and apply it in the way it usually
 would be, first to std::cout, then to outputFileStream. std::endl takes a stream
-(outputFileStream, say) and does it's newline and flush thing, and then returns
+(outputFileStream, say) and does its newline and flush thing, and then returns
 a reference to the stream so that you can then chain, i.e. put another << or
 similar straight after. We want this behaviour too, which is why our
 overloaded << operator has a return type and returns a reference to the

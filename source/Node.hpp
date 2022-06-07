@@ -29,7 +29,7 @@ containing the node's position, velocity etc.*/
 #endif
 
 #ifndef _NODE_CLASS_TAG_
-#define _NODE_CLASS_TAG_
+#define NODE_CLASS_TAG_
 
 #include <Eigen/Dense>
 
@@ -42,7 +42,7 @@ public:
     a particular file in addition to std::cout.*/
     CustomOutStreamClass nodeLogStream;
 
-    // Label of this node, (also its index in the nodes container vector).
+    // Label of this node, (also its index in the nodes' container vector).
     int label;
 
     /* Labels of the triangles with this node as a vertex ('incident triangles').
@@ -57,18 +57,18 @@ public:
     (true) or not (false).*/
     bool isOnBoundary;
 
-    /* Boolean representing whether the node's position is to be be held clamped
+    /* Boolean representing whether the node's position is to be held clamped
     (true) or not (false).*/
     bool isClamped;
 
-    // Bool indicating whether or not to impose a Seide displacement to this node.
+    // Bool indicating whether to impose a Seide displacement to this node or not.
     bool isSeideDisplacementEnabled;
 
     /* Bool representing whether the load force should be applied to this node
     (true) or not (false). For more general loading (multiple, spatially varying,
-    non-trivial directions etc) this will need generalising a lot.
+    non-trivial directions etc.) this will need generalising a lot.
     It would  require a major think about how to even mathematically represent
-    general loadng, and then how to put it in data format, code etc.*/
+    general loading, and then how to put it in data format, code etc.*/
     bool isLoadForceEnabled;
 
     // Position vector (x, y and z coordinates).
