@@ -54,7 +54,7 @@ void calcCurvatures(
 
 
     // Objects used to calculate angle deficits.
-    const double PI = 3.14159265358979323846;
+    const double PI = M_PI;
 
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
@@ -77,14 +77,15 @@ void calcCurvatures(
         so they clearly don't tell you anything about curvature directions - I
         don't think they have any useful meaning. But the eigenvalues are the
         principal curvatures, just like the usual shape operator.*/
-        Eigen::HouseholderQR<Eigen::Matrix<double, 3, 2> > qrDecomp(3, 2);
-        qrDecomp.compute(triangles[i].defGradient);
+        Eigen::HouseholderQR<Eigen::Matrix<double, 3, 2> > quadratic_decomposition(3, 2);
+        quadratic_decomposition.compute(triangles[i].defGradient);
 
         /* Extracting the 'R' part relies on the special and under-documented
         way Eigen stores the QR-decomposed matrix, which I believe is the LAPACK
         way. Inconveniently, it returns R as 3x2 upper triangular, not 2x2.*/
-        Eigen::Matrix<double, 3, 2> stretchPart_3x2 = qrDecomp.matrixQR().triangularView<Eigen::Upper>();
-        Eigen::Matrix<double, 2, 2> invStretchPart = stretchPart_3x2.block<2, 2>(0, 0).inverse(); // If it's not invertible you'll notice elsewhere!
+        Eigen::Matrix<double, 3, 2> stretchPart_3x2 = quadratic_decomposition.matrixQR().triangularView<Eigen::Upper>();
+        Eigen::Matrix<double, 2, 2> invStretchPart = stretchPart_3x2.block<2, 2>(0, 0).inverse();
+        // If it's not invertible you'll notice elsewhere!
 
         Eigen::Matrix<double, 2, 2> symShapeOp = invStretchPart.transpose() * triangles[i].secFF * invStretchPart;
 
@@ -109,7 +110,7 @@ void calcCurvatures(
     // Calculate angle deficits at nodes, if specified in settings file.
     if (settings.isAngleDeficitsPrinted) {
 #pragma omp parallel for
-        for (int n = 0; n < settings.NumNodes; ++n) {
+        for (int n = 0; n < nodes.size(); ++n) {
             if (!nodes[n].isOnBoundary) {
                 angleDeficits.at(n) = 2.0 * PI;
             } else {
@@ -119,20 +120,22 @@ void calcCurvatures(
 
 #pragma omp parallel for
         for (int i = 0; i < triangles.size(); i++) {
+            Eigen::Vector3d side0 = triangles[i].currSides.col(0);
+            Eigen::Vector3d side1 = triangles[i].currSides.col(1);
             Eigen::Vector3d side2 = triangles[i].currSides.col(1) - triangles[i].currSides.col(0);
 
-            double sideLength0 = triangles[i].currSides.col(0).norm();
-            double sideLength1 = triangles[i].currSides.col(1).norm();
+            double sideLength0 = side0.norm();
+            double sideLength1 = side1.col(1).norm();
             double sideLength2 = side2.norm();
 
             angleDeficits[triangles[i].vertexLabels(0)] -= acos(
-                    (triangles[i].currSides.col(0).dot(triangles[i].currSides.col(1))) / (sideLength0 * sideLength1));
+                    (side0.dot(side1)) / (sideLength0 * sideLength1));
 
             angleDeficits[triangles[i].vertexLabels(1)] -= acos(
-                    -(triangles[i].currSides.col(0).dot(side2)) / (sideLength0 * sideLength2));
+                    -(side0.dot(side2)) / (sideLength0 * sideLength2));
 
             angleDeficits[triangles[i].vertexLabels(2)] -= acos(
-                    (triangles[i].currSides.col(1).dot(side2)) / (sideLength1 * sideLength2));
+                    (side1.dot(side2)) / (sideLength1 * sideLength2));
         }
 
         /* Also fill vectors holding interior and exterior angle deficits
@@ -149,34 +152,5 @@ void calcCurvatures(
                 idxInto_boundaryNodeAngleDeficits += 1;
             }
         }
-
-        // OLD APPROACH, NOT LIKELY TO BE EVER USED AGAIN:
-        /* A good definition of angular deficit for a boundary node is not clear.
-        Just using Pi instead of 2*Pi is not great because that does not give
-        zero on a non-straight boundary. Instead, we just assign boundary nodes
-        an angle deficit that is the average of the deficits of neighbouring
-        non-boundary nodes. If the only neighbours are boundary nodes (which
-        should be rare), we don't assign an angle deficit.*/
-        /*
-        for(int n = 0; n < settings.NumNodes; ++n){
-
-            if( nodes[n].isOnBoundary == true ){
-
-                // 'Reset' angle deficit to zero.
-                angleDeficits[n] = 0.0;
-
-                int numNonBoundaryNeighbours = 0;
-
-                for(int nn = 0; nn < nodes[n].neighbourNodeLabels.size(); ++nn){
-                    if( nodes[nodes[n].neighbourNodeLabels(nn)].isOnBoundary == false ){
-                        angleDeficits[n] += angleDeficits[nodes[n].neighbourNodeLabels(nn)];
-                        numNonBoundaryNeighbours += 1;
-                    }
-                }
-                angleDeficits[n] /= numNonBoundaryNeighbours;
-
-            }
-        }
-        */ //remoooooooooooovvvvvvvveeeeeeeeeeeeee??????????
     }
 }
