@@ -81,7 +81,7 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
                     }
 
 
-                    for (int possiblePatchNodeLabel : possiblePatchNodeLabels) {
+                    for (int possiblePatchNodeLabel: possiblePatchNodeLabels) {
                         if (thisNodeLabel == possiblePatchNodeLabel) {
                             isNodeAlreadyAccountedFor = true;
                         }
