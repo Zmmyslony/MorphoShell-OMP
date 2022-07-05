@@ -70,23 +70,9 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         /*  Check the force is well-behaved. If not, throw error, and
             display offending nodes and its incident triangles.
             Error is caught in main(). */
-//  This function is replaced with the upper one
-//        if (nodes[i].force.norm() >= 100000.0 * settings.charForceScale) {
-//            logStream.open();
-//            logStream << " ----------------------------------------" << std::endl;
-//            logStream << " ------------CRASH REPORT----------------" << std::endl;
-//            logStream << " ----------------------------------------" << std::endl;
-//            logStream << "Offending node and its incident triangles: " << std::endl;
-//            logStream.close();
-//            nodes[i].display();
-//            for (int t = 0; t < nodes[i].incidentTriLabels.size(); ++t) {
-//                triangles[nodes[i].incidentTriLabels(t)].display();
-//            }
-//            throw std::runtime_error("suspiciously_high_force");
-//        }
 
 
-        /* Set velocities based on either Gradient Descent (overdamped) dynamics
+        /* Set velocities based on either Gradient Descent (over dampened) dynamics
         or Newtonian dynamics. Then advance positions accordingly. */
         if (settings.isGradientDescentDynamicsEnabled) {
             // Gradient Descent dynamics.
@@ -123,7 +109,5 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         }
 
         settings.upperSlideDisplacement += settings.TimeStep * settings.upperSlideVel;
-
-
     }
 }
