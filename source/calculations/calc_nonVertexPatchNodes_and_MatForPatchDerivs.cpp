@@ -68,10 +68,10 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
         std::vector<double> distancesToCentroid;
         std::vector<int> possiblePatchNodeLabels;
         for (int v = 0; v < 3; ++v) {
-            for (int j = 0; j < nodes[triangles[i].vertexLabels(v)].incidentTriLabels.size(); ++j) {
+            Eigen::VectorXi incidentTriangleLabels = nodes[triangles[i].vertexLabels(v)].incidentTriLabels;
+            for (int j = 0; j < incidentTriangleLabels.size(); ++j) {
                 for (int w = 0; w < 3; ++w) {
-                    int thisNodeLabel = triangles[nodes[triangles[i].vertexLabels(v)].incidentTriLabels(
-                            j)].vertexLabels(w);
+                    int thisNodeLabel = triangles[incidentTriangleLabels(j)].vertexLabels(w);
                     bool isNodeAlreadyAccountedFor = false;
 
                     for (int u = 0; u < 3; ++u) {
@@ -81,14 +81,15 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
                     }
 
 
-                    for (int possiblePatchNodeLabel : possiblePatchNodeLabels) {
+                    for (int possiblePatchNodeLabel: possiblePatchNodeLabels) {
                         if (thisNodeLabel == possiblePatchNodeLabel) {
                             isNodeAlreadyAccountedFor = true;
                         }
                     }
 
                     if (!isNodeAlreadyAccountedFor) {
-                        distancesToCentroid.push_back((nodes[thisNodeLabel].pos - triangles[i].refCentroid).norm());
+                        double distanceToCentroid = (nodes[thisNodeLabel].pos - triangles[i].refCentroid).norm();
+                        distancesToCentroid.push_back(distanceToCentroid);
                         possiblePatchNodeLabels.push_back(thisNodeLabel);
                     }
                 }
@@ -174,12 +175,13 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
 
                 //Throw error to main if whole search has been exhausted unsuccessfully
                 if (q == possiblePatchNodeLabels.size() - 1) {
-                    throw std::runtime_error("At least one search for patch nodes was exhausted without "
-                                             "success (triangle " + std::to_string(triangles[i].label) +
-                                             "); all possible patch matrices in the search had a  "
-                                             "condition number above the acceptance threshold. Try increasing this threshold. If "
-                                             "that does not solve the issue, or causes other issues, the patch node search will "
-                                             "probably need to be extended. Please report this issue in that case. Aborting.");
+                    throw std::runtime_error(
+                            "At least one search for patch nodes was exhausted without success (triangle " +
+                            std::to_string(triangles[i].label) +
+                            "); all possible patch matrices in the search had a condition number above the acceptance "
+                            "threshold. Try increasing this threshold. If that does not solve the issue, or causes "
+                            "other issues, the patch node search will probably need to be extended. Please report this "
+                            "issue in that case. Aborting.");
                 }
                 continue;
             } else {
