@@ -29,7 +29,7 @@ containing the node's position, velocity etc.*/
 #endif
 
 #ifndef _NODE_CLASS_TAG_
-#define NODE_CLASS_TAG_
+#define _NODE_CLASS_TAG_
 
 #include <Eigen/Dense>
 

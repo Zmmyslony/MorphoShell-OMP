@@ -38,7 +38,7 @@ file to get written to std::cout e.g. for easy viewing in a terminal.
 */
 
 #ifndef _CUSTOM_OUT_STREAM_CLASS_TAG_
-#define CUSTOM_OUT_STREAM_CLASS_TAG_
+#define _CUSTOM_OUT_STREAM_CLASS_TAG_
 
 #include <iostream>
 #include <fstream>

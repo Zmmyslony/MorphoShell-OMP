@@ -30,7 +30,7 @@ two triangles sharing the edge, and the labels of those triangles.*/
 #endif
 
 #ifndef _EDGE_CLASS_TAG_
-#define EDGE_CLASS_TAG_
+#define _EDGE_CLASS_TAG_
 
 #include <Eigen/Dense>
 
