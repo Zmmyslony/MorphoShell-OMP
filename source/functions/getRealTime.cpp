@@ -27,6 +27,7 @@ now.*/
 #include <ctime>
 #include <string>
 #include <iomanip>
+#include <sstream>
 
 #include "getRealTime.hpp"
 
