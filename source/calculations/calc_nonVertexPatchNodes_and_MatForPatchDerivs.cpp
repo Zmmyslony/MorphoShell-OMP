@@ -67,11 +67,12 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
 
         std::vector<double> distancesToCentroid;
         std::vector<int> possiblePatchNodeLabels;
-        for (int v = 0; v < 3; ++v) {
-            Eigen::VectorXi incidentTriangleLabels = nodes[triangles[i].vertexLabels(v)].incidentTriLabels;
-            for (int j = 0; j < incidentTriangleLabels.size(); ++j) {
+
+        for (int outerVertex = 0; outerVertex < 3; ++outerVertex) {
+            Eigen::VectorXi incidentTriangleLabels = nodes[triangles[i].vertexLabels(outerVertex)].incidentTriLabels;
+            for (int innerVertex = 0; innerVertex < incidentTriangleLabels.size(); ++innerVertex) {
                 for (int w = 0; w < 3; ++w) {
-                    int thisNodeLabel = triangles[incidentTriangleLabels(j)].vertexLabels(w);
+                    int thisNodeLabel = triangles[incidentTriangleLabels(innerVertex)].vertexLabels(w);
                     bool isNodeAlreadyAccountedFor = false;
 
                     for (int u = 0; u < 3; ++u) {
