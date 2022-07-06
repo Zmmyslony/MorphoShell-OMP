@@ -60,28 +60,31 @@ void calcDeformationForces(
 
     double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
     std::vector<Eigen::Vector3d> forcesForEachTriangle(6 * triangles.size());
-#pragma omp parallel for
-    for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].updateHalfPK1Stress(stretchingPreFac);
-        Eigen::Matrix<double, 3, 3> stretchForces = triangles[i].getStretchingForces();
+#pragma omp parallel
+    {
+    #pragma omp for
+        for (int i = 0; i < triangles.size(); i++) {
+            triangles[i].updateHalfPK1Stress(stretchingPreFac);
+            Eigen::Matrix<double, 3, 3> stretchForces = triangles[i].getStretchingForces();
 
-        Eigen::Matrix<double, 3, 3> outwardTriNormals = triangles[i].getOutwardTriangleNormals();
-        Eigen::Matrix<double, 3, 3> normalDerivPiece =
-                0.5 * triangles[i].invCurrArea * (triangles[i].patchSecDerivs.transpose() * outwardTriNormals);
+            Eigen::Matrix<double, 3, 3> outwardTriNormals = triangles[i].getOutwardTriangleNormals();
+            Eigen::Matrix<double, 3, 3> normalDerivPiece =
+                    0.5 * triangles[i].invCurrArea * (triangles[i].patchSecDerivs.transpose() * outwardTriNormals);
 
-        for (int n = 0; n < 3; ++n) {
-            forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n) + stretchForces.col(n);
+            for (int n = 0; n < 3; ++n) {
+                forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n) + stretchForces.col(n);
+            }
+            for (int n = 3; n < 6; ++n) {
+                forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n);
+            }
         }
-        for (int n = 3; n < 6; ++n) {
-            forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n);
-        }
-    }
 
-#pragma omp parallel for
-    for (int i = 0; i < nodes.size(); i++) {
-        for (auto &trianglesForNode: correspondingTrianglesForNodes[i]) {
-            int index = 6 * trianglesForNode.first + trianglesForNode.second;
-            nodes[i].force += forcesForEachTriangle[index];
+    #pragma omp for
+        for (int i = 0; i < nodes.size(); i++) {
+            for (auto &trianglesForNode: correspondingTrianglesForNodes[i]) {
+                int index = 6 * trianglesForNode.first + trianglesForNode.second;
+                nodes[i].force += forcesForEachTriangle[index];
+            }
         }
     }
 }
