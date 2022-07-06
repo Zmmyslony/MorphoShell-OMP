@@ -182,7 +182,7 @@ void Triangle::updateAngleDeficits(std::vector<double> &angleDeficits) const {
         sidesLength.emplace_back(side.norm());
     }
 
-    angleDeficits[vertexLabels(0)] -= acos((sides[0].dot(sides[1]) / (sidesLength[0] * sidesLength[1]));
-    angleDeficits[vertexLabels(1)] -= acos((sides[0].dot(sides[2]) / (sidesLength[0] * sidesLength[2]));
-    angleDeficits[vertexLabels(0)] -= acos((sides[1].dot(sides[2]) / (sidesLength[1] * sidesLength[2]));
+    angleDeficits[vertexLabels(0)] -= acos(sides[0].dot(sides[1]) / (sidesLength[0] * sidesLength[1]));
+    angleDeficits[vertexLabels(1)] -= acos(sides[0].dot(sides[2]) / (sidesLength[0] * sidesLength[2]));
+    angleDeficits[vertexLabels(0)] -= acos(sides[1].dot(sides[2]) / (sidesLength[1] * sidesLength[2]));
 }
