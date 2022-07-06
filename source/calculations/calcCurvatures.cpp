@@ -85,8 +85,8 @@ void calcCurvatures(
         way Eigen stores the QR-decomposed matrix, which I believe is the LAPACK
         way. Inconveniently, it returns R as 3x2 upper triangular, not 2x2.*/
         Eigen::Matrix<double, 3, 2> stretchingPart = quadraticDecomposition.matrixQR().triangularView<Eigen::Upper>();
-        Eigen::Matrix<double, 2, 2> stretchingPartInverse = stretchingPart.block<2, 2>(0,
-                                                                                       0).inverse(); // If it's not invertible you'll notice elsewhere!
+        Eigen::Matrix<double, 2, 2> stretchingPartInverse = stretchingPart.block<2, 2>(0,0).inverse();
+        // If it's not invertible you'll notice elsewhere!
 
         Eigen::Matrix<double, 2, 2> symmetricShapeOperator =
                 stretchingPartInverse.transpose() * triangles[i].secFF * stretchingPartInverse;

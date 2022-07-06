@@ -547,7 +547,7 @@ sequence.*/
             smallestTri = i;
         }
 
-        for (auto & sequenceOf_ProgTau : sequenceOf_ProgTaus) {
+        for (auto &sequenceOf_ProgTau: sequenceOf_ProgTaus) {
             if (smallestSizeOverRootTau > smallestAltitude / sqrt(sequenceOf_ProgTau[i])) {
                 smallestSizeOverRootTau = smallestAltitude / sqrt(sequenceOf_ProgTau[i]);
             }
