@@ -169,3 +169,20 @@ void Triangle::calculateSecondFundamentalForm(double bendingPreFac, double JPreF
     energyDensityDerivWRTSecFF =
             gentDerivFac * 2 * tempScalar * (tempMat2 + tr_tempMat1 * dialledInvProgMetric);
 }
+
+
+void Triangle::updateAngleDeficits(std::vector<double> &angleDeficits) const {
+    std::vector<Eigen::Vector3d> sides;
+    sides.emplace_back(currSides.col(0));
+    sides.emplace_back(currSides.col(1));
+    sides.emplace_back(sides[1] - sides[0]);
+
+    std::vector<double> sidesLength(sides.size());
+    for (auto &side : sides) {
+        sidesLength.emplace_back(side.norm());
+    }
+
+    angleDeficits[vertexLabels(0)] -= acos((sides[0].dot(sides[1]) / (sidesLength[0] * sidesLength[1]));
+    angleDeficits[vertexLabels(1)] -= acos((sides[0].dot(sides[2]) / (sidesLength[0] * sidesLength[2]));
+    angleDeficits[vertexLabels(0)] -= acos((sides[1].dot(sides[2]) / (sidesLength[1] * sidesLength[2]));
+}

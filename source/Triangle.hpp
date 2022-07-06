@@ -223,6 +223,8 @@ public:
     void updateGeometricProperties(const std::vector<Node> &nodes);
 
     void calculateSecondFundamentalForm(double bendingPreFac, double JPreFactor);
+
+    void updateAngleDeficits(std::vector<double> &angleDeficits) const;
 };
 
 #endif
