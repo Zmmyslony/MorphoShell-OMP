@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 project(ShelloMorph)
 
 find_package(OpenMP REQUIRED)
@@ -6,7 +6,7 @@ find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_STANDARD 17)
 
 find_path(LIBCONFIG_DIR libconfig.h)
-find_library(LIBCONFIGPP_LIB config++)
+find_library(LIBCONFIGPP_LIB libconfig++)
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(SOURCE_FILES
