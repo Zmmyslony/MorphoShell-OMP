@@ -1368,7 +1368,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     logStream << "Checking for equilibrium at " << getRealTime() << ", stepCount = " << stepCount
                               << ", simulation time = " << time << ", current dial-in factor = " << currDialInFactor
                               << std::endl;
-                    logStream.close();
+
 
                     status = equilibriumCheck(nodes, triangles, settings, logStream);
                     timeSinceLastEquilCheck = 0.0;
@@ -1380,11 +1380,11 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     double nonDimBendEnergy = kahanSum(bendEnergies) / settings.charStretchEnergyScale;
                     double nonDimKineticEnergy = kahanSum(kineticEnergies) / settings.charStretchEnergyScale;
 
-                    logStream.open();
-                    logStream << "Non-dimensionalised stretch, bend, kinetic, and total energies: "
-                              << nonDimStretchEnergy << ", " << nonDimBendEnergy
-                              << ", " << nonDimKineticEnergy << ", "
-                              << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy << std::endl;
+                    logStream << "Non-dimensionalised energies:" << std::endl;
+                    logStream << "\t total \t\t" << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy << std::endl;
+                    logStream << "\t stretch \t" << nonDimStretchEnergy << std::endl;
+                    logStream << "\t bend \t\t" << nonDimBendEnergy << std::endl;
+                    logStream << "\t kinetic \t" << nonDimKineticEnergy << std::endl;
                     logStream.close();
                 }
 
