@@ -76,6 +76,7 @@ void writeVTKDataOutput(
         const std::string &outputDirName) {
 
     std::ofstream outFile(outputDirName + "/stepcount_" + std::to_string(stepcount) + "_output.vtk");
+//    std::stringstream outFile;
     if (!outFile) {
         throw std::runtime_error("Error: Problem creating or opening output file.");
     }
@@ -206,7 +207,6 @@ void writeVTKDataOutput(
     for (int i = 0; i < settings.NumTriangles; ++i) {
         outFile << triangles[i].refCentroid.norm() << "\n";
     }
-
 
     // Now print angle deficits at nodes, if specified in settings file.
     if (settings.isAngleDeficitsPrinted) {

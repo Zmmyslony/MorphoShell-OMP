@@ -250,12 +250,12 @@ the first round of dialling in will always start from the Identity and Zero for
 the programmed metric and secFF respectively. For most uses of this code, only
 a single set of programmed tensors will be supplied - multiple sets is a fairly
 advanced case.*/
-    std::vector<Node> nodes;
-    std::vector<Triangle> triangles;
-    std::vector<std::vector<Eigen::Vector3d> > sequenceOf_progMetricInfo;
-    std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > sequenceOf_InvProgMetrics;
-    std::vector<std::vector<double> > sequenceOf_ProgTaus;
-    std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > sequenceOf_ProgSecFFs;
+    std::vector <Node> nodes;
+    std::vector <Triangle> triangles;
+    std::vector <std::vector<Eigen::Vector3d>> sequenceOf_progMetricInfo;
+    std::vector <std::vector<Eigen::Matrix<double, 2, 2> >> sequenceOf_InvProgMetrics;
+    std::vector <std::vector<double>> sequenceOf_ProgTaus;
+    std::vector <std::vector<Eigen::Matrix<double, 2, 2> >> sequenceOf_ProgSecFFs;
 
 
 /* This variable keeps track of where in the sequence of programmed tensors the
@@ -266,7 +266,7 @@ further on in the sequence of programmed tensors. */
 // This is the equivalent variable for currDialInFactor.
     double dialInFactorToStartFrom = 0.0;
 // Create container to store node ansatz positions, if given.
-    std::vector<Eigen::Vector3d> nodeAnsatzPositions;
+    std::vector <Eigen::Vector3d> nodeAnsatzPositions;
 
     logStream.open();
     logStream << "Now attempting to read data files. An error here likely \n"
@@ -325,7 +325,7 @@ same output log file as logStream (could send somewhere else in principle).*/
 
 /*Now calculate triangle edge-sharing adjacencies (triangle member data), and
 set up an 'edges' data structure to store further edge information.*/
-    std::vector<Edge> edges;
+    std::vector <Edge> edges;
     try { calcTriangleAdjacencies_And_Edges(nodes, triangles, edges, settings); }
     catch (const std::runtime_error &mesh_adjacencies_or_edges_error) {
         logStream << mesh_adjacencies_or_edges_error.what() << std::endl;
@@ -765,8 +765,8 @@ stretching and bending energies and energy densities. */
     std::vector<double> bendEnergyDensities(settings.NumTriangles, -98765.4321);
     std::vector<double> kineticEnergies(settings.NumNodes, -98765.4321);
     std::vector<double> strainMeasures(settings.NumTriangles, -98765.4321);
-    std::vector<Eigen::Vector2d> cauchyStressEigenvals(settings.NumTriangles);
-    std::vector<Eigen::Matrix<double, 3, 2> > cauchyStressEigenvecs(settings.NumTriangles);
+    std::vector <Eigen::Vector2d> cauchyStressEigenvals(settings.NumTriangles);
+    std::vector <Eigen::Matrix<double, 3, 2>> cauchyStressEigenvecs(settings.NumTriangles);
 
 
 /* Create further std::vectors to store angle deficits if specified in settings
@@ -1009,11 +1009,12 @@ cases for this code, where only a single set of programmed tensors is supplied.*
         logStream.open();
         logStream << "\nCREATING VECTOR TO STORE UNSTRESSED CONE NODE POSITIONS.\n" << std::endl;
         logStream.close();
-        std::vector<Eigen::Vector3d> nodeUnstressedConePosits(settings.NumNodes);
+        std::vector <Eigen::Vector3d> nodeUnstressedConePosits(settings.NumNodes);
         double s1 = 12345678.9;
         //double sTest = 98765432.1;
 
-        std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(
+        std::vector < std::vector < std::pair <
+        int, int>>> correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(
                 triangles, nodes);
 
         while (DialInFactorCounter <= DialInFactorValuesToHoldAt.size() - 2) {
@@ -1382,7 +1383,8 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
                     logStream.open();
                     logStream << "Non-dimensionalised energies:" << std::endl;
-                    logStream << "\t total \t\t" << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy << std::endl;
+                    logStream << "\t total \t\t" << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy
+                              << std::endl;
                     logStream << "\t stretch \t" << nonDimStretchEnergy << std::endl;
                     logStream << "\t bend \t\t" << nonDimBendEnergy << std::endl;
                     logStream << "\t kinetic \t" << nonDimKineticEnergy << std::endl;
