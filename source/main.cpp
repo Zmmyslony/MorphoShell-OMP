@@ -1245,6 +1245,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
             /* Calculate sides, areas...etc of each triangle, as well as the current
             dialled-in programmed (inverse) metric and second fundamental form.*/
+
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
             calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, status, currDialInFactor,
                                                           progTensorSequenceCounter, sequenceOf_progMetricInfo,

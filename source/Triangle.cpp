@@ -115,19 +115,13 @@ void Triangle::updateMetric(const std::vector<Node> &nodes) {
     currSides.col(1) = nodes[vertexLabels(2)].pos - nodes[vertexLabels(0)].pos;
     defGradient = currSides * invInitSidesMat;
 
-    // Calculate corresponding metric, and its det and inverse.
     metric = defGradient.transpose() * defGradient;
     detInvMetric = 1 / metric.determinant();
-//    Eigen::Matrix<double, 2, 2> metricAdjMatrix;
-//    metricAdjMatrix << metric(1, 1), -metric(0, 1),
-//            -metric(0, 1), metric(0, 0);
-//    invMetric = detInvMetric * metricAdjMatrix;
     invMetric = metric.inverse();
 }
 
 void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
     Eigen::Matrix<double, 3, 6> matrixOfPatchNodeCoords;
-    // Loop over patch nodes for this triangle and get their positions.
     for (int n = 0; n < 6; ++n) {
         if (n < 3) {
             matrixOfPatchNodeCoords.col(n) = nodes[vertexLabels(n)].pos;
@@ -135,11 +129,10 @@ void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
             matrixOfPatchNodeCoords.col(n) = nodes[nonVertexPatchNodesLabels(n - 3)].pos;
         }
     }
-
     patchSecDerivs = matrixOfPatchNodeCoords * matForPatchSecDerivs;
 
     faceNormal = currSides.col(0).cross(currSides.col(1));
-    invCurrArea = 2.0 / faceNormal.norm();
+    invCurrArea = 2 / faceNormal.norm();
     faceNormal = 0.5 * faceNormal * invCurrArea; // Normalising
 }
 
