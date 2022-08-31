@@ -39,7 +39,7 @@ having each triangle contribute 1/3 of its initial mass to each of its vertcies.
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 void setRemainingInitCond_and_NodeMasses(
         std::vector<Node> &nodes,
@@ -49,7 +49,7 @@ void setRemainingInitCond_and_NodeMasses(
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_InvProgMetrics,
         std::vector<std::vector<double> > &sequenceOf_ProgTaus,
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
-        const SettingsStruct &settings) {
+        const Settings &settings) {
 
     // Temp matrix used to hold initial triangle sides.
     Eigen::Matrix<double, 2, 2> initSidesMat;

@@ -26,6 +26,6 @@ Header file for calcSecFFsAndRelatedQuantities.cpp
 #include <vector>
 
 #include "../Triangle.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
-void calcSecFFsAndRelatedQuantities(std::vector<Triangle> &, const SettingsStruct &);
+void calcSecFFsAndRelatedQuantities(std::vector<Triangle> &, const Settings &);

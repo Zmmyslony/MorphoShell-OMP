@@ -35,7 +35,7 @@ Header file for writeVTKDataOutput.cpp function.
 
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 void writeVTKDataOutput(
         const std::vector<Node> &,
@@ -57,5 +57,5 @@ void writeVTKDataOutput(
         const std::vector<double> &,
         const std::vector<Eigen::Vector2d> &,
         const std::vector<Eigen::Matrix<double, 3, 2> > &,
-        const SettingsStruct &,
+        const Settings &,
         const std::string &);

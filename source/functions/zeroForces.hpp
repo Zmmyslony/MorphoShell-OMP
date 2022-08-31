@@ -26,7 +26,7 @@ Header file for zeroForces.cpp function.
 #include <vector>
 
 #include "../Node.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
 void zeroForces(std::vector<Node> &nodes);
 

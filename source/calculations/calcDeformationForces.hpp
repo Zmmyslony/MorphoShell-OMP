@@ -27,12 +27,12 @@ Header file for calcDeformationForces.cpp
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
 std::vector<std::vector<std::pair<int, int>>>
 getCorrespondingTrianglesForNodes(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes);
 
-void calcDeformationForces(std::vector<Node> &nodes, std::vector<Triangle> &triangles, const SettingsStruct &settings,
+void calcDeformationForces(std::vector<Node> &nodes, std::vector<Triangle> &triangles, const Settings &settings,
         const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes);
 
 

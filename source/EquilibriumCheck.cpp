@@ -41,13 +41,13 @@ scale - the (stretching) sound speed.*/
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "SimulationStatus.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
 
 SimulationStatus equilibriumCheck(
         const std::vector<Node> &nodes,
         const std::vector<Triangle> &triangles,
-        const SettingsStruct &settings,
+        const Settings &settings,
         CustomOutStreamClass &logStream) {
 
     std::vector<double> nodeNonDampingForce(nodes.size());

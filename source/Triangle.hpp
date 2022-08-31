@@ -34,7 +34,7 @@ triangular element, such as vertices, area etc.*/
 #include <vector>
 #include <Eigen/Dense>
 #include "Node.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 #include "CustomOutStreamClass.hpp"
 

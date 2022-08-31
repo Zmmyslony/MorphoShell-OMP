@@ -30,7 +30,7 @@ Header file for readVTKData.cpp function.
 
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
 
 void readVTKData(
@@ -40,7 +40,7 @@ void readVTKData(
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &,
         std::vector<std::vector<double> > &,
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &,
-        SettingsStruct &,
+        Settings &,
         const std::string &,
         size_t &,
         double &,

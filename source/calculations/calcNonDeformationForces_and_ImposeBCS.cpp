@@ -41,7 +41,7 @@ accounted for.*/
 #include "../Node.hpp"
 
 std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Node> &nodes, const double &time,
-                                                                 const SettingsStruct &settings) {
+                                                                 const Settings &settings) {
 
     double totUpperSlideForce = 0;
     double totLowerSlideForce = 0;

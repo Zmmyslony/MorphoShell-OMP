@@ -28,7 +28,7 @@ Header file for setRemainingInitCond_and_NodeMasses.cpp Function.
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 void setRemainingInitCond_and_NodeMasses(
         std::vector<Node> &,
@@ -38,4 +38,4 @@ void setRemainingInitCond_and_NodeMasses(
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &,
         std::vector<std::vector<double> > &,
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &,
-        const SettingsStruct &);
+        const Settings &);

@@ -26,6 +26,6 @@ Header file for perturbInitialPositionsWithRandomNoise.cpp function.
 #include <vector>
 
 #include "../Node.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
-void perturbInitialPositionsWithRandomNoise(std::vector<Node> &, const SettingsStruct &);
+void perturbInitialPositionsWithRandomNoise(std::vector<Node> &, const Settings &);

@@ -23,6 +23,6 @@ along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 Header file for readSettingsFile.cpp function.
 */
 
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
-void readSettingsFile(SettingsStruct &, const char *);
+void readSettingsFile(Settings &, const char *);

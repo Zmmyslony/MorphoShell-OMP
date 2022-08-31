@@ -32,7 +32,7 @@ const (though occasionally one could want to change 'settings' within a function
 
 #include <string>
 
-struct SettingsStruct {
+struct Settings {
 
     // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
     // Z-coordinates of bottom and top slides.

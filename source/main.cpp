@@ -82,7 +82,7 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 #include "functions/getRealTime.hpp"
 #include "functions/extract_Just_Filename.hpp"
@@ -212,9 +212,9 @@ has already occurred above.*/
     logStream.close();
 
 /*Read in settings file (using libconfig++ library) and put these settings in
-a SettingsStruct that will be passed around between functions when needed.
-See SettingsStruct.hpp for details of settings. */
-    SettingsStruct settings;
+a Settings that will be passed around between functions when needed.
+See Settings.hpp for details of settings. */
+    Settings settings;
     try { readSettingsFile(settings, settings_file_name); }
     catch (const libconfig::FileIOException &fioex) {
         logStream.open();
