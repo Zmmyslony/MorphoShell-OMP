@@ -32,6 +32,7 @@ containing the node's position, velocity etc.*/
 #define _NODE_CLASS_TAG_
 
 #include <Eigen/Dense>
+#include <cfloat>
 
 #include "CustomOutStreamClass.hpp"
 
@@ -91,15 +92,15 @@ public:
     incidentTriLabels and neighbourNodeLabels are left with zero size at
     initialisation. */
     Node() {
-        label = -1234;
+        label = INT_MAX;
         isSeideDisplacementEnabled = false;
         isOnBoundary = false;
         isClamped = false;
         isLoadForceEnabled = false;
-        pos.fill(-123456);
-        vel.fill(654321);
-        force.fill(56789);
-        mass = -56789;
+        pos.fill(DBL_MAX);
+        vel.fill(DBL_MAX);
+        force.fill(DBL_MAX);
+        mass = DBL_MAX;
     }
 
     // Declare other member functions.
