@@ -2,11 +2,11 @@
 // Created by Michał Zmyślony on 22/03/2022.
 //
 
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 #include <map>
 
-double *SettingsStruct::getParameterAddressDouble(const std::string &parameterName) {
+double *Settings::getParameterAddressDouble(const std::string &parameterName) {
     std::map<std::string, double *> doubleMap{
             {"initSlideZCoord_lower",                         &initSlideZCoord_lower},
             {"initSlideZCoord_upper",                         &initSlideZCoord_upper},
@@ -67,7 +67,7 @@ double *SettingsStruct::getParameterAddressDouble(const std::string &parameterNa
 }
 
 
-int *SettingsStruct::getParameterAddressInt(const std::string &parameterName) {
+int *Settings::getParameterAddressInt(const std::string &parameterName) {
     std::map<std::string, int *> intMap{
             {"testTriangle",          &testTriangle},
             {"slideJustReachedEquil", &slideJustReachedEquil},
@@ -82,7 +82,7 @@ int *SettingsStruct::getParameterAddressInt(const std::string &parameterName) {
 }
 
 
-bool *SettingsStruct::getParameterAddressBool(const std::string &parameterName) {
+bool *Settings::getParameterAddressBool(const std::string &parameterName) {
     std::map<std::string, bool *> boolMap{
             {"isDialingDisabled",                                                               &isDialingDisabled},
             {"GlassCones",                                                                      &GlassCones},
@@ -103,7 +103,7 @@ bool *SettingsStruct::getParameterAddressBool(const std::string &parameterName) 
 }
 
 
-//long int &SettingsStruct::getParameterAddressLongInt(const std::string &parameterName) {
+//long int &Settings::getParameterAddressLongInt(const std::string &parameterName) {
 //    std::map<std::string, long int &> longIntMap{
 //            {"InversePrintRate", InversePrintRate}
 //    };

@@ -44,7 +44,7 @@ will be used later to calculate bending forces.*/
 
 void calcSecFFsAndRelatedQuantities(
         std::vector<Triangle> &triangles,
-        const SettingsStruct &settings) {
+        const Settings &settings) {
 
     // Temp objects used to calculate bending forces once 2nd F.F. is found
 

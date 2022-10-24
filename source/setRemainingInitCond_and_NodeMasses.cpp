@@ -39,17 +39,17 @@ having each triangle contribute 1/3 of its initial mass to each of its vertcies.
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 void setRemainingInitCond_and_NodeMasses(
         std::vector<Node> &nodes,
         std::vector<Triangle> &triangles,
         std::vector<Edge> &edges,
-        std::vector<std::vector<Eigen::Vector3d> > &sequenceOf_progMetricInfo,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_InvProgMetrics,
-        std::vector<std::vector<double> > &sequenceOf_ProgTaus,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
-        const SettingsStruct &settings) {
+        std::vector<std::vector<Eigen::Vector3d> > &programmedMetricInfos,
+        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedInvertedMetrics,
+        std::vector<std::vector<double> > &programmedTaus,
+        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedSecondFundamentalForms,
+        const Settings &settings) {
 
     // Temp matrix used to hold initial triangle sides.
     Eigen::Matrix<double, 2, 2> initSidesMat;
@@ -66,18 +66,18 @@ void setRemainingInitCond_and_NodeMasses(
 
     //Resize the vector to hold the first ('trivial') programmed tensors, that
     //is populated in the next loop.
-    sequenceOf_progMetricInfo[0].resize(settings.NumTriangles);
-    sequenceOf_InvProgMetrics[0].resize(settings.NumTriangles);
-    sequenceOf_ProgTaus[0].resize(settings.NumTriangles);
-    sequenceOf_ProgSecFFs[0].resize(settings.NumTriangles);
+    programmedMetricInfos[0].resize(settings.NumTriangles);
+    programmedInvertedMetrics[0].resize(settings.NumTriangles);
+    programmedTaus[0].resize(settings.NumTriangles);
+    programmedSecondFundamentalForms[0].resize(settings.NumTriangles);
 
     for (int i = 0; i < settings.NumTriangles; ++i) {
         /*set triangle sides' initial in-plane x-y basis components.*/
-        initSidesMat(0, 0) = triangles[i].currSides(0, 0);
-        initSidesMat(1, 0) = triangles[i].currSides(1, 0);
-        initSidesMat(0, 1) = triangles[i].currSides(0, 1);
-        initSidesMat(1, 1) = triangles[i].currSides(1, 1);
-
+//        initSidesMat(0, 0) = triangles[i].currSides(0, 0);
+//        initSidesMat(1, 0) = triangles[i].currSides(1, 0);
+//        initSidesMat(0, 1) = triangles[i].currSides(0, 1);
+//        initSidesMat(1, 1) = triangles[i].currSides(1, 1);
+        initSidesMat = triangles[i].currSides.block<2, 2>(0, 0);
 
         //Store initial (reference) area
         triangles[i].initArea = 0.5 * initSidesMat.determinant();
@@ -126,14 +126,14 @@ void setRemainingInitCond_and_NodeMasses(
         flat plane. This may be overridden later if
         settings.isDialingFromAnsatzEnabled == true. See main().*/
         if (settings.isLCEModeEnabled) {
-            sequenceOf_progMetricInfo[0][i] << sequenceOf_progMetricInfo[1][i](0), 1.0, sequenceOf_progMetricInfo[1][i](
+            programmedMetricInfos[0][i] << programmedMetricInfos[1][i](0), 1.0, programmedMetricInfos[1][i](
                     2);
-            sequenceOf_ProgTaus[0][i] = 1.0;
-            sequenceOf_ProgSecFFs[0][i] = Eigen::Matrix<double, 2, 2>::Zero();
+            programmedTaus[0][i] = 1.0;
+            programmedSecondFundamentalForms[0][i] = Eigen::Matrix<double, 2, 2>::Zero();
         } else {
-            sequenceOf_InvProgMetrics[0][i] = Eigen::Matrix<double, 2, 2>::Identity();
-            sequenceOf_ProgTaus[0][i] = 1.0;
-            sequenceOf_ProgSecFFs[0][i] = Eigen::Matrix<double, 2, 2>::Zero();
+            programmedInvertedMetrics[0][i] = Eigen::Matrix<double, 2, 2>::Identity();
+            programmedTaus[0][i] = 1.0;
+            programmedSecondFundamentalForms[0][i] = Eigen::Matrix<double, 2, 2>::Zero();
         }
     }
 }

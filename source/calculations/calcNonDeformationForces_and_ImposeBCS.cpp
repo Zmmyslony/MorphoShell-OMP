@@ -41,7 +41,7 @@ accounted for.*/
 #include "../Node.hpp"
 
 std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Node> &nodes, const double &time,
-                                                                 const SettingsStruct &settings) {
+                                                                 const Settings &settings) {
 
     double totUpperSlideForce = 0;
     double totLowerSlideForce = 0;
@@ -82,6 +82,17 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
             }
         }
 
+        bool isSnappingLengthDifferent = false;
+        double bottomCLampLength = 3;
+        double springCoefficient = 0.005;
+        double heightOffset = 0.0;
+        if (isSnappingLengthDifferent) {
+            if (nodes[i].pos(2) < -heightOffset && abs(nodes[i].pos(0)) > bottomCLampLength) {
+                double vertForce = springCoefficient * settings.ShearModulus * settings.SheetThickness *
+                                 (-nodes[i].pos(2));
+                nodes[i].force(2) += vertForce;
+            }
+        }
 
         // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
         // Force from "glass slides".

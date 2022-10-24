@@ -49,7 +49,7 @@ The directory the files are put in is created in main().
 #include "writeVTKDataOutput.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 #include "functions/kahanSum.hpp"
 
 void writeVTKDataOutput(
@@ -72,7 +72,7 @@ void writeVTKDataOutput(
         const std::vector<double> &strainMeasures,
         const std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
         const std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
-        const SettingsStruct &settings,
+        const Settings &settings,
         const std::string &outputDirName) {
 
     std::ofstream outFile(outputDirName + "/stepcount_" + std::to_string(stepcount) + "_output.vtk");

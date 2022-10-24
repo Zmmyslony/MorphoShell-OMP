@@ -28,7 +28,7 @@ Header file for calcNonDeformationForces_and_ImposeBCS.cpp
 #include <utility>
 
 #include "../Node.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
 std::pair<double, double>
-calcNonDeformationForces_and_ImposeBCS(std::vector<Node> &, const double &, const SettingsStruct &);
+calcNonDeformationForces_and_ImposeBCS(std::vector<Node> &, const double &, const Settings &);

@@ -33,7 +33,7 @@ Header file for calcEnergiesAndStresses.cpp function
 
 #include "../Triangle.hpp"
 #include "../Node.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
 void calcEnergiesAndStresses(
         const std::vector<Node> &,
@@ -46,4 +46,4 @@ void calcEnergiesAndStresses(
         std::vector<double> &,
         std::vector<Eigen::Vector2d> &,
         std::vector<Eigen::Matrix<double, 3, 2> > &,
-        const SettingsStruct &);
+        const Settings &);

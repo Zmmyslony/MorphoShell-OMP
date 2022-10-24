@@ -27,6 +27,6 @@ Header file for calcTrianglesIncidentOnNodes.cpp function.
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
-void calcTrianglesIncidentOnNodes(std::vector<Node> &, const std::vector<Triangle> &, const SettingsStruct &);
+void calcTrianglesIncidentOnNodes(std::vector<Node> &, const std::vector<Triangle> &, const Settings &);

@@ -71,9 +71,9 @@ public:
     I ensure that default data values are recognisable values,
     for debugging. */
     Edge() {
-        label = -54321;
-        nodeLabels.fill(-1234);
-        adjTriLabels.fill(-654321);
+        label = INT_MAX;
+        nodeLabels.fill(INT_MAX);
+        adjTriLabels.fill(INT_MAX);
         //otherNodeLabel_L = -9876;
         //otherNodeLabel_L = -4321;
         isOnBoundary = false;

@@ -55,7 +55,7 @@ getCorrespondingTrianglesForNodes(const std::vector<Triangle> &triangles, const 
 void calcDeformationForces(
         std::vector<Node> &nodes,
         std::vector<Triangle> &triangles,
-        const SettingsStruct &settings,
+        const Settings &settings,
         const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
 
     double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;

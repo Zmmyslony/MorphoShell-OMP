@@ -27,7 +27,7 @@ Header file for calcCurvatures.cpp function
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
 void calcCurvatures(
         const std::vector<Node> &,
@@ -37,4 +37,4 @@ void calcCurvatures(
         std::vector<double> &,
         std::vector<double> &,
         std::vector<double> &,
-        const SettingsStruct &);
+        const Settings &);

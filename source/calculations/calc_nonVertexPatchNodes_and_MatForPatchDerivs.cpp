@@ -54,7 +54,7 @@ later.
 void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
         const std::vector<Node> &nodes,
         std::vector<Triangle> &triangles,
-        const SettingsStruct &settings,
+        const Settings &settings,
         CustomOutStreamClass &logStream) {
 
     //Some temporary variables

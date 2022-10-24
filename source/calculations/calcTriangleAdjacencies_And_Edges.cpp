@@ -50,7 +50,7 @@ nodes, its adjacent triangles etc.
 #include "../Edge.hpp"
 
 void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
-                                       std::vector<Edge> &edges, SettingsStruct &settings) {
+                                       std::vector<Edge> &edges, Settings &settings) {
 
     /* Initially we store the adjacent triangle labels for each triangle in a
     std::vector of std::vectors. At the end, the same information will then be

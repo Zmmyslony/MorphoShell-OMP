@@ -35,16 +35,16 @@ The forces are also checked, to catch code crashed in which the forces usually
 #include "advanceDynamics.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
 
 
-bool isForceThresholdExceeded(const Node &node, const SettingsStruct &settings) {
+bool isForceThresholdExceeded(const Node &node, const Settings &settings) {
     return node.force.norm() >= 100000.0 * settings.charForceScale;
 }
 
 
-void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, SettingsStruct &settings,
+void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, Settings &settings,
                                CustomOutStreamClass &logStream) {
     logStream.open();
     logStream << " ----------------------------------------" << std::endl;
@@ -60,7 +60,7 @@ void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, Set
 }
 
 
-void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, SettingsStruct &settings,
+void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, Settings &settings,
                      CustomOutStreamClass &logStream) {
 
     for (int i = 0; i < settings.NumNodes; ++i) {
