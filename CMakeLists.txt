@@ -5,8 +5,12 @@ find_package(OpenMP REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_path(LIBCONFIG_DIR libconfig.h)
-find_library(LIBCONFIGPP_LIB config++)
+find_path(LIBCONFIG_DIR libconfig.h REQUIRED)
+find_library(LIBCONFIGPP_LIB libconfig++)
+if(NOT LIBCONFIGPP_LIB)
+    find_library(LIBCONFIGPP_LIB config++)
+endif()
+
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(SOURCE_FILES
