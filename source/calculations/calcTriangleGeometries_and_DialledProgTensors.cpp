@@ -165,7 +165,7 @@ void calcTriangleGeometries_and_DialledProgTensors(
         const std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedMetricSequence,
         const std::vector<std::vector<double> > &programmedTausSequence,
         const std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedSecondFundamentalFormSequence,
-        const SettingsStruct &settings) {
+        const Settings &settings) {
 
     // Will use some functions of dial-in factor, pre-calculated here.
     const double rootCurrDialInFactor = sqrt(currDialInFactor);

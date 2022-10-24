@@ -28,7 +28,7 @@ Header file for calcTriangleAdjacencies_And_Edges.cpp function.
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 #include "../Edge.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
 void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &, std::vector<Triangle> &,
-                                       std::vector<Edge> &, SettingsStruct &);
+                                       std::vector<Edge> &, Settings &);

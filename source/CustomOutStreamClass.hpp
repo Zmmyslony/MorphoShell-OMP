@@ -45,6 +45,9 @@ file to get written to std::cout e.g. for easy viewing in a terminal.
 #include <string>
 
 class CustomOutStreamClass {
+private:
+    std::string fileName;
+    std::ofstream outputFileStream;
 
 public:
 
@@ -53,7 +56,7 @@ public:
 
     /* Set path+name of file which will be printed to (e.g. a log file, in the
     principal use case). */
-    void set_outputFileName(const std::string &);
+    void setOutputFileName(const std::string &outputFilePathAndName);
 
     // Open or create output file corresponding to fileName member data.
     void open();
@@ -62,10 +65,10 @@ public:
     void close();
 
     // Getter function to return a reference to the fileName.
-    [[nodiscard]] const std::string &get_outputFileName() const;
+    [[nodiscard]] const std::string &getOutputFileName() const;
 
     // Getter function to return a reference to the outputFileStream.
-    [[nodiscard]] const std::ofstream &get_outputFileStream() const;
+    [[nodiscard]] const std::ofstream &getOutputFileStream() const;
 
     /* For regular output of variables etc.
     This is defined here since the function is templated so defining it just in
@@ -85,14 +88,6 @@ public:
 
     CustomOutStreamClass &operator<<(streamFunction);
     //////////////////////////////////////////////////////////////////////////
-
-private:
-    // File path+name the file stream will correspond to.
-    std::string fileName;
-
-    // Actual output file stream
-    std::ofstream outputFileStream;
-
 };
 
 #endif

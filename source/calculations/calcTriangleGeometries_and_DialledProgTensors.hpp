@@ -30,7 +30,7 @@ Header file for calcTriangleGeometries_and_DialledProgTensors.cpp function.
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 #include "../SimulationStatus.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
 void calcTriangleGeometries_and_DialledProgTensors(
         const std::vector<Node> &,
@@ -42,4 +42,4 @@ void calcTriangleGeometries_and_DialledProgTensors(
         const std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> &,
         const std::vector<std::vector<double>> &,
         const std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> &,
-        const SettingsStruct &);
+        const Settings &);

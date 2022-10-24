@@ -60,7 +60,7 @@ std::cout << teststring << std::endl;
 #include "readVTKData.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
 
 void readVTKData(
@@ -70,7 +70,7 @@ void readVTKData(
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_InvProgMetrics,
         std::vector<std::vector<double> > &sequenceOf_ProgTaus,
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
-        SettingsStruct &settings,
+        Settings &settings,
         const std::string &init_data_file_name_str,
         std::size_t &progTensorSequenceCounterToStartFrom,
         double &dialInFactorToStartFrom,

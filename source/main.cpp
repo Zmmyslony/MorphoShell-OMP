@@ -82,7 +82,7 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 #include "functions/getRealTime.hpp"
 #include "functions/extract_Just_Filename.hpp"
@@ -195,7 +195,7 @@ by reference to any functions that want to print output to the log file. The
 logStream must be opened before writing to it, and it is good practice to close
 it immediately afterwards.*/
     CustomOutStreamClass logStream;
-    logStream.set_outputFileName(outputDirName + "/log.txt");
+    logStream.setOutputFileName(outputDirName + "/log.txt");
 // Check we can create a log file with the chosen name.
     try {
         logStream.open();
@@ -212,9 +212,9 @@ has already occurred above.*/
     logStream.close();
 
 /*Read in settings file (using libconfig++ library) and put these settings in
-a SettingsStruct that will be passed around between functions when needed.
-See SettingsStruct.hpp for details of settings. */
-    SettingsStruct settings;
+a Settings that will be passed around between functions when needed.
+See Settings.hpp for details of settings. */
+    Settings settings;
     try { readSettingsFile(settings, settings_file_name); }
     catch (const libconfig::FileIOException &fioex) {
         logStream.open();
@@ -310,10 +310,10 @@ to possible bugs in this rather special case.*/
 /* Set the nodes and triangles debugging display functions to print to the
 same output log file as logStream (could send somewhere else in principle).*/
     for (int i = 0; i < settings.NumNodes; ++i) {
-        nodes[i].nodeLogStream.set_outputFileName(logStream.get_outputFileName());
+        nodes[i].nodeLogStream.setOutputFileName(logStream.getOutputFileName());
     }
     for (int i = 0; i < settings.NumTriangles; ++i) {
-        triangles[i].triLogStream.set_outputFileName(logStream.get_outputFileName());
+        triangles[i].triLogStream.setOutputFileName(logStream.getOutputFileName());
     }
 
 
@@ -335,7 +335,7 @@ set up an 'edges' data structure to store further edge information.*/
 /* Set the edges debugging display functions to print to the same output log
 file as logStream (could send somewhere else in principle).*/
     for (int i = 0; i < settings.NumEdges; ++i) {
-        edges[i].edgeLogStream.set_outputFileName(logStream.get_outputFileName());
+        edges[i].edgeLogStream.setOutputFileName(logStream.getOutputFileName());
     }
 
 /* Calculate and print the number of boundary and non-boundary edges.
@@ -1245,6 +1245,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
             /* Calculate sides, areas...etc of each triangle, as well as the current
             dialled-in programmed (inverse) metric and second fundamental form.*/
+
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
             calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, status, currDialInFactor,
                                                           progTensorSequenceCounter, sequenceOf_progMetricInfo,

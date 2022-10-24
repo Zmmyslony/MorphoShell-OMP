@@ -34,7 +34,7 @@ triangular element, such as vertices, area etc.*/
 #include <vector>
 #include <Eigen/Dense>
 #include "Node.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 #include "CustomOutStreamClass.hpp"
 
@@ -178,31 +178,31 @@ public:
     and usefulTermsForSecFFDeriv
     are left with zero size at initialisation. */
     Triangle() {
-        label = -12345;
+        label = INT_MAX;
         isOnBoundary = false;
-        vertexLabels.fill(123456789);
-        nonVertexPatchNodesLabels.fill(987654321);
-        edgeLabels.fill(-4321);
-        initArea = 98765;
-        invCurrArea = 56789;
-        currSides.fill(5678);
-        faceNormal.fill(8765);
-        initOutwardSideNormals.fill(8765432);
-        invInitSidesMat.fill(-5678);
-        dialledInvProgMetric.fill(-6789);
-        detDialledInvProgMetric = -9.87654321;
-        dialledProgTau = 123456;
-        dialledProgSecFF.fill(-5678);
-        defGradient.fill(123456);
-        metric.fill(1234567.89);
-        detInvMetric = -1234.567;
-        invMetric.fill(-1234567.89);
-        halfPK1Stress.fill(-1234567);
-        patchSecDerivs.fill(12345.6789);
-        secFF.fill(-7654);
-        energyDensityDerivWRTSecFF.fill(456789);
-        bendEnergyDensityDerivWRTMetric.fill(-456789);
-        matForPatchSecDerivs.fill(54321);
+        vertexLabels.fill(INT_MAX);
+        nonVertexPatchNodesLabels.fill(INT_MAX);
+        edgeLabels.fill(INT_MAX);
+        initArea = DBL_MAX;
+        invCurrArea = DBL_MAX;
+        currSides.fill(DBL_MAX);
+        faceNormal.fill(DBL_MAX);
+        initOutwardSideNormals.fill(DBL_MAX);
+        invInitSidesMat.fill(DBL_MAX);
+        dialledInvProgMetric.fill(DBL_MAX);
+        detDialledInvProgMetric = DBL_MAX;
+        dialledProgTau = DBL_MAX;
+        dialledProgSecFF.fill(DBL_MAX);
+        defGradient.fill(DBL_MAX);
+        metric.fill(DBL_MAX);
+        detInvMetric = DBL_MAX;
+        invMetric.fill(DBL_MAX);
+        halfPK1Stress.fill(DBL_MAX);
+        patchSecDerivs.fill(DBL_MAX);
+        secFF.fill(DBL_MAX);
+        energyDensityDerivWRTSecFF.fill(DBL_MAX);
+        bendEnergyDensityDerivWRTMetric.fill(DBL_MAX);
+        matForPatchSecDerivs.fill(DBL_MAX);
     }
 
     // Declare other member functions.

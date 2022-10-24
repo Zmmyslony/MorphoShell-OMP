@@ -40,7 +40,7 @@ approximate smallest element size, to ensure the right kind of scale.*/
 #include "perturbInitialPositionsWithRandomNoise.hpp"
 #include "../Node.hpp"
 
-void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, const SettingsStruct &settings) {
+void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, const Settings &settings) {
 
     /*Set random number generator . A simple and common one is chosen here:
     there is little point worrying about obtaining extremely 'good' random

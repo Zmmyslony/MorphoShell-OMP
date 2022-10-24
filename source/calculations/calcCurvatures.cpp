@@ -50,7 +50,7 @@ void calcCurvatures(
         std::vector<double> &angleDeficits,
         std::vector<double> &interiorNodeAngleDeficits,
         std::vector<double> &boundaryNodeAngleDeficits,
-        const SettingsStruct &settings) {
+        const Settings &settings) {
 
 
     // Objects used to calculate angle deficits.

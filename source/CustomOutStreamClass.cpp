@@ -34,15 +34,13 @@ See CustomOutStreamClass.hpp for details of the class.
 
 /* Set which file will be printed to (the log file, in the principal use
 case). */
-void CustomOutStreamClass::set_outputFileName(const std::string &outputFilePathAndName) {
-
+void CustomOutStreamClass::setOutputFileName(const std::string &outputFilePathAndName) {
     fileName = outputFilePathAndName;
 }
 
 
 // Open or create log file corresponding to fileName member data.
 void CustomOutStreamClass::open() {
-
     // Open file in append mode.
     outputFileStream.open(fileName, std::ofstream::app);
 
@@ -57,12 +55,12 @@ void CustomOutStreamClass::close() {
 }
 
 // Getter function to return a reference to the fileName.
-const std::string &CustomOutStreamClass::get_outputFileName() const {
+const std::string &CustomOutStreamClass::getOutputFileName() const {
     return fileName;
 }
 
 // Getter function to return a reference to the outputFileStream.
-const std::ofstream &CustomOutStreamClass::get_outputFileStream() const {
+const std::ofstream &CustomOutStreamClass::getOutputFileStream() const {
     return outputFileStream;
 }
 

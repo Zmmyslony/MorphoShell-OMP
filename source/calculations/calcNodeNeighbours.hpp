@@ -27,6 +27,6 @@ Header file for calcNodeNeighbours.cpp function
 
 #include "../Node.hpp"
 #include "../Edge.hpp"
-#include "../SettingsStruct.hpp"
+#include "../Settings.hpp"
 
-void calcNodeNeighbours(std::vector<Node> &, const std::vector<Edge> &, const SettingsStruct &);
+void calcNodeNeighbours(std::vector<Node> &, const std::vector<Edge> &, const Settings &);

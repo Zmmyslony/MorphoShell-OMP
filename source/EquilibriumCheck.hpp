@@ -28,8 +28,8 @@ Header file for equilibriumCheck.cpp function.
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "SimulationStatus.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
 
-SimulationStatus equilibriumCheck(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const SettingsStruct &settings,
+SimulationStatus equilibriumCheck(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const Settings &settings,
                                   CustomOutStreamClass &logStream);

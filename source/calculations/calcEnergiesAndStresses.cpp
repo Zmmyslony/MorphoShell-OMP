@@ -56,7 +56,7 @@ void calcEnergiesAndStresses(
         std::vector<double> &strainMeasures,
         std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
         std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
-        const SettingsStruct &settings) {
+        const Settings &settings) {
 
 //     Energy prefactor that is the same for each triangle.
     double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;

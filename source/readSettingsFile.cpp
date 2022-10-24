@@ -21,8 +21,8 @@ along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////
 
 Function to read in settings file (using libconfig++ library) and put these
-these settings in a SettingsStruct which is then returned.
-See SettingsStruct.hpp for details of settings.
+these settings in a Settings which is then returned.
+See Settings.hpp for details of settings.
 
 Libconfig++ is distributed under the Lesser GPL license (2.1 or later), and copyright is held by Mark A Lindner (at least in large part).
 */
@@ -32,31 +32,31 @@ Libconfig++ is distributed under the Lesser GPL license (2.1 or later), and copy
 #include <vector>
 
 #include "readSettingsFile.hpp"
-#include "SettingsStruct.hpp"
+#include "Settings.hpp"
 
 
-// TODO  write a method for SettingsStruct which returns the value of parameter from its string name
+// TODO  write a method for Settings which returns the value of parameter from its string name
 //       this will allow for clearing up the code and removing a lot of lines
 
-bool tryFillingDoubleParameter(SettingsStruct &settings, const libconfig::Config &config,
+bool tryFillingDoubleParameter(Settings &settings, const libconfig::Config &config,
                                const std::string &valueName) {
     return config.lookupValue(valueName, *settings.getParameterAddressDouble(valueName));
 }
 
-bool tryFillingBoolParameter(SettingsStruct &settings, const libconfig::Config &config,
+bool tryFillingBoolParameter(Settings &settings, const libconfig::Config &config,
                              const std::string &valueName) {
     return config.lookupValue(valueName, *settings.getParameterAddressBool(valueName));
 }
 
-bool tryFillingIntParameter(SettingsStruct &settings, const libconfig::Config &config,
+bool tryFillingIntParameter(Settings &settings, const libconfig::Config &config,
                             const std::string &valueName) {
     return config.lookupValue(valueName, *settings.getParameterAddressInt(valueName));
 }
 
 
-void checkIfParameterIsDefinedCorrectlyGeneral(SettingsStruct &settings, const libconfig::Config &config,
+void checkIfParameterIsDefinedCorrectlyGeneral(Settings &settings, const libconfig::Config &config,
                                                const std::string &valueName, const std::string &suffix,
-                                               bool (*fillingFunction)(SettingsStruct &, const libconfig::Config &,
+                                               bool (*fillingFunction)(Settings &, const libconfig::Config &,
                                                                        const std::string &)) {
     if (!fillingFunction(settings, config, valueName)) {
         std::string errorMessage =
@@ -65,26 +65,26 @@ void checkIfParameterIsDefinedCorrectlyGeneral(SettingsStruct &settings, const l
     }
 }
 
-void checkIfDoubleParameterIsDefinedCorrectly(SettingsStruct &settings, const libconfig::Config &config,
+void checkIfDoubleParameterIsDefinedCorrectly(Settings &settings, const libconfig::Config &config,
                                               const std::string &valueName) {
     std::string suffix = "\n Remember that floating point numbers must have a decimal point in the settings file.";
     checkIfParameterIsDefinedCorrectlyGeneral(settings, config, valueName, suffix, tryFillingDoubleParameter);
 }
 
 
-void checkIfIntParameterIsDefinedCorrectly(SettingsStruct &settings, const libconfig::Config &config,
+void checkIfIntParameterIsDefinedCorrectly(Settings &settings, const libconfig::Config &config,
                                            const std::string &valueName) {
     checkIfParameterIsDefinedCorrectlyGeneral(settings, config, valueName, "", tryFillingIntParameter);
 }
 
 
-void checkIfBoolParameterIsDefinedCorrectly(SettingsStruct &settings, const libconfig::Config &config,
+void checkIfBoolParameterIsDefinedCorrectly(Settings &settings, const libconfig::Config &config,
                                             const std::string &valueName) {
     checkIfParameterIsDefinedCorrectlyGeneral(settings, config, valueName, "", tryFillingBoolParameter);
 }
 
 
-void readInAllParametersWithAnIntegrityCheck(SettingsStruct &settings, const libconfig::Config &config) {
+void readInAllParametersWithAnIntegrityCheck(Settings &settings, const libconfig::Config &config) {
     std::vector<std::string>
             doubleConfigurationParameters = {"slideStiffnessPrefactor", "slideSpeedPrefactor", "slideFrictionCoeff",
                                              "ThicknessesAboveLowestNodeToClampUpTo", "pSpeedPrefactor",
@@ -130,7 +130,7 @@ void readInAllParametersWithAnIntegrityCheck(SettingsStruct &settings, const lib
 }
 
 
-void readSettingsFile(SettingsStruct &settings, const char *settings_file_name) {
+void readSettingsFile(Settings &settings, const char *settings_file_name) {
     libconfig::Config config;
     config.readFile(settings_file_name);
     readInAllParametersWithAnIntegrityCheck(settings, config);

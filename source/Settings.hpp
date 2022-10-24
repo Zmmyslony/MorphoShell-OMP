@@ -27,12 +27,12 @@ by initial data). It should always be passed by reference, and almost always
 const (though occasionally one could want to change 'settings' within a function
 - e.g. time step may change.*/
 
-#ifndef _SETTINGSSTRUCT_TAG_
-#define _SETTINGSSTRUCT_TAG_
+#ifndef _SETTINGS_TAG_
+#define _SETTINGS_TAG_
 
 #include <string>
 
-struct SettingsStruct {
+struct Settings {
 
     // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
     // Z-coordinates of bottom and top slides.

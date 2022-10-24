@@ -40,7 +40,7 @@ having it as a vertex), and store these as node member data.*/
 #include "../Triangle.hpp"
 
 void calcTrianglesIncidentOnNodes(std::vector<Node> &nodes, const std::vector<Triangle> &triangles,
-                                  const SettingsStruct &settings) {
+                                  const Settings &settings) {
 
     /* Temporarily, we will store the incident triangle labels for nodes in a
     std::vector of std::vectors. At the end, the same information will then be
