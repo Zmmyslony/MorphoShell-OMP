@@ -244,18 +244,18 @@ outer vector holds a vector of (director angle, lambda, nu) vectors, one vector
 for each triangle. The different sets held in the outer vector are to allow a
 sequence of programmed tensors to be activated in turn, one after the other. For
 example a bend first in one direction, with a bend in a second direction only
-added afterwards. Ditto for sequenceOf_ProgSecFFs. Between each set of programmed
+added afterwards. Ditto for programmed_second_fundamental_forms. Between each set of programmed
 tensors the full dialling in procedure occurs. Unless an ansatz file is used,
 the first round of dialling in will always start from the Identity and Zero for
 the programmed metric and secFF respectively. For most uses of this code, only
 a single set of programmed tensors will be supplied - multiple sets is a fairly
 advanced case.*/
-    std::vector <Node> nodes;
-    std::vector <Triangle> triangles;
-    std::vector <std::vector<Eigen::Vector3d>> sequenceOf_progMetricInfo;
-    std::vector <std::vector<Eigen::Matrix<double, 2, 2> >> sequenceOf_InvProgMetrics;
-    std::vector <std::vector<double>> sequenceOf_ProgTaus;
-    std::vector <std::vector<Eigen::Matrix<double, 2, 2> >> sequenceOf_ProgSecFFs;
+    std::vector<Node> nodes;
+    std::vector<Triangle> triangles;
+    std::vector<std::vector<Eigen::Vector3d>> programmed_metric_infos;
+    std::vector<std::vector<Eigen::Matrix<double, 2, 2> >> inverted_programmed_metrics;
+    std::vector<std::vector<double>> programmed_taus;
+    std::vector<std::vector<Eigen::Matrix<double, 2, 2> >> programmed_second_fundamental_forms;
 
 
 /* This variable keeps track of where in the sequence of programmed tensors the
@@ -266,7 +266,7 @@ further on in the sequence of programmed tensors. */
 // This is the equivalent variable for currDialInFactor.
     double dialInFactorToStartFrom = 0.0;
 // Create container to store node ansatz positions, if given.
-    std::vector <Eigen::Vector3d> nodeAnsatzPositions;
+    std::vector<Eigen::Vector3d> nodeAnsatzPositions;
 
     logStream.open();
     logStream << "Now attempting to read data files. An error here likely \n"
@@ -276,8 +276,9 @@ further on in the sequence of programmed tensors. */
                  "Remember the input files must have exactly the correct format." << std::endl;
     logStream.close();
     try {
-        readVTKData(nodes, triangles, sequenceOf_progMetricInfo, sequenceOf_InvProgMetrics, sequenceOf_ProgTaus,
-                    sequenceOf_ProgSecFFs, settings, initial_data_file_name_str, progTensorSequenceCounterToStartFrom,
+        readVTKData(nodes, triangles, programmed_metric_infos, inverted_programmed_metrics, programmed_taus,
+                    programmed_second_fundamental_forms, settings, initial_data_file_name_str,
+                    progTensorSequenceCounterToStartFrom,
                     dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_data_file_name_str, logStream);
     }
     catch (const std::out_of_range &out_of_bounds_error) {
@@ -325,7 +326,7 @@ same output log file as logStream (could send somewhere else in principle).*/
 
 /*Now calculate triangle edge-sharing adjacencies (triangle member data), and
 set up an 'edges' data structure to store further edge information.*/
-    std::vector <Edge> edges;
+    std::vector<Edge> edges;
     try { calcTriangleAdjacencies_And_Edges(nodes, triangles, edges, settings); }
     catch (const std::runtime_error &mesh_adjacencies_or_edges_error) {
         logStream << mesh_adjacencies_or_edges_error.what() << std::endl;
@@ -487,8 +488,8 @@ recalculating the initial normals, areas etc. Note, a more complex procedure
 will be required for non-planar initial geometries. The magic numbers in the
 argument list are just debugging values that should not matter here.*/
     calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, -12345, 98765,
-                                                  sequenceOf_progMetricInfo, sequenceOf_InvProgMetrics,
-                                                  sequenceOf_ProgTaus, sequenceOf_ProgSecFFs, settings);
+                                                  programmed_metric_infos, inverted_programmed_metrics,
+                                                  programmed_taus, programmed_second_fundamental_forms, settings);
     Eigen::Vector3d tempZAxisVec;
     tempZAxisVec << 0.0, 0.0, 1.0;
     for (int i = 0; i < settings.NumTriangles; ++i) {
@@ -500,8 +501,8 @@ argument list are just debugging values that should not matter here.*/
     }
     std::cout << "CHECK THIS - should shuffle normals before patch matrix calc I think?" << std::endl;
     calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, -12345, 98765,
-                                                  sequenceOf_progMetricInfo, sequenceOf_InvProgMetrics,
-                                                  sequenceOf_ProgTaus, sequenceOf_ProgSecFFs, settings);
+                                                  programmed_metric_infos, inverted_programmed_metrics,
+                                                  programmed_taus, programmed_second_fundamental_forms, settings);
 
 /* Set remaining initial conditions e.g. velocity, store initial triangle
 side components and fractional edge lengths, and calculate node masses.
@@ -509,8 +510,9 @@ Also set the first set of programmed tensors to be the trivial ones for the
 plane, and set up the triangles to have their tensors dialled in from these to
 begin with. */
     try {
-        setRemainingInitCond_and_NodeMasses(nodes, triangles, edges, sequenceOf_progMetricInfo,
-                                            sequenceOf_InvProgMetrics, sequenceOf_ProgTaus, sequenceOf_ProgSecFFs,
+        setRemainingInitCond_and_NodeMasses(nodes, triangles, edges, programmed_metric_infos,
+                                            inverted_programmed_metrics, programmed_taus,
+                                            programmed_second_fundamental_forms,
                                             settings);
     }
     catch (const std::runtime_error &setInitCondAndInitSidesEtc_error) {
@@ -518,170 +520,53 @@ begin with. */
         return -1;
     }
 
-/* First find the approximate smallest linear size of mesh element, based on
-smallest altitude of each triangle. Find also the smallest value of
-this linear size / sqrt(progTau), which is what really matters for the stretching
-time step. If progTau varied a a lot over the sequenceOf_ProgTaus, you might
-want to be less wasteful and recalculate the time step each time you move on to
-the next set of progTaus in the sequence, because the time step then might be
-much bigger for other sets in the sequence. If you wanted to get even fancier,
-you could change the time step as prog_Tau is dialled in between two sets in the
-sequence.*/
-    settings.ApproxMinInitElemSize = 2.0 * triangles[0].initArea / triangles[0].currSides.col(0).norm();
-    double smallestSizeOverRootTau = settings.ApproxMinInitElemSize / sequenceOf_ProgTaus[0][0];
-    int smallestTri = 0;
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+//    settings.SetupSmallestElements(logStream, triangles, programmed_taus);
+
+    /* First find the approximate smallest linear size of mesh element, based on
+    smallest altitude of each triangle. Find also the smallest value of
+    this linear size / sqrt(progTau), which is what really matters for the stretching
+    time step. If progTau varied a a lot over the programmed_taus, you might
+    want to be less wasteful and recalculate the time step each time you move on to
+    the next set of progTaus in the sequence, because the time step then might be
+    much bigger for other sets in the sequence. If you wanted to get even fancier,
+    you could change the time step as prog_Tau is dialled in between two sets in the
+    sequence.*/
+    settings.ApproxMinInitElemSize = DBL_MAX;
+    settings.smallestSizeOverRootTau = DBL_MAX;
+//    int smallestTri = 0;
+    for (int i = 0; i < triangles.size(); ++i) {
 
         // This variable will end up holding the smallest altitude for *this* tri.
         double smallestAltitude =
-                2.0 * triangles[i].initArea / (triangles[i].currSides.col(0) - triangles[i].currSides.col(1)).norm();
+                2 * triangles[i].initArea / (triangles[i].currSides.col(0) - triangles[i].currSides.col(1)).norm();
 
         for (int s = 0; s < 2; ++s) {
-            if (smallestAltitude > 2.0 * triangles[i].initArea / triangles[i].currSides.col(s).norm()) {
-                smallestAltitude = 2.0 * triangles[i].initArea / triangles[i].currSides.col(s).norm();
+            if (smallestAltitude > 2 * triangles[i].initArea / triangles[i].currSides.col(s).norm()) {
+                smallestAltitude = 2 * triangles[i].initArea / triangles[i].currSides.col(s).norm();
             }
         }
 
         if (settings.ApproxMinInitElemSize > smallestAltitude) {
             settings.ApproxMinInitElemSize = smallestAltitude;
-            smallestTri = i;
         }
 
-        for (auto &sequenceOf_ProgTau: sequenceOf_ProgTaus) {
-            if (smallestSizeOverRootTau > smallestAltitude / sqrt(sequenceOf_ProgTau[i])) {
-                smallestSizeOverRootTau = smallestAltitude / sqrt(sequenceOf_ProgTau[i]);
+        for (auto &sequenceOf_ProgTau: programmed_taus) {
+            if (settings.smallestSizeOverRootTau > smallestAltitude / sqrt(sequenceOf_ProgTau[i])) {
+                settings.smallestSizeOverRootTau = smallestAltitude / sqrt(sequenceOf_ProgTau[i]);
             }
         }
     }
     logStream.open();
     logStream << "Sheet thickness = " << settings.SheetThickness << std::endl;
-    logStream << "Approx smallest element linear size = " << settings.ApproxMinInitElemSize << " (triangle "
-              << smallestTri << ")" << std::endl;
+    logStream << "Approx smallest element linear size = " << settings.ApproxMinInitElemSize << std::endl;
     logStream.close();
-
-
-/* Calculate 'dialling in' time and damping coefficient based on toy model
-stretching and bending analyses. The 'Long times' are approximate characteristic
-times for the longest-wavelength modes in the system for stretching and bending.
-The damping coefficient is chosen to approximately critically damp the longest-
-wavelength bending mode.
-*/
-    const double PI = 3.14159265358979323846;
-
-    logStream.open();
-    double minWavevector = 2.0 * PI / settings.SampleCharLength;
-    const double dampingScale =
-            2.0 * sqrt(settings.InitDensity * settings.ShearModulus / (6.0 * (1.0 - settings.PoissonRatio))) *
-            settings.SheetThickness * minWavevector * minWavevector;
-    settings.NumDampFactor = settings.DampingPrefactor1 * dampingScale;
-    logStream << "Numerical Damping Coefficient = " << settings.NumDampFactor << std::endl;
-
-    double stretchingLongTime = sqrt(settings.InitDensity / settings.ShearModulus) / minWavevector;
-    double bendingLongTime = sqrt(settings.InitDensity * 6.0 * (1.0 - settings.PoissonRatio) / settings.ShearModulus) /
-                             (settings.SheetThickness * minWavevector * minWavevector);
-    settings.BendingLongTime = bendingLongTime;
-
-    if (stretchingLongTime > bendingLongTime) {
-        settings.DialInStepTime = settings.DialInStepTimePrefactor * stretchingLongTime;
-        logStream << "Dial-in step time = " << settings.DialInStepTime
-                  << ", set based on stretching rather than bending." << std::endl;
-    } else {
-        settings.DialInStepTime = settings.DialInStepTimePrefactor * bendingLongTime;
-        logStream << "Dial-in step time = " << settings.DialInStepTime
-                  << ", set based on bending rather than stretching." << std::endl;
-    }
-    logStream.close();
+    settings.SetupDialIn(logStream);
 
 /* Set settings.TimeBetweenEquilChecks based on the tunable dimensionless value
 in the settings file, which relates this time to settings.DialInStepTime.*/
     settings.TimeBetweenEquilChecks = settings.TimeBetweenEquilChecksPrefactor * settings.DialInStepTime;
-
-
-/* Calculate time step based on toy model stretching and bending analyses (take
- whichever gives shortest characteristic time), and print. */
-    double stretchingTimeStep;
-    double bendingTimeStep;
-    if (!settings.isGradientDescentDynamicsEnabled) {
-
-        stretchingTimeStep = settings.TimeStepPrefactor * sqrt(settings.InitDensity / settings.ShearModulus) *
-                             smallestSizeOverRootTau;
-        bendingTimeStep = settings.TimeStepPrefactor *
-                          sqrt(settings.InitDensity * 6.0 * (1.0 - settings.PoissonRatio) / settings.ShearModulus) *
-                          (settings.ApproxMinInitElemSize / settings.SheetThickness) * settings.ApproxMinInitElemSize /
-                          (2.0 * PI);
-    } else {
-        /* Use second damping factor, since we should only be using gradient descent
-        for already dialled-in states. Note the damping factor cancels out in the
-        dynamics and has no effect - but only if you are consistent with which one
-        you use!*/
-        double numDampFac2 = settings.DampingPrefactor2 * dampingScale;
-        stretchingTimeStep =
-                settings.TimeStepPrefactor * (numDampFac2 / settings.ShearModulus) * smallestSizeOverRootTau *
-                smallestSizeOverRootTau / (2.0 * PI * 2.0 * PI);
-        bendingTimeStep = settings.TimeStepPrefactor * (6.0 * (1.0 - settings.PoissonRatio) * numDampFac2 /
-                                                        (settings.SheetThickness * settings.SheetThickness *
-                                                         settings.ShearModulus))
-                          * smallestSizeOverRootTau * smallestSizeOverRootTau * smallestSizeOverRootTau *
-                          smallestSizeOverRootTau / (2.0 * PI * 2.0 * PI * 2.0 * PI * 2.0 * PI);
-
-        logStream.open();
-        logStream
-                << "\nUSING GRADIENT DESCENT DYNAMICS.\nBE WARNED - this feature is only intended for use on nearly converged states supplied as fully dialled-in ansatzes."
-                << "\nThe number of timesteps required for a full simulation with gradient descent is expected to be huge (~10^8).\nAs such, the gradient descent long bending timescale "
-                << "is not even used for DialInStepTime,\nas you really shouldn't be doing any dialling in!\nDialInStepTime is instead set such that usual non-gradient-descent settings"
-                << " should still give reasonable printout and and equilibrium check frequencies." << std::endl;
-        logStream.close();
-    }
-
-    logStream.open();
-    logStream << "Short stretching and bending timescales: " << stretchingTimeStep << ", " << bendingTimeStep
-              << std::endl;
-
-    if (stretchingTimeStep < bendingTimeStep) {
-        settings.TimeStep = stretchingTimeStep;
-        logStream << "Time step = " << settings.TimeStep << ", set based on stretching rather than bending."
-                  << std::endl;
-    } else {
-        settings.TimeStep = bendingTimeStep;
-        logStream << "Time step = " << settings.TimeStep << ", set based on bending rather than stretching."
-                  << std::endl;
-    }
-    logStream.close();
-
-/* Fix up DialInStepTime if gradient descent is being used, just to give
-reasonable printout and equilibrium check frequencies without extreme settings.*/
-    if (settings.isGradientDescentDynamicsEnabled) {
-        settings.DialInStepTime = 1000.0 * settings.TimeStep;
-        settings.TimeBetweenEquilChecks = settings.TimeBetweenEquilChecksPrefactor * settings.DialInStepTime;
-    }
-
-
-/* Calculate print frequency based on DialInStepTime / TimeStep, tuned by a
-dimensionless parameter in the setting file and rounded to the nearest integer.
-This rounding should work fine as long as the PrintFrequency isn't ridiculously
-huge. To avoid this we require that PrintFrequency is not in [0.0,1.0). If
-PrintFrequency is very large (more likely), so that InversePrintRate rounds to 0,
-we set InversePrintRate to 1 to get a printout after every time step. This can
-be a useful thing to do sometimes. If PrintFrequency is set to a negative value
-we instead set InversePrintRate to -1, which means no output files are regularly
-written at all.
-*/
-    if (settings.PrintFrequency < 0.0) {
-        settings.InversePrintRate = -1;
-    } else {
-        if (settings.PrintFrequency < 1.0) {
-            logStream
-                    << "Error: To avoid potential divide-by-zero problems we do NOT allow settings.PrintFrequency to lie in [0.0, 1.0). This is overkill somewhat, and could be relaxed if need be."
-                    << std::endl;
-            return -1;
-        } else {
-            settings.InversePrintRate = lround(settings.DialInStepTime / (settings.TimeStep * settings.PrintFrequency));
-            if (settings.InversePrintRate == 0) {
-                settings.InversePrintRate = 1;
-            }
-        }
-    }
-
+    settings.SetupStepTime(logStream);
+    settings.SetupPrintFrequency(logStream);
 
 
 // Print total load force.
@@ -730,15 +615,15 @@ the settings.TimeBetweenEquilChecks. The dialling in process occurs
 between each pair of the sequence of programmed tensors, if more than one is
 given in the input file.
 */
-    double timeSinceLastEquilCheck = -98765.0; // Reset to zero every time equil is checked, or every time a new DialInFactor value is reached.
-    double timeSinceCurrDiallingInPhaseStarted = -7654321.0; // Reset to zero every time equil is reached and a new `dialling in' phase starts.
+    auto timeSinceLastEquilCheck = DBL_MAX; // Reset to zero every time equil is checked, or every time a new DialInFactor value is reached.
+    auto timeSinceCurrDiallingInPhaseStarted = DBL_MAX; // Reset to zero every time equil is reached and a new `dialling in' phase starts.
     SimulationStatus status; // Indicates whether the simulation is currently in a 'dialling in' phase, or is not dialling and is instead waiting for equilibrium, or whether equilibrium has been reached but the next dialling phase has not yet begun.
-    std::size_t DialInFactorCounter = 123456; // Keeps track of which DialInFactor value in DialInFactorValuesToHoldAt was last dialled *from* (not held at, which is the next value along in the list)
-    double currDialInFactor = -54321.0; // Keeps track of current value
+    std::size_t DialInFactorCounter = SIZE_MAX; // Keeps track of which DialInFactor value in DialInFactorValuesToHoldAt was last dialled *from* (not held at, which is the next value along in the list)
+    auto currDialInFactor = DBL_MAX; // Keeps track of current value
 
     std::vector<double> DialInFactorValuesToHoldAt;
     double tempDialInFactor = 0.0;
-    if ((settings.DialInResolution > 0) && settings.DialInStepTime >= 0) {
+    if (settings.DialInResolution > 0 && settings.DialInStepTime >= 0) {
         while (tempDialInFactor < 1.0) {
             DialInFactorValuesToHoldAt.push_back(tempDialInFactor);
             tempDialInFactor += settings.DialInResolution;
@@ -757,26 +642,26 @@ given in the input file.
 by reference to functions calculating the Gauss and mean curvatures, and
 stretching and bending energies and energy densities. */
     std::vector<double> gaussCurvatures(settings.NumTriangles,
-                                        -98765.4321); //Recognisable initialisation for debugging.
-    std::vector<double> meanCurvatures(settings.NumTriangles, -98765.4321);
-    std::vector<double> stretchEnergies(settings.NumTriangles, -98765.4321);
-    std::vector<double> bendEnergies(settings.NumTriangles, -98765.4321);
-    std::vector<double> stretchEnergyDensities(settings.NumTriangles, -98765.4321);
-    std::vector<double> bendEnergyDensities(settings.NumTriangles, -98765.4321);
-    std::vector<double> kineticEnergies(settings.NumNodes, -98765.4321);
-    std::vector<double> strainMeasures(settings.NumTriangles, -98765.4321);
-    std::vector <Eigen::Vector2d> cauchyStressEigenvals(settings.NumTriangles);
-    std::vector <Eigen::Matrix<double, 3, 2>> cauchyStressEigenvecs(settings.NumTriangles);
+                                        DBL_MAX); //Recognisable initialisation for debugging.
+    std::vector<double> meanCurvatures(settings.NumTriangles, DBL_MAX);
+    std::vector<double> stretchEnergies(settings.NumTriangles, DBL_MAX);
+    std::vector<double> bendEnergies(settings.NumTriangles, DBL_MAX);
+    std::vector<double> stretchEnergyDensities(settings.NumTriangles, DBL_MAX);
+    std::vector<double> bendEnergyDensities(settings.NumTriangles, DBL_MAX);
+    std::vector<double> kineticEnergies(settings.NumNodes, DBL_MAX);
+    std::vector<double> strainMeasures(settings.NumTriangles, DBL_MAX);
+    std::vector<Eigen::Vector2d> cauchyStressEigenvals(settings.NumTriangles);
+    std::vector<Eigen::Matrix<double, 3, 2>> cauchyStressEigenvecs(settings.NumTriangles);
 
 
 /* Create further std::vectors to store angle deficits if specified in settings
 file.*/
-    std::vector<double> angleDeficits(settings.NumNodes, -98765.4321);
-//std::vector<double> interiorNodeAngleDeficits(settings.NumNodes - settings.numBoundaryNodes, -98765.4321);
-//std::vector<double> boundaryNodeAngleDeficits(settings.numBoundaryNodes, -98765.4321);
+    std::vector<double> angleDeficits(settings.NumNodes, DBL_MAX);
+//std::vector<double> interiorNodeAngleDeficits(settings.NumNodes - settings.numBoundaryNodes, DBL_MAX);
+//std::vector<double> boundaryNodeAngleDeficits(settings.numBoundaryNodes, DBL_MAX);
     std::cout << "CHECK THIS" << std::endl;
-    std::vector<double> interiorNodeAngleDeficits(settings.NumNodes, -98765.4321);
-    std::vector<double> boundaryNodeAngleDeficits(settings.NumNodes, -98765.4321);
+    std::vector<double> interiorNodeAngleDeficits(settings.NumNodes, DBL_MAX);
+    std::vector<double> boundaryNodeAngleDeficits(settings.NumNodes, DBL_MAX);
 
 /*
 std::cout<< "STORING NODE REF POSITIONS TO HELP MAKE EXACT CONE." << std::endl;
@@ -807,7 +692,7 @@ format and precision for e.g. energy printouts. */
 equilibrium between each pair in the sequence. This loop is redundant in most use
 cases for this code, where only a single set of programmed tensors is supplied.*/
     for (std::size_t progTensorSequenceCounter = progTensorSequenceCounterToStartFrom;
-         progTensorSequenceCounter <= sequenceOf_progMetricInfo.size() - 2; ++progTensorSequenceCounter) {
+         progTensorSequenceCounter <= programmed_metric_infos.size() - 2; ++progTensorSequenceCounter) {
 
         /* A third input file specifying an ansatz for the node positions may have
         been read in if it was given as a command line argument. This could for
@@ -870,9 +755,9 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 There may be other uses for this feature too.*/
                 if (settings.ForInitialPortionOfProgTensorsSequence_DialProgTauButJumpProgMetricAndProgSecFF) {
                     for (int i = 0; i < settings.NumTriangles; ++i) {
-                        sequenceOf_ProgSecFFs[progTensorSequenceCounterToStartFrom][i] = sequenceOf_ProgSecFFs[
+                        programmed_second_fundamental_forms[progTensorSequenceCounterToStartFrom][i] = programmed_second_fundamental_forms[
                                 progTensorSequenceCounterToStartFrom + 1][i];
-                        sequenceOf_progMetricInfo[progTensorSequenceCounterToStartFrom][i] = sequenceOf_progMetricInfo[
+                        programmed_metric_infos[progTensorSequenceCounterToStartFrom][i] = programmed_metric_infos[
                                 progTensorSequenceCounterToStartFrom + 1][i];
                     }
                 }
@@ -905,9 +790,9 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
                 // Calculate all necessary geometry for the ansatz state.
                 calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, currDialInFactor,
-                                                              progTensorSequenceCounter, sequenceOf_progMetricInfo,
-                                                              sequenceOf_InvProgMetrics, sequenceOf_ProgTaus,
-                                                              sequenceOf_ProgSecFFs, settings);
+                                                              progTensorSequenceCounter, programmed_metric_infos,
+                                                              inverted_programmed_metrics, programmed_taus,
+                                                              programmed_second_fundamental_forms, settings);
                 calcSecFFsAndRelatedQuantities(triangles, settings);
 
 
@@ -915,7 +800,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > tempMetricDecomp;
 
 
-                /* Alter sequenceOf_InvProgMetrics[progTensorSequenceCounterToStartFrom] and similar to change where
+                /* Alter inverted_programmed_metrics[progTensorSequenceCounterToStartFrom] and similar to change where
                 the programmed quantities are dialling from.*/
 
                 for (int i = 0; i < settings.NumTriangles; ++i) {
@@ -929,10 +814,10 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                                     "At least one triangle had a non-invertible metric in the ansatz state. \n"
                                     "This should not occur in a reasonable mesh. Aborting.");
                         } else {
-                            sequenceOf_InvProgMetrics[progTensorSequenceCounterToStartFrom][i] = (
+                            inverted_programmed_metrics[progTensorSequenceCounterToStartFrom][i] = (
                                     triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
                             if (settings.isDialingDisabled) {
-                                sequenceOf_InvProgMetrics[progTensorSequenceCounterToStartFrom + 1][i] = (
+                                inverted_programmed_metrics[progTensorSequenceCounterToStartFrom + 1][i] = (
                                         triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
                             }
                         }
@@ -945,13 +830,14 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     }
 
                     // Other quantities require no inverse, so are easier.
-                    sequenceOf_ProgTaus[progTensorSequenceCounterToStartFrom][i] = sequenceOf_ProgTaus[
+                    programmed_taus[progTensorSequenceCounterToStartFrom][i] = programmed_taus[
                             progTensorSequenceCounterToStartFrom + 1][i];
-                    sequenceOf_ProgSecFFs[progTensorSequenceCounterToStartFrom][i] = triangles[i].secFF;
+                    programmed_second_fundamental_forms[progTensorSequenceCounterToStartFrom][i] = triangles[i].secFF;
                     if (settings.isDialingDisabled) {
-                        sequenceOf_ProgTaus[progTensorSequenceCounterToStartFrom + 1][i] = sequenceOf_ProgTaus[
+                        programmed_taus[progTensorSequenceCounterToStartFrom + 1][i] = programmed_taus[
                                 progTensorSequenceCounterToStartFrom + 1][i];
-                        sequenceOf_ProgSecFFs[progTensorSequenceCounterToStartFrom + 1][i] = triangles[i].secFF;
+                        programmed_second_fundamental_forms[progTensorSequenceCounterToStartFrom +
+                                                            1][i] = triangles[i].secFF;
                     }
                 }
             }
@@ -1009,12 +895,12 @@ cases for this code, where only a single set of programmed tensors is supplied.*
         logStream.open();
         logStream << "\nCREATING VECTOR TO STORE UNSTRESSED CONE NODE POSITIONS.\n" << std::endl;
         logStream.close();
-        std::vector <Eigen::Vector3d> nodeUnstressedConePosits(settings.NumNodes);
+        std::vector<Eigen::Vector3d> nodeUnstressedConePosits(settings.NumNodes);
         double s1 = 12345678.9;
         //double sTest = 98765432.1;
 
-        std::vector < std::vector < std::pair <
-        int, int>>> correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(
+        std::vector<std::vector<std::pair<
+                int, int>>> correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(
                 triangles, nodes);
 
         while (DialInFactorCounter <= DialInFactorValuesToHoldAt.size() - 2) {
@@ -1136,12 +1022,12 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
             if (!settings.isControlledForceEnabled) {
                 settings.upperSlideDisplacement =
-                        time * settings.slideSpeedPrefactor * settings.SampleCharLength / bendingLongTime;
+                        time * settings.slideSpeedPrefactor * settings.SampleCharLength / settings.bending_long_time;
             } else { // settings.isControlledForceEnabled == true instead
-                //settings.upperSlideWeight = (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) * (time * settings.slideSpeedPrefactor / bendingLongTime);
+                //settings.upperSlideWeight = (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) * (time * settings.slideSpeedPrefactor / bending_long_time);
                 settings.slideDampingParam =
                         0.4 * settings.ShearModulus * settings.SheetThickness * settings.SheetThickness /
-                        (settings.slideSpeedPrefactor * settings.SampleCharLength / bendingLongTime);
+                        (settings.slideSpeedPrefactor * settings.SampleCharLength / settings.bending_long_time);
                 if (fabs(settings.upperTotSlideForce + settings.upperSlideWeight) /
                     (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) <
                     settings.totalSlideForceToMuTSqRatioEquilThreshold
@@ -1150,7 +1036,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                         if (equilibriumCheck(nodes, triangles, settings, logStream) == equilibriumReached) {
                             settings.slideJustReachedEquil = 1;
                             settings.upperSlideWeight +=
-                                    settings.slideWeightDialSpeedFac * (settings.TimeStep / bendingLongTime) *
+                                    settings.slideWeightDialSpeedFac * (settings.TimeStep / settings.bending_long_time) *
                                     (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness);
                         }
                         timeSinceLastEquilCheck = 0.0;
@@ -1172,7 +1058,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 double pInit = 3.0 * (settings.ShearModulus * settings.SheetThickness *
                                       settings.SheetThickness); // So we don't have to start all the way from p=0, chosen based on previous sims.
                 settings.p = pInit + time * settings.pSpeedPrefactor * settings.ShearModulus * settings.SheetThickness *
-                                     settings.SheetThickness / bendingLongTime;
+                                     settings.SheetThickness / settings.bending_long_time;
 
                 for (int n = 0; n < settings.NumNodes; ++n) {
                     if (nodes[n].isSeideDisplacementEnabled || stepCount == 0) {
@@ -1190,10 +1076,10 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                         wHat << -cos(settings.ConeAngle) * cos(polarAng), -cos(settings.ConeAngle) *
                                                                           sin(polarAng), -sin(settings.ConeAngle);
                         double u = -settings.p * log(s / s1) /
-                                   (2.0 * PI * settings.YoungsModulus * tCone * sin(settings.ConeAngle) *
+                                   (2.0 * M_PI * settings.YoungsModulus * tCone * sin(settings.ConeAngle) *
                                     cos(settings.ConeAngle));
                         double w = -settings.p * (log(s / s1) + settings.PoissonRatio) /
-                                   (2.0 * PI * settings.YoungsModulus * tCone * cos(settings.ConeAngle) *
+                                   (2.0 * M_PI * settings.YoungsModulus * tCone * cos(settings.ConeAngle) *
                                     cos(settings.ConeAngle));
                         nodes[n].pos = nodeUnstressedConePosits[n] + u * uHat + w * wHat;
                     }
@@ -1214,9 +1100,9 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 that phase, and set the programmed tensors accordingly.*/
                 currDialInFactor = DialInFactorValuesToHoldAt[DialInFactorCounter + 1];
                 calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, status, currDialInFactor,
-                                                              progTensorSequenceCounter, sequenceOf_progMetricInfo,
-                                                              sequenceOf_InvProgMetrics, sequenceOf_ProgTaus,
-                                                              sequenceOf_ProgSecFFs, settings);
+                                                              progTensorSequenceCounter, programmed_metric_infos,
+                                                              inverted_programmed_metrics, programmed_taus,
+                                                              programmed_second_fundamental_forms, settings);
                 status = waitingForEquilibrium;
                 // NB an EquilCheck has not actually just occurred, but this has the
                 //desired effect of ensuring that each DialInFactor value is held
@@ -1224,7 +1110,8 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 timeSinceLastEquilCheck = 0.0;
 
                 settings.NumDampFactor =
-                        settings.DampingPrefactor2 * dampingScale; // Set damping factor to waiting phase value.
+                        settings.DampingPrefactor2 *
+                        settings.dampingScale; // Set damping factor to waiting phase value.
 
                 logStream.open();
                 logStream << "Reached Dial-In Factor of " << DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
@@ -1248,9 +1135,9 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
             calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, status, currDialInFactor,
-                                                          progTensorSequenceCounter, sequenceOf_progMetricInfo,
-                                                          sequenceOf_InvProgMetrics, sequenceOf_ProgTaus,
-                                                          sequenceOf_ProgSecFFs, settings);
+                                                          progTensorSequenceCounter, programmed_metric_infos,
+                                                          inverted_programmed_metrics, programmed_taus,
+                                                          programmed_second_fundamental_forms, settings);
 
             std::chrono::steady_clock::time_point end1 = std::chrono::steady_clock::now();
 
@@ -1424,7 +1311,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     timeSinceCurrDiallingInPhaseStarted = 0.0;
                     DialInFactorCounter += 1;
                     settings.NumDampFactor = settings.DampingPrefactor1 *
-                                             dampingScale; // Set damping factor back to dialling phase value.
+                                             settings.dampingScale; // Set damping factor back to dialling phase value.
                     if (DialInFactorCounter <= DialInFactorValuesToHoldAt.size() - 2) {
                         logStream << "New dialling in phase beginning, from value "
                                   << DialInFactorValuesToHoldAt[DialInFactorCounter] << ", to "
@@ -1478,7 +1365,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
             stepCount += 1;
         }
 
-        if (sequenceOf_progMetricInfo.size() > 2 && progTensorSequenceCounter < sequenceOf_progMetricInfo.size() - 2) {
+        if (programmed_metric_infos.size() > 2 && progTensorSequenceCounter < programmed_metric_infos.size() - 2) {
             logStream.open();
             logStream << "Moving on to next set of programmed tensors in sequence." << std::endl;
             logStream.close();

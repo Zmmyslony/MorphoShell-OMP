@@ -51,6 +51,8 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
         if (!settings.isGradientDescentDynamicsEnabled) {
             nodes[i].force += -settings.NumDampFactor * nodes[i].mass * nodes[i].vel / settings.InitDensity;
         }
+//        std::cout << "current force: " << nodes[i].force(2) << ", gravity " << -nodes[i].mass << std::endl;
+        nodes[i].force(1) += settings.gravity_sign * nodes[i].mass * 9.81;
 
         /* Perturbing 'prod' force, to prompt the sheet to buckle in the upward
         direction, and ensure evolution actually begins. The particular shape
@@ -71,7 +73,7 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
 
                 //nodes[i].force(2) += -settings.LoadStrength * settings.ShearModulus * settings.ApproxMinInitElemSize * settings.SheetThickness;
 
-                double pullForce = settings.LoadStrength * settings.charForceScale * time / settings.BendingLongTime;
+                double pullForce = settings.LoadStrength * settings.charForceScale * time / settings.bending_long_time;
                 if (nodes[i].pos(0) < 0) {
                     nodes[i].force(0) += -pullForce;
                     totUpperSlideForce += pullForce;
@@ -82,17 +84,6 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
             }
         }
 
-        bool isSnappingLengthDifferent = false;
-        double bottomCLampLength = 3;
-        double springCoefficient = 0.005;
-        double heightOffset = 0.0;
-        if (isSnappingLengthDifferent) {
-            if (nodes[i].pos(2) < -heightOffset && abs(nodes[i].pos(0)) > bottomCLampLength) {
-                double vertForce = springCoefficient * settings.ShearModulus * settings.SheetThickness *
-                                 (-nodes[i].pos(2));
-                nodes[i].force(2) += vertForce;
-            }
-        }
 
         // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
         // Force from "glass slides".

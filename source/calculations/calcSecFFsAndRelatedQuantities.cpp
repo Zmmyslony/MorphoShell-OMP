@@ -48,7 +48,6 @@ void calcSecFFsAndRelatedQuantities(
 
     // Temp objects used to calculate bending forces once 2nd F.F. is found
 
-//    Eigen::Matrix<double, 6, 1> lsqDataVec;
 
     double bendingPreFac =
             pow(settings.SheetThickness, 3) * settings.ShearModulus / 12.0;
@@ -59,28 +58,5 @@ void calcSecFFsAndRelatedQuantities(
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         triangles[i].calculateSecondFundamentalForm(bendingPreFac, JPreFactor);
-//        Eigen::Vector3d vectorOfSecFFComps = triangles[i].patchSecDerivs.transpose() * triangles[i].faceNormal;
-//
-//        triangles[i].secFF(0, 0) = vectorOfSecFFComps(0);
-//        triangles[i].secFF(0, 1) = vectorOfSecFFComps(1);
-//        triangles[i].secFF(1, 0) = vectorOfSecFFComps(1);
-//        triangles[i].secFF(1, 1) = vectorOfSecFFComps(2);
-//
-//        Eigen::Matrix<double, 2, 2> tempMat1 =
-//                triangles[i].dialledInvProgMetric * (triangles[i].secFF - triangles[i].dialledProgSecFF);
-//        Eigen::Matrix<double, 2, 2> tempMat2 = tempMat1 * triangles[i].dialledInvProgMetric;
-//        double tr_tempMat1 = tempMat1.trace();
-//        double tempScalar = bendingPreFac * triangles[i].detDialledInvProgMetric;
-//
-//        double J = tempScalar * JPreFactor;
-//
-//        // Now calculate bending energy density for this triangles[i].
-//        double preGentBendEnergyDensity = tempScalar * ((tempMat1 * tempMat1).trace() + tr_tempMat1 * tr_tempMat1);
-//        double gentDerivFac = (1 + 2 * preGentBendEnergyDensity / J);
-//
-//        /* Calculate the derivative of the bending energy density with respect
-//        to the secFF. */
-//        triangles[i].energyDensityDerivWRTSecFF =
-//                gentDerivFac * 2 * tempScalar * (tempMat2 + tr_tempMat1 * triangles[i].dialledInvProgMetric);
     }
 }

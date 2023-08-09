@@ -62,7 +62,8 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
 
 #pragma omp parallel for reduction (+ : numNonBoundaryTrisThatTriedMultiplePatchChoices)
     for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].refCentroid = (nodes[triangles[i].vertexLabels(0)].pos + nodes[triangles[i].vertexLabels(1)].pos +
+        triangles[i].refCentroid = (nodes[triangles[i].vertexLabels(0)].pos +
+                                    nodes[triangles[i].vertexLabels(1)].pos +
                                     nodes[triangles[i].vertexLabels(2)].pos) / 3.0;
 
         std::vector<double> distancesToCentroid;
@@ -80,7 +81,6 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
                             isNodeAlreadyAccountedFor = true;
                         }
                     }
-
 
                     for (int possiblePatchNodeLabel: possiblePatchNodeLabels) {
                         if (thisNodeLabel == possiblePatchNodeLabel) {

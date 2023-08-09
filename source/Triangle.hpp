@@ -44,14 +44,14 @@ public:
     a particular file in addition to std::cout.*/
     CustomOutStreamClass triLogStream;
 
-    // Label so this triangle 'knows' which it is.
+    /// Label so this triangle 'knows' which it is.
     int label;
 
     /* Boolean representing whether the triangle has a vertex on the boundary of
     the sample (true) or not (false).*/
     bool isOnBoundary;
 
-    // Initial (reference) area and 1/(current area) for this triangle.
+    /// Initial (reference) area and 1/(current area) for this triangle.
     double initArea;
     double invCurrArea;
 
@@ -135,7 +135,7 @@ public:
     Eigen::Matrix<double, 3, 2> defGradient;
 
     /* The (1st order) approximation for the metric for this triangle, which
-    equals defGradient.transpose9) * defGradient.*/
+    equals defGradient.transpose) * defGradient.*/
     Eigen::Matrix<double, 2, 2> metric;
 
     /* Inverse of metric.*/
@@ -225,6 +225,7 @@ public:
     void calculateSecondFundamentalForm(double bendingPreFac, double JPreFactor);
 
     void updateAngleDeficits(std::vector<double> &angleDeficits) const;
+
 };
 
 #endif

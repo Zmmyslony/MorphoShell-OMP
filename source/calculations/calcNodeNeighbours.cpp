@@ -57,11 +57,6 @@ void calcNodeNeighbours(std::vector<Node> &nodes, const std::vector<Edge> &edges
         tempNeighbourNodeLabels[edge.nodeLabels(0)].push_back(edge.nodeLabels(1));
         tempNeighbourNodeLabels[edge.nodeLabels(1)].push_back(edge.nodeLabels(0));
     }
-//    for(int e = 0; e < settings.NumEdges; ++e){
-//        tempNeighbourNodeLabels[edges[e].nodeLabels(0)].push_back(edges[e].nodeLabels(1));
-//        tempNeighbourNodeLabels[edges[e].nodeLabels(1)].push_back(edges[e].nodeLabels(0));
-//    }
-
 
     /* Now we know each node's neighbours, we store their labels in node member
     data.*/

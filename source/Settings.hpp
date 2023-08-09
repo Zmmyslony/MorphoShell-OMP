@@ -31,12 +31,17 @@ const (though occasionally one could want to change 'settings' within a function
 #define _SETTINGS_TAG_
 
 #include <string>
+#include <vector>
+
+#include "CustomOutStreamClass.hpp"
+//#include "Triangle.hpp"
 
 struct Settings {
 
     // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
     // Z-coordinates of bottom and top slides.
     int numberOfCores = 1;
+    double gravity_sign;
     double initSlideZCoord_lower;
     double initSlideZCoord_upper;
     double currSlideZCoord_upper;
@@ -53,7 +58,9 @@ struct Settings {
     // above the node with the lowest initial (ansatz) z coord will be clamped.
     // Set to negative value to turn off.
     double ThicknessesAboveLowestNodeToClampUpTo;
-    double BendingLongTime;
+    double bending_long_time;
+    double dampingScale;
+    double smallestSizeOverRootTau;
     bool isDialingDisabled;
     bool GlassCones;
     double ConeAngle;
@@ -300,8 +307,16 @@ empirically to avoid `blowing up'. */
 
     bool * getParameterAddressBool(const std::string &parameterName);
 
+    void SetupDialIn(CustomOutStreamClass &logStream);
+
 //    long int &getParameterAddressLongInt(const std::string &parameterName);
 
+    void SetupStepTime(CustomOutStreamClass &logStream);
+
+    void SetupPrintFrequency(CustomOutStreamClass &logStream);
+
+//    void SetupSmallestElements(CustomOutStreamClass &logStream, std::vector<Triangle> &triangles,
+//                               std::vector<std::vector<double>> &programmed_taus);
 };
 
 #endif

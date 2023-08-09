@@ -54,8 +54,6 @@ void calcCurvatures(
 
 
     // Objects used to calculate angle deficits.
-// TODO Replace with a proper constant
-    const double PI = 3.14159265358979323846;
 
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
@@ -114,30 +112,16 @@ void calcCurvatures(
 #pragma omp parallel for
         for (int n = 0; n < settings.NumNodes; ++n) {
             if (!nodes[n].isOnBoundary) {
-                angleDeficits.at(n) = 2.0 * PI;
+                angleDeficits.at(n) = 2.0 * M_PI;
             } else {
-                angleDeficits.at(n) = PI;
+                angleDeficits.at(n) = M_PI;
             }
         }
 
 
 #pragma omp parallel for
         for (int i = 0; i < triangles.size(); i++) {
-           triangles[i].updateAngleDeficits(angleDeficits);
-//            Eigen::Vector3d side2 = triangles[i].currSides.col(1) - triangles[i].currSides.col(0);
-//
-//            double sideLength0 = triangles[i].currSides.col(0).norm();
-//            double sideLength1 = triangles[i].currSides.col(1).norm();
-//            double sideLength2 = side2.norm();
-//
-//            angleDeficits[triangles[i].vertexLabels(0)] -= acos(
-//                    (triangles[i].currSides.col(0).dot(triangles[i].currSides.col(1))) / (sideLength0 * sideLength1));
-//
-//            angleDeficits[triangles[i].vertexLabels(1)] -= acos(
-//                    -(triangles[i].currSides.col(0).dot(side2)) / (sideLength0 * sideLength2));
-//
-//            angleDeficits[triangles[i].vertexLabels(2)] -= acos(
-//                    (triangles[i].currSides.col(1).dot(side2)) / (sideLength1 * sideLength2));
+            triangles[i].updateAngleDeficits(angleDeficits);
         }
 
         /* Also fill vectors holding interior and exterior angle deficits

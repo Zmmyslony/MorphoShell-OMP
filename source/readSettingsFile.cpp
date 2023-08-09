@@ -98,9 +98,10 @@ void readInAllParametersWithAnIntegrityCheck(Settings &settings, const libconfig
                                              "ProdForceTime", "ProdStrength", "LoadForceTime", "LoadStrength",
                                              "DampingPrefactor1", "DampingPrefactor2", "GentFactor",
                                              "TimeStepPrefactor", "SheetThickness", "ShearModulus", "PoissonRatio",
-                                             "InitDensity", "PatchMatrixDimensionlessConditioningThreshold"};
+                                             "InitDensity", "PatchMatrixDimensionlessConditioningThreshold", "GravitySign"};
     std::vector<std::string>
             intConfigurationParameters = {"testTriangle"};
+
     std::vector<std::string>
             boolConfigurationParameters = {"isDialingDisabled", "GlassCones", "isSeideDeformationsEnabled",
                                            "isControlledForceEnabled", "isLCEModeEnabled", "isEnergyDensitiesPrinted",

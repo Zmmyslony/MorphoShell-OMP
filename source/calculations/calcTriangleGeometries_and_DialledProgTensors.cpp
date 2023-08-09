@@ -85,7 +85,8 @@ void updateDialledInverseProgrammedMetricForATriangleWithoutAnsatz(int index, st
 }
 
 
-void updateDialledInverseProgrammedMetricFromAnsatz(int index, std::vector<Triangle> &triangles,
+void updateDialledInverseProgrammedMetricFromAnsatz(int index,
+                                                    std::vector<Triangle> &triangles,
                                                     double currDialInFactor,
                                                     const size_t &progTensorSequenceCounter,
                                                     const std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> &programmedMetricSequence) {
@@ -120,7 +121,8 @@ void updateDialledSecondFundemantalForm(int index, std::vector<Triangle> &triang
 }
 
 
-void updateDialledSecondFundamentalForm(Triangle &triangle, double currDialInFactor,
+void updateDialledSecondFundamentalForm(Triangle &triangle,
+                                        double currDialInFactor,
                                         double rootCurrDialInFactor,
                                         const double &programmedTauCurrentStep,
                                         const double &programmedTauNextStep,
@@ -135,14 +137,12 @@ void updateDialledSecondFundamentalForm(Triangle &triangle, double currDialInFac
 }
 
 
-void
-updateDeterminantOfDialledInverseProgrammedMetric(int index, std::vector<Triangle> &triangles) {
+void updateDeterminantOfDialledInverseProgrammedMetric(int index, std::vector<Triangle> &triangles) {
     triangles[index].detDialledInvProgMetric = triangles[index].dialledInvProgMetric.determinant();
 }
 
 
-void
-updateDeterminantOfDialledInverseProgrammedMetric(Triangle &triangle) {
+void updateDeterminantOfDialledInverseProgrammedMetric(Triangle &triangle) {
     triangle.detDialledInvProgMetric = triangle.dialledInvProgMetric.determinant();
 }
 
@@ -182,17 +182,11 @@ void calcTriangleGeometries_and_DialledProgTensors(
                                                                               programmedMetricInfoSequence);
 
             } else {
-//                updateDialledInverseProgrammedMetricFromAnsatz(i, triangles, currDialInFactor,
-//                                                               progTensorSequenceCounter,
-//                                                               programmedMetricSequence);
                 updateDialledInverseProgrammedMetricFromAnsatz(triangles[i], currDialInFactor,
                                                                programmedMetricSequence[progTensorSequenceCounter][i],
                                                                programmedMetricSequence[progTensorSequenceCounter +
                                                                                         1][i]);
             }
-//            updateDialledSecondFundamentalForm(i, triangles, currDialInFactor, rootCurrDialInFactor,
-//                                               progTensorSequenceCounter, programmedTausSequence,
-//                                               programmedSecondFundamentalFormSequence);
             updateDialledSecondFundamentalForm(triangles[i], currDialInFactor, rootCurrDialInFactor,
                                                programmedTausSequence[progTensorSequenceCounter][i],
                                                programmedTausSequence[progTensorSequenceCounter + 1][i],
@@ -200,7 +194,6 @@ void calcTriangleGeometries_and_DialledProgTensors(
                                                programmedSecondFundamentalFormSequence[progTensorSequenceCounter +
                                                                                        1][i]);
 
-//            updateDeterminantOfDialledInverseProgrammedMetric(i, triangles);
             updateDeterminantOfDialledInverseProgrammedMetric(triangles[i]);
         }
         triangles[i].updateGeometricProperties(nodes);
