@@ -116,10 +116,10 @@ public:
     this triangle, induced by a programmed nematic director field, for example.
     The matrix stored here is the 'dialled in' value, which is used to prevent
     anything too explosive happening. */
-    Eigen::Matrix<double, 2, 2> dialledInvProgMetric;
+    Eigen::Matrix<double, 2, 2> programmedMetInv;
 
     // Determinant of the above dialledInvProgMetric matrix.
-    double detDialledInvProgMetric;
+    double programmedMetInvDet;
 
     /* Dialled in programmed scalar 'tau' factor.*/
     double dialledProgTau;
@@ -127,7 +127,7 @@ public:
     /* Matrix representing the components of the *energetically* favoured
     (programmed) Second Fundamental Form in the x-y cartesian coordinate system
     of the initial flat state. */
-    Eigen::Matrix<double, 2, 2> dialledProgSecFF;
+    Eigen::Matrix<double, 2, 2> programmedSecFF;
 
     /* Matrix representing the total deformation gradient of this triangle. This
     maps the in-plane reference (initial) state (for which no z components are
@@ -136,13 +136,13 @@ public:
 
     /* The (1st order) approximation for the metric for this triangle, which
     equals defGradient.transpose) * defGradient.*/
-    Eigen::Matrix<double, 2, 2> metric;
+    Eigen::Matrix<double, 2, 2> met;
 
     /* Inverse of metric.*/
-    Eigen::Matrix<double, 2, 2> invMetric;
+    Eigen::Matrix<double, 2, 2> metInv;
 
     /* Determinant of the inverse of the metric.*/
-    double detInvMetric;
+    double metInvDet;
 
     /* Matrix representing (1st Piola-Kirchoff stress tensor)/2 for this triangle.*/
     Eigen::Matrix<double, 3, 2> halfPK1Stress;
@@ -167,7 +167,10 @@ public:
 
     /* The derivative of the bending energy density with respect to the metric.*/
     Eigen::Matrix<double, 2, 2> bendEnergyDensityDerivWRTMetric;
+
     double bendEnergyDensity;
+    double stretchEnergyDensity;
+
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
     well as to std::out. This should usually be the log file (as for logStream).
@@ -189,14 +192,14 @@ public:
         faceNormal.fill(DBL_MAX);
         initOutwardSideNormals.fill(DBL_MAX);
         invInitSidesMat.fill(DBL_MAX);
-        dialledInvProgMetric.fill(DBL_MAX);
-        detDialledInvProgMetric = DBL_MAX;
+        programmedMetInv.fill(DBL_MAX);
+        programmedMetInvDet = DBL_MAX;
         dialledProgTau = DBL_MAX;
-        dialledProgSecFF.fill(DBL_MAX);
+        programmedSecFF.fill(DBL_MAX);
         defGradient.fill(DBL_MAX);
-        metric.fill(DBL_MAX);
-        detInvMetric = DBL_MAX;
-        invMetric.fill(DBL_MAX);
+        met.fill(DBL_MAX);
+        metInvDet = DBL_MAX;
+        metInv.fill(DBL_MAX);
         halfPK1Stress.fill(DBL_MAX);
         patchSecDerivs.fill(DBL_MAX);
         secFF.fill(DBL_MAX);
@@ -204,6 +207,7 @@ public:
         bendEnergyDensityDerivWRTMetric.fill(DBL_MAX);
         matForPatchSecDerivs.fill(DBL_MAX);
         bendEnergyDensity = DBL_MAX;
+        stretchEnergyDensity = DBL_MAX;
     }
 
     // Declare other member functions.
@@ -226,6 +230,8 @@ public:
     void updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio);
 
     void updateAngleDeficits(std::vector<double> &angleDeficits) const;
+
+    void updateFirstFundamentalForm(double stretchingPreFac);
 
 };
 

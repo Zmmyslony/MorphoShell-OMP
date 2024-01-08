@@ -64,11 +64,11 @@ void updateDialledInverseProgrammedMetricForATriangleWithoutAnsatz(int index, st
     double lambdaToTheMinus2 = 1.0 / (lambda * lambda);
     double lambdaToThe2Nu = pow(lambda, 2.0 * nu);
 
-    triangles[index].dialledInvProgMetric(0, 0) =
+    triangles[index].programmedMetInv(0, 0) =
             lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
-    triangles[index].dialledInvProgMetric(0, 1) = (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
-    triangles[index].dialledInvProgMetric(1, 0) = triangles[index].dialledInvProgMetric(0, 1);
-    triangles[index].dialledInvProgMetric(1, 1) =
+    triangles[index].programmedMetInv(0, 1) = (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
+    triangles[index].programmedMetInv(1, 0) = triangles[index].programmedMetInv(0, 1);
+    triangles[index].programmedMetInv(1, 1) =
             lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
 }
 
@@ -90,7 +90,7 @@ void updateDialledInverseProgrammedMetricFromAnsatz(int index,
                                                     double currDialInFactor,
                                                     const size_t &progTensorSequenceCounter,
                                                     const std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> &programmedMetricSequence) {
-    triangles[index].dialledInvProgMetric =
+    triangles[index].programmedMetInv =
             (1.0 - currDialInFactor) * programmedMetricSequence[progTensorSequenceCounter][index] +
             currDialInFactor * programmedMetricSequence[progTensorSequenceCounter + 1][index];
 
@@ -101,7 +101,7 @@ void updateDialledInverseProgrammedMetricFromAnsatz(Triangle &triangle,
                                                     double currDialInFactor,
                                                     const Eigen::Matrix<double, 2, 2> &programmedMetricCurrentStep,
                                                     const Eigen::Matrix<double, 2, 2> &programmedMetricNextStep) {
-    triangle.dialledInvProgMetric =
+    triangle.programmedMetInv =
             (1.0 - currDialInFactor) * programmedMetricCurrentStep + currDialInFactor * programmedMetricNextStep;
 }
 
@@ -113,7 +113,7 @@ void updateDialledSecondFundemantalForm(int index, std::vector<Triangle> &triang
     triangles[index].dialledProgTau =
             (1.0 - currDialInFactor) * programmedTausSequence[progTensorSequenceCounter][index] +
             currDialInFactor * programmedTausSequence[progTensorSequenceCounter + 1][index];
-    triangles[index].dialledProgSecFF =
+    triangles[index].programmedSecFF =
             (1.0 - rootCurrDialInFactor) *
             programmedSecondFundamentalFormSequence[progTensorSequenceCounter][index] +
             rootCurrDialInFactor * programmedSecondFundamentalFormSequence[progTensorSequenceCounter + 1][index];
@@ -130,7 +130,7 @@ void updateDialledSecondFundamentalForm(Triangle &triangle,
                                         const Eigen::Matrix<double, 2, 2> &programmedSecondFundamentalFormNextStep) {
     triangle.dialledProgTau =
             (1.0 - currDialInFactor) * programmedTauCurrentStep + currDialInFactor * programmedTauNextStep;
-    triangle.dialledProgSecFF =
+    triangle.programmedSecFF =
             (1.0 - rootCurrDialInFactor) * programmedSecondFundamentalFormCurrentStep +
             rootCurrDialInFactor * programmedSecondFundamentalFormNextStep;
 
@@ -138,12 +138,12 @@ void updateDialledSecondFundamentalForm(Triangle &triangle,
 
 
 void updateDeterminantOfDialledInverseProgrammedMetric(int index, std::vector<Triangle> &triangles) {
-    triangles[index].detDialledInvProgMetric = triangles[index].dialledInvProgMetric.determinant();
+    triangles[index].programmedMetInvDet = triangles[index].programmedMetInv.determinant();
 }
 
 
 void updateDeterminantOfDialledInverseProgrammedMetric(Triangle &triangle) {
-    triangle.detDialledInvProgMetric = triangle.dialledInvProgMetric.determinant();
+    triangle.programmedMetInvDet = triangle.programmedMetInv.determinant();
 }
 
 

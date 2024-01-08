@@ -53,14 +53,14 @@ void Triangle::display() {
     triLogStream << "faceNormal = " << "\n" << faceNormal << std::endl;
     triLogStream << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
     triLogStream << "invInitInPlaneSidesMat = " << "\n" << invInitSidesMat << std::endl;
-    triLogStream << "Dialled in inverse of programmed metric = " << "\n" << dialledInvProgMetric << std::endl;
-    triLogStream << "detDialledInvProgMetric = " << "\n" << detDialledInvProgMetric << std::endl;
+    triLogStream << "Dialled in inverse of programmed metric = " << "\n" << programmedMetInv << std::endl;
+    triLogStream << "detDialledInvProgMetric = " << "\n" << programmedMetInvDet << std::endl;
     triLogStream << "Dialled in prog tau factor = " << dialledProgTau << std::endl;
-    triLogStream << "Dialled in programmed second fundamental form = " << "\n" << dialledProgSecFF << std::endl;
+    triLogStream << "Dialled in programmed second fundamental form = " << "\n" << programmedSecFF << std::endl;
     triLogStream << "Deformation gradient = " << "\n" << defGradient << std::endl;
-    triLogStream << "metric = " << "\n" << metric << std::endl;
-    triLogStream << "Inverse of Metric = " << "\n" << invMetric << std::endl;
-    triLogStream << "Det of inverse of Metric = " << "\n" << detInvMetric << std::endl;
+    triLogStream << "metric = " << "\n" << met << std::endl;
+    triLogStream << "Inverse of Metric = " << "\n" << metInv << std::endl;
+    triLogStream << "Det of inverse of Metric = " << "\n" << metInvDet << std::endl;
     triLogStream << "matForPatchSecDerivs = " << "\n" << matForPatchSecDerivs << std::endl;
     triLogStream << "patchSecDerivs = " << "\n" << patchSecDerivs << std::endl;
     triLogStream << "Second fundamental form = " << "\n" << secFF << std::endl;
@@ -73,7 +73,7 @@ void Triangle::display() {
 
 Eigen::Matrix<double, 3, 2> Triangle::updateHalfPK1Stress(double stretchingPrefactor) {
     halfPK1Stress = defGradient * (stretchingPrefactor * dialledProgTau *
-                                   (dialledInvProgMetric - (detInvMetric / detDialledInvProgMetric) * invMetric));
+                                   (programmedMetInv - (metInvDet / programmedMetInvDet) * metInv));
     return halfPK1Stress;
 }
 
@@ -115,9 +115,9 @@ void Triangle::updateMetric(const std::vector<Node> &nodes) {
     currSides.col(1) = nodes[vertexLabels(2)].pos - nodes[vertexLabels(0)].pos;
     defGradient = currSides * invInitSidesMat;
 
-    metric = defGradient.transpose() * defGradient;
-    detInvMetric = 1 / metric.determinant();
-    invMetric = metric.inverse();
+    met = defGradient.transpose() * defGradient;
+    metInvDet = 1 / met.determinant();
+    metInv = met.inverse();
 }
 
 void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
@@ -146,22 +146,29 @@ void Triangle::updateSecondFundamentalForm(double bendingPreFac, double JPreFact
     secFF(1, 1) = vectorOfSecFFComps(2);
 
     Eigen::Matrix<double, 2, 2> relativeSecFF =
-            dialledInvProgMetric * (secFF - dialledProgSecFF);
-    Eigen::Matrix<double, 2, 2> tempMat2 = relativeSecFF * dialledInvProgMetric;
-    double areaMultiplier = bendingPreFac * detDialledInvProgMetric;
+            programmedMetInv * (secFF - programmedSecFF);
+    Eigen::Matrix<double, 2, 2> tempMat2 = relativeSecFF * programmedMetInv;
+    double areaMultiplier = bendingPreFac * programmedMetInvDet;
 
     double J = areaMultiplier * JPreFactor;
 
     // Now calculate bending energy density for this 
     double preGentBendEnergyDensity = areaMultiplier * ((1 - poissonRatio) * (relativeSecFF * relativeSecFF).trace() +
-                                                    poissonRatio * relativeSecFF.trace() * relativeSecFF.trace());
+                                                        poissonRatio * relativeSecFF.trace() * relativeSecFF.trace());
     double gentDerivFac = (1 + 2 * preGentBendEnergyDensity / J);
 
     /* Calculate the derivative of the bending energy density with respect
     to the secFF. */
     energyDensityDerivWRTSecFF =
-            gentDerivFac * 2 * areaMultiplier * (tempMat2 + relativeSecFF.trace() * dialledInvProgMetric);
+            gentDerivFac * 2 * areaMultiplier * (tempMat2 + relativeSecFF.trace() * programmedMetInv);
     bendEnergyDensity = gentDerivFac * preGentBendEnergyDensity;
+}
+
+void Triangle::updateFirstFundamentalForm(double stretchingPreFac) {
+    stretchEnergyDensity = stretchingPreFac * dialledProgTau *
+                           ((met * programmedMetInv).trace() +
+                            metInvDet / programmedMetInvDet -
+                            3.0 / dialledProgTau);
 }
 
 

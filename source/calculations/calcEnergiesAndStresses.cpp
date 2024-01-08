@@ -45,19 +45,26 @@ stress stuff.
 #include "../Triangle.hpp"
 #include "../Node.hpp"
 
-void updateSecondFundamentalForms(
+void updateFirstFundamentalForms(
         std::vector<Triangle> &triangles,
         const Settings &settings) {
 
-    // Temp objects used to calculate bending forces once 2nd F.F. is found
+    double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
+#pragma omp parallel for
+    for (int i = 0; i < triangles.size(); i++) {
+        triangles[i].updateFirstFundamentalForm(stretchingPreFac);
+    }
+}
 
+void updateSecondFundamentalForms(
+        std::vector<Triangle> &triangles,
+        const Settings &settings) {
 
     double bendingPreFac =
             pow(settings.SheetThickness, 3) * settings.ShearModulus / 12.0;
 
     double JPreFactor = settings.GentFactor / (settings.SheetThickness * settings.SheetThickness);
 
-    // secFF estimate
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         triangles[i].updateSecondFundamentalForm(bendingPreFac, JPreFactor, settings.PoissonRatio);
@@ -78,17 +85,13 @@ void calcEnergiesAndStresses(
         std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
         const Settings &settings) {
 
-//     Energy prefactor that is the same for each triangle.
-    double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
-
+    updateFirstFundamentalForms(triangles, settings);
     updateSecondFundamentalForms(triangles, settings);
     // Loop over triangles and calculate potential energies and energy densities.
 #pragma omp parallel for
     for (int i = 0; i < settings.NumTriangles; ++i) {
-        stretchEnergyDensities[i] = stretchingPreFac * triangles[i].dialledProgTau *
-                                    ((triangles[i].metric * triangles[i].dialledInvProgMetric).trace() +
-                                     triangles[i].detInvMetric / triangles[i].detDialledInvProgMetric -
-                                     3.0 / triangles[i].dialledProgTau);
+        stretchEnergyDensities[i] = triangles[i].stretchEnergyDensity;
+        bendEnergyDensities[i] = triangles[i].bendEnergyDensity;
 
         stretchEnergies[i] = triangles[i].initArea * stretchEnergyDensities[i];
         bendEnergies[i] = triangles[i].initArea * triangles[i].bendEnergyDensity;
@@ -97,14 +100,14 @@ void calcEnergiesAndStresses(
                 (triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse() *
                 (triangles[i].defGradient.transpose());
 
-        Eigen::Matrix<double, 3, 3> myStrainTensor = 0.5 * defGradPseudoInv.transpose() * (triangles[i].metric -
-                                                                                           triangles[i].dialledInvProgMetric.inverse()) *
+        Eigen::Matrix<double, 3, 3> myStrainTensor = 0.5 * defGradPseudoInv.transpose() * (triangles[i].met -
+                                                                                           triangles[i].programmedMetInv.inverse()) *
                                                      defGradPseudoInv;
 
         strainMeasures.at(i) = sqrt((myStrainTensor.transpose() * myStrainTensor).trace() / 2.0);
 
         Eigen::Matrix<double, 3, 3> cauchyStress =
-                sqrt(triangles[i].detInvMetric) * (2.0 * triangles[i].halfPK1Stress) *
+                sqrt(triangles[i].metInvDet) * (2.0 * triangles[i].halfPK1Stress) *
                 triangles[i].defGradient.transpose();
 
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 3, 3>> eigenSolver(cauchyStress);
