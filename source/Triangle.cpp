@@ -137,7 +137,7 @@ void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
 }
 
 
-void Triangle::calculateSecondFundamentalForm(double bendingPreFac, double JPreFactor) {
+void Triangle::updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio) {
     Eigen::Vector3d vectorOfSecFFComps = patchSecDerivs.transpose() * faceNormal;
 
     secFF(0, 0) = vectorOfSecFFComps(0);
@@ -145,22 +145,23 @@ void Triangle::calculateSecondFundamentalForm(double bendingPreFac, double JPreF
     secFF(1, 0) = vectorOfSecFFComps(1);
     secFF(1, 1) = vectorOfSecFFComps(2);
 
-    Eigen::Matrix<double, 2, 2> tempMat1 =
+    Eigen::Matrix<double, 2, 2> relativeSecFF =
             dialledInvProgMetric * (secFF - dialledProgSecFF);
-    Eigen::Matrix<double, 2, 2> tempMat2 = tempMat1 * dialledInvProgMetric;
-    double tr_tempMat1 = tempMat1.trace();
-    double tempScalar = bendingPreFac * detDialledInvProgMetric;
+    Eigen::Matrix<double, 2, 2> tempMat2 = relativeSecFF * dialledInvProgMetric;
+    double areaMultiplier = bendingPreFac * detDialledInvProgMetric;
 
-    double J = tempScalar * JPreFactor;
+    double J = areaMultiplier * JPreFactor;
 
     // Now calculate bending energy density for this 
-    double preGentBendEnergyDensity = tempScalar * ((tempMat1 * tempMat1).trace() + tr_tempMat1 * tr_tempMat1);
+    double preGentBendEnergyDensity = areaMultiplier * ((1 - poissonRatio) * (relativeSecFF * relativeSecFF).trace() +
+                                                    poissonRatio * relativeSecFF.trace() * relativeSecFF.trace());
     double gentDerivFac = (1 + 2 * preGentBendEnergyDensity / J);
 
     /* Calculate the derivative of the bending energy density with respect
     to the secFF. */
     energyDensityDerivWRTSecFF =
-            gentDerivFac * 2 * tempScalar * (tempMat2 + tr_tempMat1 * dialledInvProgMetric);
+            gentDerivFac * 2 * areaMultiplier * (tempMat2 + relativeSecFF.trace() * dialledInvProgMetric);
+    bendEnergyDensity = gentDerivFac * preGentBendEnergyDensity;
 }
 
 
@@ -171,7 +172,7 @@ void Triangle::updateAngleDeficits(std::vector<double> &angleDeficits) const {
     sides.emplace_back(sides[1] - sides[0]);
 
     std::vector<double> sidesLength(sides.size());
-    for (auto &side : sides) {
+    for (auto &side: sides) {
         sidesLength.emplace_back(side.norm());
     }
 

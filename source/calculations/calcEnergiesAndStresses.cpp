@@ -45,9 +45,29 @@ stress stuff.
 #include "../Triangle.hpp"
 #include "../Node.hpp"
 
+void updateSecondFundamentalForms(
+        std::vector<Triangle> &triangles,
+        const Settings &settings) {
+
+    // Temp objects used to calculate bending forces once 2nd F.F. is found
+
+
+    double bendingPreFac =
+            pow(settings.SheetThickness, 3) * settings.ShearModulus / 12.0;
+
+    double JPreFactor = settings.GentFactor / (settings.SheetThickness * settings.SheetThickness);
+
+    // secFF estimate
+#pragma omp parallel for
+    for (int i = 0; i < triangles.size(); i++) {
+        triangles[i].updateSecondFundamentalForm(bendingPreFac, JPreFactor, settings.PoissonRatio);
+    }
+}
+
+
 void calcEnergiesAndStresses(
         const std::vector<Node> &nodes,
-        const std::vector<Triangle> &triangles,
+        std::vector<Triangle> &triangles,
         std::vector<double> &stretchEnergyDensities,
         std::vector<double> &bendEnergyDensities,
         std::vector<double> &stretchEnergies,
@@ -60,10 +80,8 @@ void calcEnergiesAndStresses(
 
 //     Energy prefactor that is the same for each triangle.
     double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
-    double bendingPreFac =
-            settings.SheetThickness * settings.SheetThickness * settings.SheetThickness * settings.ShearModulus / 12.0;
 
-
+    updateSecondFundamentalForms(triangles, settings);
     // Loop over triangles and calculate potential energies and energy densities.
 #pragma omp parallel for
     for (int i = 0; i < settings.NumTriangles; ++i) {
@@ -73,17 +91,7 @@ void calcEnergiesAndStresses(
                                      3.0 / triangles[i].dialledProgTau);
 
         stretchEnergies[i] = triangles[i].initArea * stretchEnergyDensities[i];
-
-        Eigen::Matrix<double, 2, 2> tempMat1 =
-                triangles[i].dialledInvProgMetric * (triangles[i].secFF - triangles[i].dialledProgSecFF);
-        double tr_tempMat1 = tempMat1.trace();
-        double tempScalar = bendingPreFac * triangles[i].detDialledInvProgMetric;
-        double J = settings.GentFactor * tempScalar / (settings.SheetThickness * settings.SheetThickness);
-
-        double preGentBendEnergyDensity = tempScalar * ((tempMat1 * tempMat1).trace() + tr_tempMat1 * tr_tempMat1);
-        bendEnergyDensities[i] = preGentBendEnergyDensity + pow(preGentBendEnergyDensity, 2) / J;
-
-        bendEnergies[i] = triangles[i].initArea * bendEnergyDensities[i];
+        bendEnergies[i] = triangles[i].initArea * triangles[i].bendEnergyDensity;
 
         Eigen::Matrix<double, 2, 3> defGradPseudoInv =
                 (triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse() *

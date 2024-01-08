@@ -18,7 +18,7 @@ set(SOURCE_FILES
         source/calculations/calc_nonVertexPatchNodes_and_MatForPatchDerivs.hpp source/calculations/calcCurvatures.cpp source/calculations/calcCurvatures.hpp source/calculations/calcDeformationForces.cpp
         source/calculations/calcDeformationForces.hpp source/calculations/calcEnergiesAndStresses.cpp source/calculations/calcEnergiesAndStresses.hpp source/calculations/calcNodeNeighbours.cpp
         source/calculations/calcNodeNeighbours.hpp source/calculations/calcNonDeformationForces_and_ImposeBCS.cpp source/calculations/calcNonDeformationForces_and_ImposeBCS.hpp
-        source/calculations/calcSecFFsAndRelatedQuantities.cpp source/calculations/calcSecFFsAndRelatedQuantities.hpp source/calculations/calcTriangleAdjacencies_And_Edges.cpp
+        source/calculations/calcTriangleAdjacencies_And_Edges.cpp
         source/calculations/calcTriangleAdjacencies_And_Edges.hpp source/calculations/calcTriangleGeometries_and_DialledProgTensors.cpp source/calculations/calcTriangleGeometries_and_DialledProgTensors.hpp
         source/calculations/calcTrianglesIncidentOnNodes.cpp source/calculations/calcTrianglesIncidentOnNodes.hpp source/CustomOutStreamClass.cpp source/CustomOutStreamClass.hpp source/Edge.cpp
         source/Edge.hpp source/EquilibriumCheck.cpp source/EquilibriumCheck.hpp source/functions/extract_Just_Filename.cpp source/functions/extract_Just_Filename.hpp source/functions/getRealTime.cpp

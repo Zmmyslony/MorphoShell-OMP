@@ -52,7 +52,7 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
             nodes[i].force += -settings.NumDampFactor * nodes[i].mass * nodes[i].vel / settings.InitDensity;
         }
 //        std::cout << "current force: " << nodes[i].force(2) << ", gravity " << -nodes[i].mass << std::endl;
-        nodes[i].force(1) += settings.gravity_sign * nodes[i].mass * 9.81;
+        nodes[i].force(2) += settings.gravity_sign * nodes[i].mass * 9.81;
 
         /* Perturbing 'prod' force, to prompt the sheet to buckle in the upward
         direction, and ensure evolution actually begins. The particular shape

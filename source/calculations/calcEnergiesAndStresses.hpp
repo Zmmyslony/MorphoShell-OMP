@@ -35,15 +35,17 @@ Header file for calcEnergiesAndStresses.cpp function
 #include "../Node.hpp"
 #include "../Settings.hpp"
 
+void updateSecondFundamentalForms(std::vector<Triangle> &, const Settings &);
+
 void calcEnergiesAndStresses(
-        const std::vector<Node> &,
-        const std::vector<Triangle> &,
-        std::vector<double> &,
-        std::vector<double> &,
-        std::vector<double> &,
-        std::vector<double> &,
-        std::vector<double> &,
-        std::vector<double> &,
-        std::vector<Eigen::Vector2d> &,
-        std::vector<Eigen::Matrix<double, 3, 2> > &,
-        const Settings &);
+        const std::vector<Node> &nodes,
+        std::vector<Triangle> &triangles,
+        std::vector<double> &stretchEnergyDensities,
+        std::vector<double> &bendEnergyDensities,
+        std::vector<double> &stretchEnergies,
+        std::vector<double> &bendEnergies,
+        std::vector<double> &kineticEnergies,
+        std::vector<double> &strainMeasures,
+        std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
+        std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
+        const Settings &settings);

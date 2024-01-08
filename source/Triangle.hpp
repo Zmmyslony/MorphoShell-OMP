@@ -167,7 +167,7 @@ public:
 
     /* The derivative of the bending energy density with respect to the metric.*/
     Eigen::Matrix<double, 2, 2> bendEnergyDensityDerivWRTMetric;
-
+    double bendEnergyDensity;
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
     well as to std::out. This should usually be the log file (as for logStream).
@@ -203,6 +203,7 @@ public:
         energyDensityDerivWRTSecFF.fill(DBL_MAX);
         bendEnergyDensityDerivWRTMetric.fill(DBL_MAX);
         matForPatchSecDerivs.fill(DBL_MAX);
+        bendEnergyDensity = DBL_MAX;
     }
 
     // Declare other member functions.
@@ -222,7 +223,7 @@ public:
 
     void updateGeometricProperties(const std::vector<Node> &nodes);
 
-    void calculateSecondFundamentalForm(double bendingPreFac, double JPreFactor);
+    void updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio);
 
     void updateAngleDeficits(std::vector<double> &angleDeficits) const;
 

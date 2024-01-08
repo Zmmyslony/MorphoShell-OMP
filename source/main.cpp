@@ -98,7 +98,6 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "SimulationStatus.hpp"
 #include "functions/perturbInitialPositionsWithRandomNoise.hpp"
 #include "functions/zeroForces.hpp"
-#include "calculations/calcSecFFsAndRelatedQuantities.hpp"
 #include "calculations/calcDeformationForces.hpp"
 #include "calculations/calcNonDeformationForces_and_ImposeBCS.hpp"
 #include "advanceDynamics.hpp"
@@ -793,7 +792,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                                                               progTensorSequenceCounter, programmed_metric_infos,
                                                               inverted_programmed_metrics, programmed_taus,
                                                               programmed_second_fundamental_forms, settings);
-                calcSecFFsAndRelatedQuantities(triangles, settings);
+                updateSecondFundamentalForms(triangles, settings);
 
 
                 // Temp LU decomp of triangle metric, used to check invertibility.
@@ -1143,7 +1142,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
             /* Calculate secFF estimates for triangles, and related quantities such
             as the derivative of the bending energy wrt the secFF components.*/
-            calcSecFFsAndRelatedQuantities(triangles, settings);
+            updateSecondFundamentalForms(triangles, settings);
             std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
 
             // Calculate current strain and bending force on each node.
