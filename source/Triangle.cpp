@@ -38,7 +38,7 @@ void Triangle::display() {
     triLogStream << "Triangle " << label << ":" << std::endl;
     triLogStream << "Boundary indicator = " << isOnBoundary << std::endl;
     triLogStream << "Initial (reference) area = " << initArea << std::endl;
-    triLogStream << "invCurrArea = " << invCurrArea << std::endl;
+    triLogStream << "invCurrArea = " << currAreaInv << std::endl;
     triLogStream << "Labels of vertices: " << vertexLabels.transpose() << std::endl;
     triLogStream << "Labels of edges: " << edgeLabels.transpose() << std::endl;
     triLogStream << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
@@ -81,13 +81,14 @@ Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces() {
     return halfPK1Stress * initOutwardSideNormals;
 }
 
-Eigen::Matrix<double, 3, 3> Triangle::getOutwardTriangleNormals() {
-    Eigen::Matrix<double, 3, 3> outwardTriangleNormals;
+// Returns vectors that normal to triangle edges and point outward
+Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals() {
+    Eigen::Matrix<double, 3, 3> triangleEdgeNormals;
 
-    outwardTriangleNormals.col(1) = faceNormal.cross(currSides.col(1));
-    outwardTriangleNormals.col(2) = -faceNormal.cross(currSides.col(0));
-    outwardTriangleNormals.col(0) = -outwardTriangleNormals.col(1) - outwardTriangleNormals.col(2);
-    return outwardTriangleNormals;
+    triangleEdgeNormals.col(1) = faceNormal.cross(currSides.col(1));
+    triangleEdgeNormals.col(2) = -faceNormal.cross(currSides.col(0));
+    triangleEdgeNormals.col(0) = -triangleEdgeNormals.col(1) - triangleEdgeNormals.col(2);
+    return triangleEdgeNormals;
 }
 
 Eigen::Matrix<double, 3, 1> Triangle::getBendingForce(const Eigen::Matrix<double, 3, 3> &normalDerivatives, int row) {
@@ -132,8 +133,8 @@ void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
     patchSecDerivs = matrixOfPatchNodeCoords * matForPatchSecDerivs;
 
     faceNormal = currSides.col(0).cross(currSides.col(1));
-    invCurrArea = 2 / faceNormal.norm();
-    faceNormal = 0.5 * faceNormal * invCurrArea; // Normalising
+    currAreaInv = 2 / faceNormal.norm();
+    faceNormal = 0.5 * faceNormal * currAreaInv; // Normalising
 }
 
 
@@ -145,9 +146,7 @@ void Triangle::updateSecondFundamentalForm(double bendingPreFac, double JPreFact
     secFF(1, 0) = vectorOfSecFFComps(1);
     secFF(1, 1) = vectorOfSecFFComps(2);
 
-    Eigen::Matrix<double, 2, 2> relativeSecFF =
-            programmedMetInv * (secFF - programmedSecFF);
-    Eigen::Matrix<double, 2, 2> tempMat2 = relativeSecFF * programmedMetInv;
+    Eigen::Matrix<double, 2, 2> relativeSecFF = programmedMetInv * (secFF - programmedSecFF);
     double areaMultiplier = bendingPreFac * programmedMetInvDet;
 
     double J = areaMultiplier * JPreFactor;
@@ -157,10 +156,10 @@ void Triangle::updateSecondFundamentalForm(double bendingPreFac, double JPreFact
                                                         poissonRatio * relativeSecFF.trace() * relativeSecFF.trace());
     double gentDerivFac = (1 + 2 * preGentBendEnergyDensity / J);
 
-    /* Calculate the derivative of the bending energy density with respect
-    to the secFF. */
-    energyDensityDerivWRTSecFF =
-            gentDerivFac * 2 * areaMultiplier * (tempMat2 + relativeSecFF.trace() * programmedMetInv);
+    /* Calculate the derivative of the bending energy density with respect to the secFF. */
+    energyDensityDerivWRTSecFF = gentDerivFac * 2 * areaMultiplier *
+                                 ((1 - poissonRatio) * relativeSecFF * programmedMetInv +
+                                  poissonRatio * relativeSecFF.trace() * programmedMetInv);
     bendEnergyDensity = gentDerivFac * preGentBendEnergyDensity;
 }
 

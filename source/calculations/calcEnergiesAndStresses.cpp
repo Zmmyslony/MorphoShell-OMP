@@ -60,9 +60,7 @@ void updateSecondFundamentalForms(
         std::vector<Triangle> &triangles,
         const Settings &settings) {
 
-    double bendingPreFac =
-            pow(settings.SheetThickness, 3) * settings.ShearModulus / 12.0;
-
+    double bendingPreFac = 0.5 * pow(settings.SheetThickness, 3) * settings.ShearModulus / 12;
     double JPreFactor = settings.GentFactor / (settings.SheetThickness * settings.SheetThickness);
 
 #pragma omp parallel for
@@ -94,7 +92,7 @@ void calcEnergiesAndStresses(
         bendEnergyDensities[i] = triangles[i].bendEnergyDensity;
 
         stretchEnergies[i] = triangles[i].initArea * stretchEnergyDensities[i];
-        bendEnergies[i] = triangles[i].initArea * triangles[i].bendEnergyDensity;
+        bendEnergies[i] = triangles[i].initArea * bendEnergyDensities[i];
 
         Eigen::Matrix<double, 2, 3> defGradPseudoInv =
                 (triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse() *

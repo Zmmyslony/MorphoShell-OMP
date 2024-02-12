@@ -196,7 +196,7 @@ void writeVTKDataOutput(
                 << "LOOKUP_TABLE default" << "\n";
 
         for (int i = 0; i < settings.NumTriangles; ++i) {
-            outFile << 1.0 / triangles[i].invCurrArea << "\n";
+            outFile << 1.0 / triangles[i].currAreaInv << "\n";
         }
     }
 

@@ -49,136 +49,29 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
 #pragma omp parallel for reduction (+: totUpperSlideForce, totLowerSlideForce)
     for (int i = 0; i < nodes.size(); i++) {
         if (!settings.isGradientDescentDynamicsEnabled) {
-            nodes[i].force += -settings.NumDampFactor * nodes[i].mass * nodes[i].vel / settings.InitDensity;
+            nodes[i].add_damping(settings);
         }
-//        std::cout << "current force: " << nodes[i].force(2) << ", gravity " << -nodes[i].mass << std::endl;
-        nodes[i].force(2) += settings.gravity_sign * nodes[i].mass * 9.81;
+        nodes[i].add_gravity(settings);
 
-        /* Perturbing 'prod' force, to prompt the sheet to buckle in the upward
-        direction, and ensure evolution actually begins. The particular shape
-        has no special justification, except that many target shapes have a
-        bulge or protrusion vaguely in the middle, e.g. a nose. The shear
-        modulus factor ensures the force has the correct dimensions and an order
-        of magnitude roughly that of typical forces in the simulation. Note, an
-        ansatz is probably a better way to choose a buckling direction than a
-        prod.*/
         if (time < settings.ProdForceTime) {
-            nodes[i].force(2) += -settings.ProdStrength * settings.ShearModulus * settings.SheetThickness *
-                                 sqrt(nodes[i].pos(0) * nodes[i].pos(0) + nodes[i].pos(1) * nodes[i].pos(1));
+            nodes[i].add_prod_force(settings);
         }
 
         // Simple load force.
         if (time < settings.LoadForceTime) {
-            if (nodes[i].isLoadForceEnabled) {
-
-                //nodes[i].force(2) += -settings.LoadStrength * settings.ShearModulus * settings.ApproxMinInitElemSize * settings.SheetThickness;
-
-                double pullForce = settings.LoadStrength * settings.charForceScale * time / settings.bending_long_time;
-                if (nodes[i].pos(0) < 0) {
-                    nodes[i].force(0) += -pullForce;
-                    totUpperSlideForce += pullForce;
-                } else {
-                    nodes[i].force(0) += pullForce;
-                    totLowerSlideForce += pullForce;
-                }
-            }
+            nodes[i].add_load_force(settings, time, totUpperSlideForce, totLowerSlideForce);
         }
-
 
         // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
         // Force from "glass slides".
-        double slideVertForce;
         if (!settings.GlassCones) {
-            // Use the if() statement with the && for single ridge experiment if you want to allow tip to go through the lower slide.
-            //if( nodes[i].pos(2) < settings.initSlideZCoord_lower && nodes[i].pos(0)*nodes[i].pos(0) + nodes[i].pos(1)*nodes[i].pos(1) > (0.95*1.8)*(0.95*1.8) ){
-            if (nodes[i].pos(2) < settings.initSlideZCoord_lower) {
-                slideVertForce = settings.slideStiffnessPrefactor * settings.ShearModulus * settings.SheetThickness *
-                                 (settings.initSlideZCoord_lower - nodes[i].pos(2));
-                nodes[i].force(2) += slideVertForce;
-                totLowerSlideForce += slideVertForce;
-
-                // Friction
-                double nonFrictionInPlaneForceSize = sqrt(
-                        nodes[i].force(0) * nodes[i].force(0) + nodes[i].force(1) * nodes[i].force(1));
-                if (nonFrictionInPlaneForceSize < settings.slideFrictionCoeff * fabs(slideVertForce)) {
-                    nodes[i].force(0) = 0;
-                    nodes[i].force(1) = 0;
-                    nodes[i].vel(0) = 0;
-                    nodes[i].vel(1) = 0;
-                } else {
-                    nodes[i].force(0) += -settings.slideFrictionCoeff * fabs(slideVertForce) * nodes[i].force(0) /
-                                         nonFrictionInPlaneForceSize;
-                    nodes[i].force(1) += -settings.slideFrictionCoeff * fabs(slideVertForce) * nodes[i].force(1) /
-                                         nonFrictionInPlaneForceSize;
-
-                }
-
-            }
-            // Use the if() statement with the && for single ridge experiment if you want to apply point(ish) load to tip.
-            if (nodes[i].pos(2) > settings.currSlideZCoord_upper) {
-                //if( nodes[i].pos(2) > settings.currSlideZCoord_upper && nodes[i].pos(0)*nodes[i].pos(0) + nodes[i].pos(1)*nodes[i].pos(1) < 2.0*settings.SheetThickness*2.0*settings.SheetThickness ){
-                slideVertForce = settings.slideStiffnessPrefactor * settings.ShearModulus * settings.SheetThickness *
-                                 (settings.currSlideZCoord_upper - nodes[i].pos(2));
-                nodes[i].force(2) += slideVertForce;
-                totUpperSlideForce += slideVertForce;
-
-                // Friction
-                double nonFrictionInPlaneForceSize = sqrt(
-                        nodes[i].force(0) * nodes[i].force(0) + nodes[i].force(1) * nodes[i].force(1));
-                if (nonFrictionInPlaneForceSize < settings.slideFrictionCoeff * fabs(slideVertForce)) {
-                    nodes[i].force(0) = 0;
-                    nodes[i].force(1) = 0;
-                    nodes[i].vel(0) = 0;
-                    nodes[i].vel(1) = 0;
-                } else {
-                    nodes[i].force(0) += -settings.slideFrictionCoeff * fabs(slideVertForce) * nodes[i].force(0) /
-                                         nonFrictionInPlaneForceSize;
-                    nodes[i].force(1) += -settings.slideFrictionCoeff * fabs(slideVertForce) * nodes[i].force(1) /
-                                         nonFrictionInPlaneForceSize;
-
-                }
-            }
+            nodes[i].add_slide_force(settings, settings.initSlideZCoord_lower, true, totLowerSlideForce);
+            nodes[i].add_slide_force(settings, settings.initSlideZCoord_upper, false, totUpperSlideForce);
         }
             // GLASS CONES
         else {
-            // Cylindrical polar coords.
-            double r = sqrt(nodes[i].pos(0) * nodes[i].pos(0) + nodes[i].pos(1) * nodes[i].pos(1));
-            double polarAng = atan2(nodes[i].pos(1), nodes[i].pos(0));
-
-            // UPPER GLASS CONE
-            // Distance this node is from the glass surface. If positive the node is
-            // inside the glass.
-            double distFromGlass = (nodes[i].pos(2) - r * tan(settings.ConeAngle) - settings.currSlideZCoord_upper) *
-                                   cos(settings.ConeAngle);
-
-            if (distFromGlass > 0) {
-                double slideForceSize =
-                        settings.slideStiffnessPrefactor * settings.ShearModulus * settings.SheetThickness *
-                        distFromGlass;
-
-                nodes[i].force(0) += slideForceSize * sin(settings.ConeAngle) * cos(polarAng);
-                nodes[i].force(1) += slideForceSize * sin(settings.ConeAngle) * sin(polarAng);
-                nodes[i].force(2) += -slideForceSize * cos(settings.ConeAngle);
-                totUpperSlideForce += -slideForceSize * cos(settings.ConeAngle);
-            }
-
-            // LOWER GLASS CONE
-            // Distance this node is from the glass surface. If negative the node is
-            // inside the glass.
-            distFromGlass = (nodes[i].pos(2) - r * tan(settings.ConeAngle) - settings.initSlideZCoord_lower) *
-                            cos(settings.ConeAngle);
-
-            if (distFromGlass < 0) {
-                double slideForceSize =
-                        -settings.slideStiffnessPrefactor * settings.ShearModulus * settings.SheetThickness *
-                        distFromGlass;
-
-                nodes[i].force(0) += -slideForceSize * sin(settings.ConeAngle) * cos(polarAng);
-                nodes[i].force(1) += -slideForceSize * sin(settings.ConeAngle) * sin(polarAng);
-                nodes[i].force(2) += slideForceSize * cos(settings.ConeAngle);
-                totLowerSlideForce += slideForceSize * cos(settings.ConeAngle);
-            }
-
+            nodes[i].add_cone_force(settings, settings.currSlideZCoord_upper, true, totLowerSlideForce);
+            nodes[i].add_cone_force(settings, settings.initSlideZCoord_upper, false, totUpperSlideForce);
 
             /*
             // SEIDE'S HORIZONTAL CLAMP ON ALL BOUNDARY NODES.
@@ -193,25 +86,16 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
             // not tangent to the simple expected base state (Seide) of a perfect cone with only
             // a single in-plane stress component.
             if (nodes[i].isOnBoundary) {
+                double polar_angle = atan2(nodes[i].pos(1), nodes[i].pos(0));
                 Eigen::Vector3d theoryNormalVec;
-                theoryNormalVec << cos(settings.ConeAngle) * cos(polarAng), cos(settings.ConeAngle) *
-                                                                            sin(polarAng), sin(settings.ConeAngle);
-                nodes[i].force = nodes[i].force - (nodes[i].force.dot(theoryNormalVec)) * theoryNormalVec;
+                theoryNormalVec << cos(settings.ConeAngle) * cos(polar_angle),
+                        cos(settings.ConeAngle) * sin(polar_angle), sin(settings.ConeAngle);
+                nodes[i].force -= (nodes[i].force.dot(theoryNormalVec)) * theoryNormalVec;
             }
-
         }
 
         // BOUNDARY CONDITIONS
-        if (nodes[i].isClamped) {
-            // Full clamp.
-            //nodes[i].force << 0.0,0.0,0.0;
-            // Only clamp in z direction.
-            //nodes[i].force(2) = 0.0;
-            // Only clamp in z and x directions.
-            nodes[i].force(0) = 0.0;
-            nodes[i].force(1) = 0.0;
-            nodes[i].force(2) = 0.0;
-        }
+        nodes[i].apply_boundary_conditions();
     }
     return {totUpperSlideForce, totLowerSlideForce};
 }

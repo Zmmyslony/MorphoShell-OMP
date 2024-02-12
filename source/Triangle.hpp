@@ -53,7 +53,7 @@ public:
 
     /// Initial (reference) area and 1/(current area) for this triangle.
     double initArea;
-    double invCurrArea;
+    double currAreaInv;
 
     /* Indices (labels) of the nodes at the vertices of the triangle. These are
     in no particular order*/
@@ -187,7 +187,7 @@ public:
         nonVertexPatchNodesLabels.fill(INT_MAX);
         edgeLabels.fill(INT_MAX);
         initArea = DBL_MAX;
-        invCurrArea = DBL_MAX;
+        currAreaInv = DBL_MAX;
         currSides.fill(DBL_MAX);
         faceNormal.fill(DBL_MAX);
         initOutwardSideNormals.fill(DBL_MAX);
@@ -219,7 +219,7 @@ public:
 
     Eigen::Matrix<double, 3, 3> getStretchingForces();
 
-    Eigen::Matrix<double, 3, 3> getOutwardTriangleNormals();
+    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals();
 
     Eigen::Matrix<double, 3, 1> getBendingForce(const Eigen::Matrix<double, 3, 3> &normalDerivatives, int row);
 

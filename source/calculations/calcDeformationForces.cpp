@@ -67,9 +67,9 @@ void calcDeformationForces(
             triangles[i].updateHalfPK1Stress(stretchingPreFac);
             Eigen::Matrix<double, 3, 3> stretchForces = triangles[i].getStretchingForces();
 
-            Eigen::Matrix<double, 3, 3> outwardTriNormals = triangles[i].getOutwardTriangleNormals();
+            Eigen::Matrix<double, 3, 3> triangleEdgeNormals = triangles[i].getTriangleEdgeNormals();
             Eigen::Matrix<double, 3, 3> normalDerivPiece =
-                    0.5 * triangles[i].invCurrArea * (triangles[i].patchSecDerivs.transpose() * outwardTriNormals);
+                    0.5 * triangles[i].currAreaInv * (triangles[i].patchSecDerivs.transpose() * triangleEdgeNormals);
 
             for (int n = 0; n < 3; ++n) {
                 forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n) + stretchForces.col(n);

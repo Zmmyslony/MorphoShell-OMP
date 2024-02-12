@@ -99,10 +99,10 @@ void updateDialledInverseProgrammedMetricFromAnsatz(int index,
 
 void updateDialledInverseProgrammedMetricFromAnsatz(Triangle &triangle,
                                                     double currDialInFactor,
-                                                    const Eigen::Matrix<double, 2, 2> &programmedMetricCurrentStep,
-                                                    const Eigen::Matrix<double, 2, 2> &programmedMetricNextStep) {
+                                                    const Eigen::Matrix<double, 2, 2> &programmedMetricCurrentStage,
+                                                    const Eigen::Matrix<double, 2, 2> &programmedMetricNextStage) {
     triangle.programmedMetInv =
-            (1.0 - currDialInFactor) * programmedMetricCurrentStep + currDialInFactor * programmedMetricNextStep;
+            (1.0 - currDialInFactor) * programmedMetricCurrentStage + currDialInFactor * programmedMetricNextStage;
 }
 
 
@@ -124,15 +124,15 @@ void updateDialledSecondFundemantalForm(int index, std::vector<Triangle> &triang
 void updateDialledSecondFundamentalForm(Triangle &triangle,
                                         double currDialInFactor,
                                         double rootCurrDialInFactor,
-                                        const double &programmedTauCurrentStep,
-                                        const double &programmedTauNextStep,
-                                        const Eigen::Matrix<double, 2, 2> &programmedSecondFundamentalFormCurrentStep,
-                                        const Eigen::Matrix<double, 2, 2> &programmedSecondFundamentalFormNextStep) {
+                                        const double &programmedTauCurrentStage,
+                                        const double &programmedTauNextStage,
+                                        const Eigen::Matrix<double, 2, 2> &programmedSecondFundamentalFormCurrentStage,
+                                        const Eigen::Matrix<double, 2, 2> &programmedSecondFundamentalFormNextStage) {
     triangle.dialledProgTau =
-            (1.0 - currDialInFactor) * programmedTauCurrentStep + currDialInFactor * programmedTauNextStep;
+            (1.0 - currDialInFactor) * programmedTauCurrentStage + currDialInFactor * programmedTauNextStage;
     triangle.programmedSecFF =
-            (1.0 - rootCurrDialInFactor) * programmedSecondFundamentalFormCurrentStep +
-            rootCurrDialInFactor * programmedSecondFundamentalFormNextStep;
+            (1.0 - rootCurrDialInFactor) * programmedSecondFundamentalFormCurrentStage +
+            rootCurrDialInFactor * programmedSecondFundamentalFormNextStage;
 
 }
 
