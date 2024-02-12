@@ -141,6 +141,14 @@ public:
      */
     void add_slide_force(const Settings &settings, double height, bool is_bottom_slide, double &total_slide_force);
 
+    /**
+     * Adds force coming from the interaction with the "glass" cone. The cones can either approach from the top or the
+     * bottom and are centred as x = 0, y = 0.
+     * @param settings
+     * @param tip_height
+     * @param is_bottom_cone
+     * @param total_cone_force
+     */
     void add_cone_force(const Settings &settings, double tip_height, bool is_bottom_cone, double &total_cone_force);
 };
 
