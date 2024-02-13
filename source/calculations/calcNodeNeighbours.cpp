@@ -40,8 +40,7 @@ by edges).
 #include "../Node.hpp"
 #include "../Edge.hpp"
 
-void calcNodeNeighbours(std::vector<Node> &nodes, const std::vector<Edge> &edges, const Settings &settings){
-
+void configureNodeAdjacency(std::vector<Node> &nodes, const std::vector<Edge> &edges, const Settings &settings){
     /* Temporarily, we will store the node neighbour labels in a std::vector of
     std::vectors. At the end, the same information will then be stored as a
     dynamic-sized Eigen::VectorXd at each node. We use std::vector here because

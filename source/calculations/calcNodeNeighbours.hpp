@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////
 
-Header file for calcNodeNeighbours.cpp function
+Header file for confiugure_node_adjacencies.cpp function
 */
 
 #include <vector>
@@ -29,4 +29,8 @@ Header file for calcNodeNeighbours.cpp function
 #include "../Edge.hpp"
 #include "../Settings.hpp"
 
-void calcNodeNeighbours(std::vector<Node> &, const std::vector<Edge> &, const Settings &);
+/**
+ * Determine and store labels of the node neighbours to each node (those that
+ * share an edge).
+ * */
+void configureNodeAdjacency(std::vector<Node> &nodes, const std::vector<Edge> &edges, const Settings &settings);

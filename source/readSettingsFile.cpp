@@ -135,4 +135,9 @@ void readSettingsFile(Settings &settings, const char *settings_file_name) {
     libconfig::Config config;
     config.readFile(settings_file_name);
     readInAllParametersWithAnIntegrityCheck(settings, config);
+    settings.YoungsModulus = 2.0 * settings.ShearModulus * (1.0 + settings.PoissonRatio);
+}
+
+void readSettingsFile(Settings &settings, const std::string& settings_filename) {
+    readSettingsFile(settings, settings_filename.c_str());
 }

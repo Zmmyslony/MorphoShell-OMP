@@ -29,4 +29,5 @@ Header file for calcTrianglesIncidentOnNodes.cpp function.
 #include "../Triangle.hpp"
 #include "../Settings.hpp"
 
+// Determine and store the labels of the triangles incident on each node.
 void calcTrianglesIncidentOnNodes(std::vector<Node> &, const std::vector<Triangle> &, const Settings &);

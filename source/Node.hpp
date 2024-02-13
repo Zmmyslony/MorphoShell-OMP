@@ -34,6 +34,7 @@ containing the node's position, velocity etc.*/
 #include <Eigen/Dense>
 #include <cfloat>
 
+#include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
 
 class Node {
@@ -129,7 +130,7 @@ public:
     void add_prod_force(const Settings &settings);
 
     /**
-    * Simple load force
+    * Adds load force to the nodes that have isLoadForceEnabled = True.
     */
     void add_load_force(const Settings &settings, double time, double &upper_slide_force, double &lower_slide_force);
 

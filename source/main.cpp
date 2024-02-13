@@ -65,6 +65,8 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #define EIGEN_NO_DEBUG
 #endif
 
+#define _USE_MATH_DEFINES
+
 #include <iostream> // Used for outputting messages to the terminal
 #include <fstream> // Used for outputting to files
 #include <cassert> // Used for debugging tools
@@ -106,6 +108,7 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "calculations/calcCurvatures.hpp"
 #include "calculations/calcEnergiesAndStresses.hpp"
 #include "functions/kahanSum.hpp"
+#include "simulation.h"
 
 //Create useful debug tools.
 /*
@@ -121,7 +124,16 @@ assert( x > 100 );
 
 ///////////////////////////////////////////////////////////////////////////////
 
+
 int main(int argc, char *argv[]) {
+    Simulation simulation(argc, argv);
+    simulation.run_simulation();
+
+    return 0;
+}
+
+
+int legacy_main(int argc, char *argv[]) {
 /* Create a string to contain some things that will later be written to the log
 file, as long as all goes to plan and the code gets that far. The first thing to
 add to this string is a record of what command line arguments where given, and
@@ -155,7 +167,7 @@ from command line. */
     std::string ansatz_data_file_name_str("no_ansatz_file"); // Default, since usually no ansatz will be given
 
 /* Will need the settings file name without any preceding directory info,
-so we extract that first. Ditto for the initial data file file, and ansatz file.*/
+so we extract that first. Ditto for the initial data  file, and ansatz file.*/
     std::string settings_file_name_str_final_piece = extract_Just_Filename(settings_file_name_str);
     std::string initial_data_file_name_str_final_piece = extract_Just_Filename(initial_data_file_name_str);
     std::string ansatz_data_file_name_str_final_piece("no_ansatz_file");
@@ -421,7 +433,7 @@ on the sample boundary.*/
 
 /* Determine and store labels of the node neighbours to each node (those that
 share an edge).*/
-    calcNodeNeighbours(nodes, edges, settings);
+    configureNodeAdjacency(nodes, edges, settings);
 
 // Calculate and store number of boundary nodes.
     int numBoundaryNodes = 0;
@@ -1035,7 +1047,8 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                         if (equilibriumCheck(nodes, triangles, settings, logStream) == equilibriumReached) {
                             settings.slideJustReachedEquil = 1;
                             settings.upperSlideWeight +=
-                                    settings.slideWeightDialSpeedFac * (settings.TimeStep / settings.bending_long_time) *
+                                    settings.slideWeightDialSpeedFac *
+                                    (settings.TimeStep / settings.bending_long_time) *
                                     (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness);
                         }
                         timeSinceLastEquilCheck = 0.0;

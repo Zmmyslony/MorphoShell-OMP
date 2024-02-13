@@ -26,3 +26,5 @@ Header file for readSettingsFile.cpp function.
 #include "Settings.hpp"
 
 void readSettingsFile(Settings &, const char *);
+
+void readSettingsFile(Settings &settings, const std::string& settings_filename);

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(ShelloMorph)
 
 find_package(OpenMP REQUIRED)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -10,8 +11,6 @@ find_library(LIBCONFIGPP_LIB libconfig++)
 if(NOT LIBCONFIGPP_LIB)
     find_library(LIBCONFIGPP_LIB config++)
 endif()
-
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(SOURCE_FILES
         source/main.cpp source/advanceDynamics.cpp source/advanceDynamics.hpp source/calculations/calc_nonVertexPatchNodes_and_MatForPatchDerivs.cpp
@@ -26,7 +25,9 @@ set(SOURCE_FILES
         source/Node.hpp source/functions/perturbInitialPositionsWithRandomNoise.cpp source/functions/perturbInitialPositionsWithRandomNoise.hpp source/readSettingsFile.cpp
         source/readSettingsFile.hpp source/readVTKData.cpp source/readVTKData.hpp source/setRemainingInitCond_and_NodeMasses.cpp source/setRemainingInitCond_and_NodeMasses.hpp
         source/Settings.hpp source/SimulationStatus.hpp source/Triangle.cpp source/Triangle.hpp source/writeVTKDataOutput.cpp source/writeVTKDataOutput.hpp source/functions/zeroForces.cpp
-        source/functions/zeroForces.hpp source/Settings.cpp source/InitialisationFunctions.h source/InitialisationFunctions.cpp)
+        source/functions/zeroForces.hpp source/Settings.cpp source/InitialisationFunctions.h source/InitialisationFunctions.cpp
+        source/simulation.cpp
+        source/simulation.h)
 
 add_executable(ShelloMorph ${SOURCE_FILES})
 
