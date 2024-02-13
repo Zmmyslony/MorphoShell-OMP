@@ -904,7 +904,7 @@ void Simulation::error_large_force(int counter) {
                        boundaryNodeAngleDeficits, stretchEnergyDensities, bendEnergyDensities,
                        stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                        cauchyStressEigenvals, cauchyStressEigenvecs, settings, outputDirName);
-    throw std::runtime_error("Unexpectedly large force.");
+    throw std::runtime_error("Unexpectedly large force at step " + std::to_string(step_count) + ".");
 }
 
 void Simulation::check_for_equilibrium() {
