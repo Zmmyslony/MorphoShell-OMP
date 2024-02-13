@@ -96,19 +96,19 @@ SimulationStatus equilibriumCheck(
     /* Now check whether non-damping force and speed ratios are below chosen
     `equilibrium' thresholds.*/
     logStream.open();
-    logStream << "Ratio of max non-damping force to characteristic force = "
-              << maxNonDampForce / settings.charForceScale << " (node " << maxNonDampForceNode << ")" << "\n";
-    logStream << "Max ratio of node speed to local stretching wave speed = "
-              << maxRelativeSpeed << " (node " << maxRelativeSpeedNode << ")" << "\n";
+    logStream << "\tRatio of max non-damping force to characteristic force = "
+              << maxNonDampForce / settings.charForceScale << " (node " << maxNonDampForceNode << ")." << std::endl;
+    logStream << "\tMax ratio of node speed to local stretching wave speed = "
+              << maxRelativeSpeed << " (node " << maxRelativeSpeedNode << ")." << std::endl;
 
     if ((maxNonDampForce / settings.charForceScale) < settings.Equil_Force_To_CharForce_Ratio_Threshold
         && maxRelativeSpeed < settings.Equil_Speed_To_SoundSpeed_Ratio_Threshold) {
 
-        logStream << "Equilibrium reached" << std::endl;
+        logStream << "Equilibrium reached." << std::endl;
         logStream.close();
         return equilibriumReached;
     } else {
-        logStream << "Equilibrium not reached" << std::endl;
+        logStream << "Equilibrium not reached." << std::endl;
         logStream.close();
         return waitingForEquilibrium;
     }

@@ -20,6 +20,9 @@ class Simulation {
     std::string outputDirName;
     Settings settings;
 
+    int step_count;
+    int time = 0;
+
     std::string settings_filename;
     std::string initialisation_filename;
     std::string ansatz_filename = "no_ansatz_file";
@@ -169,43 +172,44 @@ class Simulation {
 
     void run_ansatz(int counter);
 
-    void run_tensor_increment(int counter, double &time, int &step_count);
+    void run_tensor_increment(int counter);
 
-    void
-    impose_seide_deformation(double time, int step_count, double s1,
-                             std::vector<Eigen::Vector3d> nodeUnstressedConePosits);
+    void impose_seide_deformation(double s, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
 
-    void update_slide_properties(double time);
+    void update_slide_properties();
 
     void setup_glass_cones(int highest_node, int lowest_node);
 
     void setup_imposed_seide_deformations(double &s1, int highest_node, int lowest_node,
                                           std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
 
-    void first_step_configuration(double &s1, std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
+    void first_step_configuration(double &seide_quotient, std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
 
-    void progress_single_step(double time, int counter, std::pair<double, double> upperAndLowerTotSlideForces,
+    void progress_single_step(int counter, std::pair<double, double> upperAndLowerTotSlideForces,
                               std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes);
 
-    void update_dial_in_factor(double time, int counter);
+    void update_dial_in_factor();
 
-    void save_and_print_details(double time, int counter, int step_count, double duration_us,
+    void save_and_print_details(int counter, double duration_us,
                                 std::pair<double, double> upperAndLowerTotSlideForces);
 
     void begin_equilibrium_search(int counter);
 
-    void check_for_equilibrium(double time, int step_count);
+    void check_for_equilibrium();
 
-    void error_large_force(double time, int step_count, int counter);
+    void error_large_force(int counter);
 
     void setup_reached_equilibrium();
 
-public :
+    std::stringstream log_prefix();
+
     void init(int argc, char *argv[]);
 
-    void run_simulation();
+public :
 
     Simulation(int argc, char *argv[]);
+
+    void run_simulation();
 };
 
 

@@ -364,7 +364,7 @@ void Simulation::setup_characteristic_scales() {
     settings.charForceScale = settings.ShearModulus * settings.ApproxMinInitElemSize * settings.SheetThickness;
     settings.charStretchEnergyDensityScale = settings.ShearModulus * settings.SheetThickness;
 // settings.charBendEnergyDensityScale = settings.ShearModulus * settings.SheetThickness * settings.SheetThickness * settings.SheetThickness / (settings.SampleCharLength * settings.SampleCharLength);
-    double totInitArea = 0;
+    double totInitArea;
     std::vector<double> initAreas(settings.NumTriangles);
     for (int i = 0; i < settings.NumTriangles; ++i) {
         initAreas[i] = triangles[i].initArea;
@@ -629,10 +629,10 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
     s1 = sqrt(nodes[highest_node].pos(0) * nodes[highest_node].pos(0) +
               nodes[highest_node].pos(1) * nodes[highest_node].pos(1)) / sin(settings.ConeAngle);
 
-    Eigen::Vector3d testTriCurrCentroid;
-    testTriCurrCentroid = (nodes[triangles[settings.testTriangle].vertexLabels(0)].pos +
-                           nodes[triangles[settings.testTriangle].vertexLabels(1)].pos +
-                           nodes[triangles[settings.testTriangle].vertexLabels(2)].pos) / 3;
+//    Eigen::Vector3d testTriCurrCentroid;
+//    testTriCurrCentroid = (nodes[triangles[settings.testTriangle].vertexLabels(0)].pos +
+//                           nodes[triangles[settings.testTriangle].vertexLabels(1)].pos +
+//                           nodes[triangles[settings.testTriangle].vertexLabels(2)].pos) / 3;
     //sTest = sqrt(testTriCurrCentroid(0)*testTriCurrCentroid(0) + testTriCurrCentroid(1)*testTriCurrCentroid(1)) / sin(settings.ConeAngle);
 
 }
@@ -668,7 +668,7 @@ void Simulation::setup_glass_cones(int highest_node, int lowest_node) {
     }
 }
 
-void Simulation::update_slide_properties(double time) {
+void Simulation::update_slide_properties() {
     if (!settings.isControlledForceEnabled) {
         settings.upperSlideDisplacement =
                 time * settings.slideSpeedPrefactor * settings.SampleCharLength / settings.bending_long_time;
@@ -700,11 +700,11 @@ void Simulation::update_slide_properties(double time) {
                     settings.SheetThickness;
         }
     }
+    settings.currSlideZCoord_upper = settings.initSlideZCoord_upper - settings.upperSlideDisplacement;
 }
 
 
-void Simulation::impose_seide_deformation(double time, int step_count, double s1,
-                                          std::vector<Eigen::Vector3d> nodeUnstressedConePosits) {
+void Simulation::impose_seide_deformation(double s1, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
     if (settings.isSeideDeformationsEnabled) {
         double pInit = 3.0 * (settings.ShearModulus * settings.SheetThickness *
                               settings.SheetThickness); // So we don't have to start all the way from p=0, chosen based on previous sims.
@@ -738,7 +738,8 @@ void Simulation::impose_seide_deformation(double time, int step_count, double s1
     }
 }
 
-void Simulation::first_step_configuration(double &s1, std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
+void Simulation::first_step_configuration(double &seide_quotient,
+                                          std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
     int highest_node = INT_MIN;
     int lowest_node = INT_MIN;
     settings.initSlideZCoord_lower = nodes[0].pos(2);
@@ -787,7 +788,7 @@ void Simulation::first_step_configuration(double &s1, std::vector<Eigen::Vector3
 
     // Instead set up imposed-Seide-deformations idea.
     if (settings.isSeideDeformationsEnabled) {
-        setup_imposed_seide_deformations(s1, highest_node, lowest_node, nodeUnstressedConePosits);
+        setup_imposed_seide_deformations(seide_quotient, highest_node, lowest_node, nodeUnstressedConePosits);
     }
 }
 
@@ -808,12 +809,12 @@ void Simulation::begin_equilibrium_search(int counter) {
             settings.dampingScale; // Set damping factor to waiting phase value.
 
     log_stream.open();
-    log_stream << "Reached Dial-In Factor of " << DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
-               << ", now waiting for equilibrium" << std::endl;
+    log_stream << "Reached dial-in factor of " << DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
+               << ". Waiting for equilibrium." << std::endl;
     log_stream.close();
 }
 
-void Simulation::progress_single_step(double time, int counter, std::pair<double, double> upperAndLowerTotSlideForces,
+void Simulation::progress_single_step(int counter, std::pair<double, double> upperAndLowerTotSlideForces,
                                       std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes) {
     calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, simulation_status, currDialInFactor,
                                                   counter, programmed_metric_infos,
@@ -835,7 +836,7 @@ void Simulation::progress_single_step(double time, int counter, std::pair<double
     settings.upperTotSlideForce = upperAndLowerTotSlideForces.first;
 }
 
-void Simulation::update_dial_in_factor(double time, int counter) {
+void Simulation::update_dial_in_factor() {
     currDialInFactor = DialInFactorValuesToHoldAt[DialInFactorCounter] +
                        (DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
                         - DialInFactorValuesToHoldAt[DialInFactorCounter]) *
@@ -843,7 +844,7 @@ void Simulation::update_dial_in_factor(double time, int counter) {
 }
 
 
-void Simulation::save_and_print_details(double time, int counter, int step_count, double duration_us,
+void Simulation::save_and_print_details(int counter, double duration_us,
                                         std::pair<double, double> upperAndLowerTotSlideForces) {
     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings);
@@ -894,7 +895,13 @@ void Simulation::save_and_print_details(double time, int counter, int step_count
     forceDistFile.close();
 }
 
-void Simulation::error_large_force(double time, int step_count, int counter) {
+std::stringstream Simulation::log_prefix() {
+    std::stringstream ss;
+    ss << getRealTime() << ", step = " << step_count << ", time = " << time;
+    return ss;
+}
+
+void Simulation::error_large_force(int counter) {
     log_stream.open();
     log_stream << "At " << getRealTime() << ", stepCount = " << step_count << ", time = " << time
                << ", dial-in factor = " << currDialInFactor
@@ -917,7 +924,7 @@ void Simulation::error_large_force(double time, int step_count, int counter) {
     throw std::runtime_error("Unexpectedly large force.");
 }
 
-void Simulation::check_for_equilibrium(double time, int step_count) {
+void Simulation::check_for_equilibrium() {
     log_stream.open();
     log_stream << "Checking for equilibrium at " << getRealTime() << ", stepCount = " << step_count
                << ", simulation time = " << time << ", current dial-in factor = " << currDialInFactor
@@ -930,18 +937,18 @@ void Simulation::check_for_equilibrium(double time, int step_count) {
     calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
                             stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                             cauchyStressEigenvals, cauchyStressEigenvecs, settings);
-    double nonDimStretchEnergy = kahanSum(stretchEnergies) / settings.charStretchEnergyScale;
-    double nonDimBendEnergy = kahanSum(bendEnergies) / settings.charStretchEnergyScale;
-    double nonDimKineticEnergy = kahanSum(kineticEnergies) / settings.charStretchEnergyScale;
+//    double nonDimStretchEnergy = kahanSum(stretchEnergies) / settings.charStretchEnergyScale;
+//    double nonDimBendEnergy = kahanSum(bendEnergies) / settings.charStretchEnergyScale;
+//    double nonDimKineticEnergy = kahanSum(kineticEnergies) / settings.charStretchEnergyScale;
 
-    log_stream.open();
-    log_stream << "Non-dimensionalised energies:" << std::endl;
-    log_stream << "\t total \t\t" << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy
-               << std::endl;
-    log_stream << "\t stretch \t" << nonDimStretchEnergy << std::endl;
-    log_stream << "\t bend \t\t" << nonDimBendEnergy << std::endl;
-    log_stream << "\t kinetic \t" << nonDimKineticEnergy << std::endl;
-    log_stream.close();
+//    log_stream.open();
+//    log_stream << "Non-dimensionalised energies:" << std::endl;
+//    log_stream << "\t total \t\t" << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy
+//               << std::endl;
+//    log_stream << "\t stretch \t" << nonDimStretchEnergy << std::endl;
+//    log_stream << "\t bend \t\t" << nonDimBendEnergy << std::endl;
+//    log_stream << "\t kinetic \t" << nonDimKineticEnergy << std::endl;
+//    log_stream.close();
 }
 
 void Simulation::setup_reached_equilibrium() {
@@ -959,7 +966,7 @@ void Simulation::setup_reached_equilibrium() {
     log_stream.close();
 }
 
-void Simulation::run_tensor_increment(int counter, double &time, int &step_count) {
+void Simulation::run_tensor_increment(int counter) {
     /* A third input file specifying an ansatz for the node positions may have
         been read in if it was given as a command line argument. This could for
         example correspond to an output file from this code, to carry on where some
@@ -998,25 +1005,20 @@ void Simulation::run_tensor_increment(int counter, double &time, int &step_count
     log_stream << "\nCREATING VECTOR TO STORE UNSTRESSED CONE NODE POSITIONS.\n" << std::endl;
     log_stream.close();
     std::vector<Eigen::Vector3d> nodeUnstressedConePosits(settings.NumNodes);
-    double s1 = DBL_MAX;
+    double seide_quotient = DBL_MAX;
 
     std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(
             triangles, nodes);
 
     while (DialInFactorCounter <= DialInFactorValuesToHoldAt.size() - 2) {
-        if (step_count == 0) {
-            first_step_configuration(s1, nodeUnstressedConePosits);
+        if (step_count == 0) { first_step_configuration(seide_quotient, nodeUnstressedConePosits); }
+
+        update_slide_properties();
+
+        if (settings.isSeideDeformationsEnabled) {
+            impose_seide_deformation(seide_quotient, nodeUnstressedConePosits);
         }
 
-        update_slide_properties(time);
-        settings.currSlideZCoord_upper = settings.initSlideZCoord_upper - settings.upperSlideDisplacement;
-        std::pair<double, double> upperAndLowerTotSlideForces;
-
-        // Impose Seide deformations.
-        impose_seide_deformation(time, step_count, s1, nodeUnstressedConePosits);
-
-        /* The forces are set each timestep using a += procedure, and therefore
-        must be set to zero each time before this is done. */
         zeroForces(nodes);
 
         // Check if still in dialling in phase or whether it is time to wait for
@@ -1028,10 +1030,11 @@ void Simulation::run_tensor_increment(int counter, double &time, int &step_count
         /* If not waiting for equilibrium, set the current value of the Dial-In
         Factor, based on linear dialling in between the previously calculated
         'checkpoint' values. */
-        if (simulation_status == dialling) { update_dial_in_factor(time, counter); }
+        if (simulation_status == dialling) { update_dial_in_factor(); }
 
+        std::pair<double, double> upperAndLowerTotSlideForces;
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        progress_single_step(time, counter, upperAndLowerTotSlideForces, correspondingTrianglesForNodes);
+        progress_single_step(counter, upperAndLowerTotSlideForces, correspondingTrianglesForNodes);
         auto duration = std::chrono::steady_clock::now() - begin;
         double duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
 
@@ -1042,7 +1045,7 @@ void Simulation::run_tensor_increment(int counter, double &time, int &step_count
         and the triangle geometry data match in the output, which is desirable!*/
         if ((step_count % settings.InversePrintRate == 0 && settings.InversePrintRate > 0) ||
             settings.slideJustReachedEquil == 1) {
-            save_and_print_details(time, counter, step_count, duration_us, upperAndLowerTotSlideForces);
+            save_and_print_details(counter, duration_us, upperAndLowerTotSlideForces);
             settings.slideJustReachedEquil = 0;
         }
 
@@ -1053,13 +1056,13 @@ void Simulation::run_tensor_increment(int counter, double &time, int &step_count
              Also print total stretching and bending energies.*/
             if (timeSinceLastEquilCheck > settings.TimeBetweenEquilChecks &&
                 simulation_status == waitingForEquilibrium) {
-                check_for_equilibrium(time, step_count);
+                check_for_equilibrium();
             }
 
             /* If equilibrium reached, write output data to file, and move to next
             'dialling in' phase. */
             if (simulation_status == equilibriumReached) {
-                save_and_print_details(time, counter, step_count, duration_us, upperAndLowerTotSlideForces);
+                save_and_print_details(counter, duration_us, upperAndLowerTotSlideForces);
                 setup_reached_equilibrium();
             }
         }
@@ -1069,7 +1072,7 @@ void Simulation::run_tensor_increment(int counter, double &time, int &step_count
         'blowing, up', and the code aborts in that case. */
         try { advanceDynamics(nodes, triangles, settings, log_stream); }
         catch (const std::runtime_error &error) {
-            error_large_force(time, step_count, counter);
+            error_large_force(counter);
         }
 
         // Advance times and step counter.
@@ -1082,12 +1085,7 @@ void Simulation::run_tensor_increment(int counter, double &time, int &step_count
 
 
 void Simulation::run_simulation() {
-    /* Initialise time and step counter. Set logStream to more useful
-    format and precision for e.g. energy printouts. */
-    double time = 0;
-    int step_count = 0;
     log_stream << std::scientific << std::setprecision(8);
-
     std::ofstream forceDistFile;
 
     /* Loop over the sequence of programmed tensors, dialling-in and waiting for
@@ -1095,7 +1093,7 @@ void Simulation::run_simulation() {
     cases for this code, where only a single set of programmed tensors is supplied.*/
     for (std::size_t progTensorSequenceCounter = progTensorSequenceCounterToStartFrom;
          progTensorSequenceCounter <= programmed_metric_infos.size() - 2; ++progTensorSequenceCounter) {
-        run_tensor_increment(progTensorSequenceCounter, time, step_count);
+        run_tensor_increment(progTensorSequenceCounter);
 
         if (programmed_metric_infos.size() > 2 && progTensorSequenceCounter < programmed_metric_infos.size() - 2) {
             log_stream.open();
