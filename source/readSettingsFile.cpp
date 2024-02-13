@@ -86,30 +86,30 @@ void checkIfBoolParameterIsDefinedCorrectly(Settings &settings, const libconfig:
 
 void readInAllParametersWithAnIntegrityCheck(Settings &settings, const libconfig::Config &config) {
     std::vector<std::string>
-            doubleConfigurationParameters = {"slideStiffnessPrefactor", "slideSpeedPrefactor", "slideFrictionCoeff",
-                                             "ThicknessesAboveLowestNodeToClampUpTo", "pSpeedPrefactor",
-                                             "constSlideWeightFac", "slideWeightDialSpeedFac", "SpacerHeight",
-                                             "SpecifyInitSlideZCoord_upper", "SpecifyInitSlideZCoord_lower",
-                                             "totalSlideForceToMuTSqRatioEquilThreshold",
-                                             "InitialSlideWeightForCtrldForceInUnitsOfMuTsq", "PrintFrequency",
-                                             "Equil_Force_To_CharForce_Ratio_Threshold",
-                                             "Equil_Speed_To_SoundSpeed_Ratio_Threshold", "DialInResolution",
-                                             "DialInStepTimePrefactor", "TimeBetweenEquilChecksPrefactor",
-                                             "ProdForceTime", "ProdStrength", "LoadForceTime", "LoadStrength",
-                                             "DampingPrefactor1", "DampingPrefactor2", "GentFactor",
-                                             "TimeStepPrefactor", "SheetThickness", "ShearModulus", "PoissonRatio",
-                                             "InitDensity", "PatchMatrixDimensionlessConditioningThreshold", "GravitySign"};
+            doubleConfigurationParameters = {"slide_stiffness_prefactor", "slide_speed_prefactor", "slide_friction_coefficient",
+                                             "thicknesses_above_lowest_node_to_clamp_up_to", "p_speed_prefactor",
+                                             "const_slide_weight_fac", "slide_weight_dial_speed_fac", "spacer_height",
+                                             "specify_init_slide_z_coord_upper", "specify_init_slide_z_coord_lower",
+                                             "total_slide_force_to_mu_t_sq_ratio_equil_threshold",
+                                             "initial_slide_weight_for_ctrld_force_in_units_of_mu_tsq", "print_frequency",
+                                             "char_force",
+                                             "char_speed", "dial_in_resolution",
+                                             "dial_in_step_time_prefactor", "time_between_equil_checks_prefactor",
+                                             "prod_force_time", "prod_strength", "load_force_time", "load_strength",
+                                             "dial_in_damping", "equilibriation_damping", "gent_factor",
+                                             "time_step_prefactor", "sheet_thickness", "shear_modulus", "poisson_ratio",
+                                             "init_density", "patch_matrix_dimensionless_conditioning_threshold", "gravity_sign"};
     std::vector<std::string>
-            intConfigurationParameters = {"testTriangle"};
+            intConfigurationParameters = {"test_triangle"};
 
     std::vector<std::string>
-            boolConfigurationParameters = {"isDialingDisabled", "GlassCones", "isSeideDeformationsEnabled",
-                                           "isControlledForceEnabled", "isLCEModeEnabled", "isEnergyDensitiesPrinted",
-                                           "isTriangleAreasPrinted",
-                                           "isAngleDeficitsPrinted", "isGradientDescentDynamicsEnabled",
-                                           "ForInitialPortionOfProgTensorsSequence_DialProgTauButJumpProgMetricAndProgSecFF",
-                                           "isDialingFromAnsatzEnabled", "isPerturbationOfInitialPositionsEnabled",
-                                           "isBoundaryClamped"};
+            boolConfigurationParameters = {"is_dialing_disabled", "glass_cones", "is_controlled_force_enabled",
+                                           "is_seide_deformations_enabled", "is_lce_mode_enabled", "is_energy_densities_printed",
+                                           "is_triangle_areas_printed",
+                                           "is_angle_deficits_printed", "is_gradient_descent_dynamics_enabled",
+                                           "for_initial_portion_of_prog_tensors_sequence_dial_prog_tau_but_jump_prog_metric_and_prog_sec_ff",
+                                           "is_dialing_from_ansatz_enabled", "is_perturbation_of_initial_positions_enabled",
+                                           "is_boundary_clamped"};
 
     for (auto &floatParameterName: doubleConfigurationParameters) {
         checkIfDoubleParameterIsDefinedCorrectly(settings, config, floatParameterName);
@@ -123,8 +123,8 @@ void readInAllParametersWithAnIntegrityCheck(Settings &settings, const libconfig
         checkIfBoolParameterIsDefinedCorrectly(settings, config, boolParameterName);
     }
 
-    if (settings.ForInitialPortionOfProgTensorsSequence_DialProgTauButJumpProgMetricAndProgSecFF &&
-        settings.isDialingFromAnsatzEnabled) {
+    if (settings.for_initial_portion_of_prog_tensors_sequence_dial_prog_tau_but_jump_prog_metric_and_prog_sec_ff &&
+        settings.is_dialing_from_ansatz_enabled) {
         throw std::runtime_error("Error: The ForInitialPortionOfProgTensorsSequence_DialProgTauButJumpProgMetricAndProgSecFF\n \
         and isDialingFromAnsatzEnabled settings give incompatible behaviours, so you're not allowed to have both == true simultaneously. Aborting.");
     }
@@ -135,7 +135,7 @@ void readSettingsFile(Settings &settings, const char *settings_file_name) {
     libconfig::Config config;
     config.readFile(settings_file_name);
     readInAllParametersWithAnIntegrityCheck(settings, config);
-    settings.YoungsModulus = 2.0 * settings.ShearModulus * (1.0 + settings.PoissonRatio);
+    settings.youngs_modulus = 2.0 * settings.shear_modulus * (1.0 + settings.poisson_ratio);
 }
 
 void readSettingsFile(Settings &settings, const std::string& settings_filename) {

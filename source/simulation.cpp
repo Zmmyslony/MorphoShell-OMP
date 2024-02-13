@@ -112,22 +112,7 @@ from command line. */
 
 
 void Simulation::read_settings() {
-    try { readSettingsFile(settings, settings_filename); }
-    catch (const libconfig::FileIOException &fioex) {
-        log_stream.open();
-        log_stream << "I/O error reading settings file. Check file exists in correct directory and has correct name."
-                   << std::endl;
-        return;
-    }
-    catch (const libconfig::ParseException &pex) {
-        log_stream << "Parse error reading settings file. Check file has correct format." << std::endl;
-        return;
-    }
-    catch (const std::runtime_error &error) {
-        log_stream << error.what() << std::endl;
-        log_stream.close();
-        return;
-    }
+    readSettingsFile(settings, settings_filename);
 }
 
 
@@ -158,14 +143,14 @@ void Simulation::read_vtk_data() {
 
 void Simulation::configure_nodes() {
     log_stream.open();
-    log_stream << "Number of nodes = " << settings.NumNodes << std::endl;
-    log_stream << "Number of triangles = " << settings.NumTriangles << std::endl;
+    log_stream << "Number of nodes = " << settings.num_nodes << std::endl;
+    log_stream << "Number of triangles = " << settings.num_triangles << std::endl;
 
     /* Print warning if number of triangles is low - in this case boundary effects
     will dominate, and the code should not be trusted, both due to the reduced
     accuracy in the treatment of the boundary in e.g. the 2nd F.F. approx, and due
     to possible bugs in this rather special case.*/
-    if (settings.NumTriangles < 50) {
+    if (settings.num_triangles < 50) {
         log_stream << "Your mesh has a small number of triangles. \nBeware that the code "
                       "is likely to be less accurate in this case, \nand unforeseen bugs are more "
                       "likely in extreme cases." << std::endl;
@@ -173,7 +158,7 @@ void Simulation::configure_nodes() {
     log_stream.close();
 
 
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
         nodes[i].nodeLogStream.setOutputFileName(log_filename);
     }
 }
@@ -183,7 +168,7 @@ void Simulation::configure_topological_properties() {
     calcTrianglesIncidentOnNodes(nodes, triangles, settings);
     calcTriangleAdjacencies_And_Edges(nodes, triangles, edges, settings);
 
-    for (int i = 0; i < settings.NumEdges; ++i) {
+    for (int i = 0; i < settings.num_edges; ++i) {
         edges[i].edgeLogStream.setOutputFileName(log_filename);
     }
 
@@ -193,9 +178,9 @@ void Simulation::configure_topological_properties() {
     characteristic sample length in estimating characteristic times, time steps
     etc.*/
     int numBoundaryEdges = 0;
-    std::vector<double> initBoundaryEdgeLengths(settings.NumEdges);
+    std::vector<double> initBoundaryEdgeLengths(settings.num_edges);
 
-    for (int i = 0; i < settings.NumEdges; ++i) {
+    for (int i = 0; i < settings.num_edges; ++i) {
         if (edges[i].isOnBoundary) {
 
             numBoundaryEdges += 1;
@@ -205,7 +190,7 @@ void Simulation::configure_topological_properties() {
 
             //If chosen in settings, clamp whole boundary in addition to clamp
             //indicators from data file.
-            if (settings.isBoundaryClamped) {
+            if (settings.is_boundary_clamped) {
                 nodes[edges[i].nodeLabels(0)].isClamped = true;
                 nodes[edges[i].nodeLabels(1)].isClamped = true;
             }
@@ -217,33 +202,33 @@ void Simulation::configure_topological_properties() {
 
 // Do sum to calculate perimeter, and set the characteristic sample length to it.
     double initPerimeter = kahanSum(initBoundaryEdgeLengths);
-    settings.SampleCharLength = initPerimeter;
+    settings.sample_char_length = initPerimeter;
     log_stream.open();
     log_stream << "Initial perimeter = " << initPerimeter << std::endl;
     log_stream.close();
 
 
 //A further check that things are ok:
-    if (3 * settings.NumTriangles != 2 * settings.NumEdges - numBoundaryEdges) {
+    if (3 * settings.num_triangles != 2 * settings.num_edges - numBoundaryEdges) {
         throw std::runtime_error(
                 "Something has gone wrong in calculating triangle adjacencies and/or edges: the current edge and triangle counts violate a topological identity.");
     }
 
     log_stream.open();
-    log_stream << "Number of edges = " << settings.NumEdges << std::endl;
+    log_stream << "Number of edges = " << settings.num_edges << std::endl;
     log_stream << "Number of boundary edges = " << numBoundaryEdges << std::endl;
-    log_stream << "Number of non-boundary edges = " << settings.NumEdges - numBoundaryEdges << std::endl;
+    log_stream << "Number of non-boundary edges = " << settings.num_edges - numBoundaryEdges << std::endl;
     log_stream.close();
 }
 
 
 void Simulation::configure_triangles() {
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         triangles[i].triLogStream.setOutputFileName(log_filename);
     }
 
     int numBoundaryTriangles = 0;
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         if (triangles[i].isOnBoundary) {
             numBoundaryTriangles += 1;
         }
@@ -251,11 +236,11 @@ void Simulation::configure_triangles() {
 
     log_stream.open();
     log_stream << "Number of boundary triangles = " << numBoundaryTriangles << std::endl;
-    log_stream << "Number of holes in mesh = " << 1 + settings.NumEdges - settings.NumNodes - settings.NumTriangles
+    log_stream << "Number of holes in mesh = " << 1 + settings.num_edges - settings.num_nodes - settings.num_triangles
                << std::endl; // From Euler's formula for a planar graph.
     log_stream.close();
 
-    if (1 + settings.NumEdges - settings.NumNodes - settings.NumTriangles < 0) {
+    if (1 + settings.num_edges - settings.num_nodes - settings.num_triangles < 0) {
         throw std::runtime_error(
                 "Something is very wrong with the mesh, because the code thinks it has a negative number of holes! A first thing to check is that all nodes touch at least one tri.");
     }
@@ -264,12 +249,12 @@ void Simulation::configure_triangles() {
 
 void Simulation::count_boundary_nodes() {
     int numBoundaryNodes = 0;
-    for (int n = 0; n < settings.NumNodes; ++n) {
+    for (int n = 0; n < settings.num_nodes; ++n) {
         if (nodes[n].isOnBoundary) {
             numBoundaryNodes += 1;
         }
     }
-    settings.numBoundaryNodes = numBoundaryNodes;
+    settings.num_boundary_nodes = numBoundaryNodes;
 }
 
 
@@ -292,7 +277,7 @@ void Simulation::orient_node_labels() {
                                                   programmed_taus, programmed_second_fundamental_forms, settings);
     Eigen::Vector3d tempZAxisVec;
     tempZAxisVec << 0.0, 0.0, 1.0;
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         if (tempZAxisVec.dot(triangles[i].currSides.col(0).cross(triangles[i].currSides.col(1))) < 0) {
             int tempLabel = triangles[i].vertexLabels(2);
             triangles[i].vertexLabels(2) = triangles[i].vertexLabels(1);
@@ -314,8 +299,8 @@ void Simulation::set_initial_conditions() {
 }
 
 void Simulation::find_smallest_element() {
-    settings.ApproxMinInitElemSize = DBL_MAX;
-    settings.smallestSizeOverRootTau = DBL_MAX;
+    settings.approx_min_init_elem_size = DBL_MAX;
+    settings.smallest_size_over_root_tau = DBL_MAX;
     for (int i = 0; i < triangles.size(); ++i) {
 
         // This variable will end up holding the smallest altitude for *this* tri.
@@ -328,59 +313,59 @@ void Simulation::find_smallest_element() {
             }
         }
 
-        if (settings.ApproxMinInitElemSize > smallestAltitude) {
-            settings.ApproxMinInitElemSize = smallestAltitude;
+        if (settings.approx_min_init_elem_size > smallestAltitude) {
+            settings.approx_min_init_elem_size = smallestAltitude;
         }
 
         for (auto &sequenceOf_ProgTau: programmed_taus) {
-            if (settings.smallestSizeOverRootTau > smallestAltitude / sqrt(sequenceOf_ProgTau[i])) {
-                settings.smallestSizeOverRootTau = smallestAltitude / sqrt(sequenceOf_ProgTau[i]);
+            if (settings.smallest_size_over_root_tau > smallestAltitude / sqrt(sequenceOf_ProgTau[i])) {
+                settings.smallest_size_over_root_tau = smallestAltitude / sqrt(sequenceOf_ProgTau[i]);
             }
         }
     }
     log_stream.open();
-    log_stream << "Sheet thickness = " << settings.SheetThickness << std::endl;
-    log_stream << "Approx smallest element linear size = " << settings.ApproxMinInitElemSize << std::endl;
+    log_stream << "Sheet thickness = " << settings.sheet_thickness << std::endl;
+    log_stream << "Approx smallest element linear size = " << settings.approx_min_init_elem_size << std::endl;
     log_stream.close();
 }
 
 void Simulation::print_total_load_force() {
     int numLoadedNodes = 0;
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
         if (nodes[i].isLoadForceEnabled) {
             numLoadedNodes += 1;
         }
     }
     log_stream.open();
     log_stream << "Total load force applied = " <<
-               numLoadedNodes * settings.LoadStrength * settings.ShearModulus * settings.ApproxMinInitElemSize *
-               settings.SheetThickness << std::endl;
+                                                numLoadedNodes * settings.load_strength * settings.shear_modulus * settings.approx_min_init_elem_size *
+                                                settings.sheet_thickness << std::endl;
     log_stream.close();
 }
 
 void Simulation::setup_characteristic_scales() {
-    settings.TimeBetweenEquilChecks = settings.TimeBetweenEquilChecksPrefactor * settings.DialInStepTime;
+    settings.time_between_equil_checks = settings.time_between_equil_checks_prefactor * settings.dial_in_step_time;
 
-    settings.charForceScale = settings.ShearModulus * settings.ApproxMinInitElemSize * settings.SheetThickness;
-    settings.charStretchEnergyDensityScale = settings.ShearModulus * settings.SheetThickness;
+    settings.char_force_scale = settings.shear_modulus * settings.approx_min_init_elem_size * settings.sheet_thickness;
+    settings.char_stretch_energy_density_scale = settings.shear_modulus * settings.sheet_thickness;
 // settings.charBendEnergyDensityScale = settings.ShearModulus * settings.SheetThickness * settings.SheetThickness * settings.SheetThickness / (settings.SampleCharLength * settings.SampleCharLength);
     double totInitArea;
-    std::vector<double> initAreas(settings.NumTriangles);
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    std::vector<double> initAreas(settings.num_triangles);
+    for (int i = 0; i < settings.num_triangles; ++i) {
         initAreas[i] = triangles[i].initArea;
     }
     totInitArea = kahanSum(initAreas);
-    settings.charStretchEnergyScale = settings.charStretchEnergyDensityScale * totInitArea;
+    settings.char_stretch_energy_scale = settings.char_stretch_energy_density_scale * totInitArea;
 // settings.charBendEnergyScale = settings.charBendEnergyDensityScale * totInitArea;
 }
 
 
 void Simulation::setup_equilibrium_dial_in_factors() {
     double tempDialInFactor = 0.0;
-    if (settings.DialInResolution > 0 && settings.DialInStepTime >= 0) {
+    if (settings.dial_in_resolution > 0 && settings.dial_in_step_time >= 0) {
         while (tempDialInFactor < 1.0) {
             DialInFactorValuesToHoldAt.push_back(tempDialInFactor);
-            tempDialInFactor += settings.DialInResolution;
+            tempDialInFactor += settings.dial_in_resolution;
         }
         DialInFactorValuesToHoldAt.push_back(1.0);
     } else {
@@ -395,20 +380,20 @@ void Simulation::setup_equilibrium_dial_in_factors() {
 }
 
 void Simulation::initialise_simulation_vectors() {
-    gaussCurvatures = std::vector<double>(settings.NumTriangles, DBL_MAX);
-    meanCurvatures = std::vector<double>(settings.NumTriangles, DBL_MAX);
-    stretchEnergies = std::vector<double>(settings.NumTriangles, DBL_MAX);
-    bendEnergies = std::vector<double>(settings.NumTriangles, DBL_MAX);
-    stretchEnergyDensities = std::vector<double>(settings.NumTriangles, DBL_MAX);
-    bendEnergyDensities = std::vector<double>(settings.NumTriangles, DBL_MAX);
-    kineticEnergies = std::vector<double>(settings.NumNodes, DBL_MAX);
-    strainMeasures = std::vector<double>(settings.NumTriangles, DBL_MAX);
-    cauchyStressEigenvals = std::vector<Eigen::Vector2d>(settings.NumTriangles);
-    cauchyStressEigenvecs = std::vector<Eigen::Matrix<double, 3, 2>>(settings.NumTriangles);
+    gaussCurvatures = std::vector<double>(settings.num_triangles, DBL_MAX);
+    meanCurvatures = std::vector<double>(settings.num_triangles, DBL_MAX);
+    stretchEnergies = std::vector<double>(settings.num_triangles, DBL_MAX);
+    bendEnergies = std::vector<double>(settings.num_triangles, DBL_MAX);
+    stretchEnergyDensities = std::vector<double>(settings.num_triangles, DBL_MAX);
+    bendEnergyDensities = std::vector<double>(settings.num_triangles, DBL_MAX);
+    kineticEnergies = std::vector<double>(settings.num_nodes, DBL_MAX);
+    strainMeasures = std::vector<double>(settings.num_triangles, DBL_MAX);
+    cauchyStressEigenvals = std::vector<Eigen::Vector2d>(settings.num_triangles);
+    cauchyStressEigenvecs = std::vector<Eigen::Matrix<double, 3, 2>>(settings.num_triangles);
 
-    angleDeficits = std::vector<double>(settings.NumNodes, DBL_MAX);
-    interiorNodeAngleDeficits = std::vector<double>(settings.NumNodes, DBL_MAX);
-    boundaryNodeAngleDeficits = std::vector<double>(settings.NumNodes, DBL_MAX);
+    angleDeficits = std::vector<double>(settings.num_nodes, DBL_MAX);
+    interiorNodeAngleDeficits = std::vector<double>(settings.num_nodes, DBL_MAX);
+    boundaryNodeAngleDeficits = std::vector<double>(settings.num_nodes, DBL_MAX);
 }
 
 
@@ -438,22 +423,22 @@ void Simulation::init(int argc, char *argv[]) {
 
     initialise_simulation_vectors();
 
-    if (settings.isPerturbationOfInitialPositionsEnabled) {
+    if (settings.is_perturbation_of_initial_positions_enabled) {
         perturbInitialPositionsWithRandomNoise(nodes, settings);
     }
 }
 
 
 void Simulation::run_ansatz(int counter) {
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
         nodes[i].pos = nodeAnsatzPositions[i];
     }
 
     timeSinceLastEquilCheck = 0;
-    simulation_status = dialling;
+    simulation_status = Dialling;
     DialInFactorCounter = 0;
 
-    if (!settings.isDialingFromAnsatzEnabled) {
+    if (!settings.is_dialing_from_ansatz_enabled) {
 
         currDialInFactor = dialInFactorToStartFrom;
         for (std::size_t i = 0; i < DialInFactorValuesToHoldAt.size(); ++i) {
@@ -465,7 +450,7 @@ void Simulation::run_ansatz(int counter) {
         timeSinceCurrDiallingInPhaseStarted =
                 ((currDialInFactor - DialInFactorValuesToHoldAt[DialInFactorCounter]) /
                  (DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
-                  - DialInFactorValuesToHoldAt[DialInFactorCounter])) * settings.DialInStepTime;
+                  - DialInFactorValuesToHoldAt[DialInFactorCounter])) * settings.dial_in_step_time;
 
         /* Here we implement another feature, in which the progMetric and
         progSecFF that we would normally be dialling FROM at this point, are
@@ -496,8 +481,8 @@ void Simulation::run_ansatz(int counter) {
         that you thought you started close to, pumping unnecessary energy in
         to the system and wasting time.
         There may be other uses for this feature too.*/
-        if (settings.ForInitialPortionOfProgTensorsSequence_DialProgTauButJumpProgMetricAndProgSecFF) {
-            for (int i = 0; i < settings.NumTriangles; ++i) {
+        if (settings.for_initial_portion_of_prog_tensors_sequence_dial_prog_tau_but_jump_prog_metric_and_prog_sec_ff) {
+            for (int i = 0; i < settings.num_triangles; ++i) {
                 programmed_second_fundamental_forms[progTensorSequenceCounterToStartFrom][i] = programmed_second_fundamental_forms[
                         progTensorSequenceCounterToStartFrom + 1][i];
                 programmed_metric_infos[progTensorSequenceCounterToStartFrom][i] = programmed_metric_infos[
@@ -531,7 +516,7 @@ void Simulation::run_ansatz(int counter) {
         timeSinceCurrDiallingInPhaseStarted = 0.0;
 
         // Calculate all necessary geometry for the ansatz state.
-        calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, currDialInFactor,
+        calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, WaitingForEquilibrium, currDialInFactor,
                                                       counter, programmed_metric_infos,
                                                       inverted_programmed_metrics, programmed_taus,
                                                       programmed_second_fundamental_forms, settings);
@@ -545,7 +530,7 @@ void Simulation::run_ansatz(int counter) {
         /* Alter inverted_programmed_metrics[progTensorSequenceCounterToStartFrom] and similar to change where
         the programmed quantities are dialling from.*/
 
-        for (int i = 0; i < settings.NumTriangles; ++i) {
+        for (int i = 0; i < settings.num_triangles; ++i) {
 
             // Test for invertibility of metric before taking inverse.
             tempMetricDecomp.compute(
@@ -557,7 +542,7 @@ void Simulation::run_ansatz(int counter) {
             } else {
                 inverted_programmed_metrics[progTensorSequenceCounterToStartFrom][i] = (
                         triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
-                if (settings.isDialingDisabled) {
+                if (settings.is_dialing_disabled) {
                     inverted_programmed_metrics[progTensorSequenceCounterToStartFrom + 1][i] = (
                             triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
                 }
@@ -568,7 +553,7 @@ void Simulation::run_ansatz(int counter) {
             programmed_taus[progTensorSequenceCounterToStartFrom][i] = programmed_taus[
                     progTensorSequenceCounterToStartFrom + 1][i];
             programmed_second_fundamental_forms[progTensorSequenceCounterToStartFrom][i] = triangles[i].secFF;
-            if (settings.isDialingDisabled) {
+            if (settings.is_dialing_disabled) {
                 programmed_taus[progTensorSequenceCounterToStartFrom + 1][i] = programmed_taus[
                         progTensorSequenceCounterToStartFrom + 1][i];
                 programmed_second_fundamental_forms[progTensorSequenceCounterToStartFrom +
@@ -579,17 +564,17 @@ void Simulation::run_ansatz(int counter) {
 
     // If set in settings file, clamp all nodes within a certain vertical distance
     // above the node with the lowest initial z value (only works with ansazt clearly).
-    if (settings.ThicknessesAboveLowestNodeToClampUpTo > 0) {
+    if (settings.thicknesses_above_lowest_node_to_clamp_up_to > 0) {
         double minNodeZCoord = nodes[0].pos(2);
-        for (int n = 0; n < settings.NumNodes; ++n) {
+        for (int n = 0; n < settings.num_nodes; ++n) {
             if (minNodeZCoord > nodes[n].pos(2)) {
                 minNodeZCoord = nodes[n].pos(2);
             }
         }
 
-        for (int n = 0; n < settings.NumNodes; ++n) {
+        for (int n = 0; n < settings.num_nodes; ++n) {
             if (nodes[n].pos(2) - minNodeZCoord <
-                settings.ThicknessesAboveLowestNodeToClampUpTo * settings.SheetThickness) {
+                settings.thicknesses_above_lowest_node_to_clamp_up_to * settings.sheet_thickness) {
                 nodes[n].isClamped = true;
             }
         }
@@ -599,7 +584,7 @@ void Simulation::run_ansatz(int counter) {
 void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, int lowest_node,
                                                   std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
     settings.lambda = 0.9;
-    settings.ConeAngle = asin(pow(settings.lambda, 1.5));
+    settings.cone_angle = asin(pow(settings.lambda, 1.5));
     log_stream.open();
     log_stream << "IMPOSING SEIDE DEFORMATIONS." << std::endl;
     log_stream.close();
@@ -608,14 +593,14 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
     // positions we will force to be those of Seide's setup (found
     // by findng the membrane stress solution for his base state, and
     // integrating the strains etc).
-    double intermLengthScaleUpper = 3.0 * sqrt(settings.SheetThickness * 0.18);
-    double intermLengthScaleLower = 3.0 * sqrt(settings.SheetThickness * 1.8);
+    double intermLengthScaleUpper = 3.0 * sqrt(settings.sheet_thickness * 0.18);
+    double intermLengthScaleLower = 3.0 * sqrt(settings.sheet_thickness * 1.8);
     log_stream.open();
     log_stream
             << "Imposing Seide displacements within the following (initial) vertical distances of the top and bottom: "
             << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
     log_stream.close();
-    for (int n = 0; n < settings.NumNodes; ++n) {
+    for (int n = 0; n < settings.num_nodes; ++n) {
         if (((nodes[highest_node].pos(2) - nodes[n].pos(2)) < intermLengthScaleUpper) ||
             ((nodes[n].pos(2) - nodes[lowest_node].pos(2)) < intermLengthScaleLower)) {
             nodes[n].isSeideDisplacementEnabled = true;
@@ -623,11 +608,11 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
     }
 
     // STORE PERFECT CONE ANSATZ
-    for (int n = 0; n < settings.NumNodes; ++n) {
+    for (int n = 0; n < settings.num_nodes; ++n) {
         nodeUnstressedConePosits[n] = nodes[n].pos;
     }
     s1 = sqrt(nodes[highest_node].pos(0) * nodes[highest_node].pos(0) +
-              nodes[highest_node].pos(1) * nodes[highest_node].pos(1)) / sin(settings.ConeAngle);
+              nodes[highest_node].pos(1) * nodes[highest_node].pos(1)) / sin(settings.cone_angle);
 
 //    Eigen::Vector3d testTriCurrCentroid;
 //    testTriCurrCentroid = (nodes[triangles[settings.testTriangle].vertexLabels(0)].pos +
@@ -638,12 +623,12 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
 }
 
 void Simulation::setup_glass_cones(int highest_node, int lowest_node) {
-    settings.ConeAngle = 1.02327019;
-    settings.initSlideZCoord_upper += -tan(settings.ConeAngle) *
-                                      sqrt(nodes[highest_node].pos(0) * nodes[highest_node].pos(0) +
+    settings.cone_angle = 1.02327019;
+    settings.init_slide_z_coord_upper += -tan(settings.cone_angle) *
+                                         sqrt(nodes[highest_node].pos(0) * nodes[highest_node].pos(0) +
                                            nodes[highest_node].pos(1) * nodes[highest_node].pos(1));
-    settings.initSlideZCoord_lower += -tan(settings.ConeAngle) *
-                                      sqrt(nodes[lowest_node].pos(0) * nodes[lowest_node].pos(0) +
+    settings.init_slide_z_coord_lower += -tan(settings.cone_angle) *
+                                         sqrt(nodes[lowest_node].pos(0) * nodes[lowest_node].pos(0) +
                                            nodes[lowest_node].pos(1) * nodes[lowest_node].pos(1));
     log_stream.open();
     log_stream << "USING TWO GLASS CONES FOR SQUASHING." << std::endl;
@@ -653,14 +638,13 @@ void Simulation::setup_glass_cones(int highest_node, int lowest_node) {
     // forces we will modify to kill any components not tangential to
     // a perfect cone base state. We do this to nodes within an intermediate
     // distance vertically from the ends of the cone.
-    double intermLengthScaleUpper = 2.0 * sqrt(settings.SheetThickness * 0.18);
-    double intermLengthScaleLower = 2.0 * sqrt(settings.SheetThickness * 1.8);
+    double intermLengthScaleUpper = 2.0 * sqrt(settings.sheet_thickness * 0.18);
+    double intermLengthScaleLower = 2.0 * sqrt(settings.sheet_thickness * 1.8);
     log_stream.open();
-    log_stream
-            << "Apply normal-force-killer within the following vertical distances of the top and bottom: "
-            << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
+    log_stream << "Apply normal-force-killer within the following vertical distances of the top and bottom: "
+               << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
     log_stream.close();
-    for (int n = 0; n < settings.NumNodes; ++n) {
+    for (int n = 0; n < settings.num_nodes; ++n) {
         if (((nodes[highest_node].pos(2) - nodes[n].pos(2)) < intermLengthScaleUpper) ||
             ((nodes[n].pos(2) - nodes[lowest_node].pos(2)) < intermLengthScaleLower)) {
             nodes[n].isOnBoundary = true;
@@ -669,69 +653,69 @@ void Simulation::setup_glass_cones(int highest_node, int lowest_node) {
 }
 
 void Simulation::update_slide_properties() {
-    if (!settings.isControlledForceEnabled) {
-        settings.upperSlideDisplacement =
-                time * settings.slideSpeedPrefactor * settings.SampleCharLength / settings.bending_long_time;
+    if (!settings.is_controlled_force_enabled) {
+        settings.upper_slide_displacement =
+                time * settings.slide_speed_prefactor * settings.sample_char_length / settings.bending_long_time;
     } else { // settings.isControlledForceEnabled == true instead
         //settings.upperSlideWeight = (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) * (time * settings.slideSpeedPrefactor / bending_long_time);
-        settings.slideDampingParam =
-                0.4 * settings.ShearModulus * settings.SheetThickness * settings.SheetThickness /
-                (settings.slideSpeedPrefactor * settings.SampleCharLength / settings.bending_long_time);
-        if (fabs(settings.upperTotSlideForce + settings.upperSlideWeight) /
-            (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) <
-            settings.totalSlideForceToMuTSqRatioEquilThreshold
-            && settings.constSlideWeightFac < 0) {
-            if (timeSinceLastEquilCheck > settings.TimeBetweenEquilChecks) {
-                if (equilibriumCheck(nodes, triangles, settings, log_stream) == equilibriumReached) {
-                    settings.slideJustReachedEquil = 1;
-                    settings.upperSlideWeight +=
-                            settings.slideWeightDialSpeedFac *
-                            (settings.TimeStep / settings.bending_long_time) *
-                            (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness);
+        settings.slide_damping_param =
+                0.4 * settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness /
+                (settings.slide_speed_prefactor * settings.sample_char_length / settings.bending_long_time);
+        if (fabs(settings.upper_tot_slide_force + settings.upper_slide_weight) /
+            (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness) <
+            settings.total_slide_force_to_mu_t_sq_ratio_equil_threshold
+            && settings.const_slide_weight_fac < 0) {
+            if (timeSinceLastEquilCheck > settings.time_between_equil_checks) {
+                if (equilibriumCheck(nodes, triangles, settings, log_stream) == EquilibriumReached) {
+                    settings.is_slide_just_equilibrated = 1;
+                    settings.upper_slide_weight +=
+                            settings.slide_weight_dial_speed_fac *
+                            (settings.time_step / settings.bending_long_time) *
+                            (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness);
                 }
                 timeSinceLastEquilCheck = 0.0;
             }
         }
 
         // To do constant-weight slide instead
-        if (settings.constSlideWeightFac > 0) {
-            settings.upperSlideWeight =
-                    settings.constSlideWeightFac * settings.ShearModulus * settings.SheetThickness *
-                    settings.SheetThickness;
+        if (settings.const_slide_weight_fac > 0) {
+            settings.upper_slide_weight =
+                    settings.const_slide_weight_fac * settings.shear_modulus * settings.sheet_thickness *
+                    settings.sheet_thickness;
         }
     }
-    settings.currSlideZCoord_upper = settings.initSlideZCoord_upper - settings.upperSlideDisplacement;
+    settings.curr_slide_z_coord_upper = settings.init_slide_z_coord_upper - settings.upper_slide_displacement;
 }
 
 
 void Simulation::impose_seide_deformation(double s1, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
-    if (settings.isSeideDeformationsEnabled) {
-        double pInit = 3.0 * (settings.ShearModulus * settings.SheetThickness *
-                              settings.SheetThickness); // So we don't have to start all the way from p=0, chosen based on previous sims.
-        settings.p = pInit + time * settings.pSpeedPrefactor * settings.ShearModulus * settings.SheetThickness *
-                             settings.SheetThickness / settings.bending_long_time;
+    if (settings.is_seide_deformations_enabled) {
+        double pInit = 3.0 * (settings.shear_modulus * settings.sheet_thickness *
+                              settings.sheet_thickness); // So we don't have to start all the way from p=0, chosen based on previous sims.
+        settings.p = pInit + time * settings.p_speed_prefactor * settings.shear_modulus * settings.sheet_thickness *
+                             settings.sheet_thickness / settings.bending_long_time;
 
-        for (int n = 0; n < settings.NumNodes; ++n) {
+        for (int n = 0; n < settings.num_nodes; ++n) {
             if (nodes[n].isSeideDisplacementEnabled || step_count == 0) {
 
-                double tCone = settings.SheetThickness / sqrt(settings.lambda);
+                double tCone = settings.sheet_thickness / sqrt(settings.lambda);
 
                 double polarAng = atan2(nodeUnstressedConePosits[n](1), nodeUnstressedConePosits[n](0));
                 double s = sqrt(nodeUnstressedConePosits[n](0) * nodeUnstressedConePosits[n](0) +
                                 nodeUnstressedConePosits[n](1) * nodeUnstressedConePosits[n](1)) /
-                           sin(settings.ConeAngle);
+                           sin(settings.cone_angle);
                 Eigen::Vector3d uHat;
-                uHat << sin(settings.ConeAngle) * cos(polarAng), sin(settings.ConeAngle) * sin(polarAng), -cos(
-                        settings.ConeAngle);
+                uHat << sin(settings.cone_angle) * cos(polarAng), sin(settings.cone_angle) * sin(polarAng), -cos(
+                        settings.cone_angle);
                 Eigen::Vector3d wHat;
-                wHat << -cos(settings.ConeAngle) * cos(polarAng), -cos(settings.ConeAngle) *
-                                                                  sin(polarAng), -sin(settings.ConeAngle);
+                wHat << -cos(settings.cone_angle) * cos(polarAng), -cos(settings.cone_angle) *
+                                                                   sin(polarAng), -sin(settings.cone_angle);
                 double u = -settings.p * log(s / s1) /
-                           (2.0 * M_PI * settings.YoungsModulus * tCone * sin(settings.ConeAngle) *
-                            cos(settings.ConeAngle));
-                double w = -settings.p * (log(s / s1) + settings.PoissonRatio) /
-                           (2.0 * M_PI * settings.YoungsModulus * tCone * cos(settings.ConeAngle) *
-                            cos(settings.ConeAngle));
+                           (2.0 * M_PI * settings.youngs_modulus * tCone * sin(settings.cone_angle) *
+                            cos(settings.cone_angle));
+                double w = -settings.p * (log(s / s1) + settings.poisson_ratio) /
+                           (2.0 * M_PI * settings.youngs_modulus * tCone * cos(settings.cone_angle) *
+                            cos(settings.cone_angle));
                 nodes[n].pos = nodeUnstressedConePosits[n] + u * uHat + w * wHat;
             }
         }
@@ -742,39 +726,39 @@ void Simulation::first_step_configuration(double &seide_quotient,
                                           std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
     int highest_node = INT_MIN;
     int lowest_node = INT_MIN;
-    settings.initSlideZCoord_lower = nodes[0].pos(2);
-    settings.initSlideZCoord_upper = nodes[0].pos(2);
-    for (int n = 0; n < settings.NumNodes; ++n) {
-        if (settings.initSlideZCoord_lower > nodes[n].pos(2)) {
-            settings.initSlideZCoord_lower = nodes[n].pos(2);
+    settings.init_slide_z_coord_lower = nodes[0].pos(2);
+    settings.init_slide_z_coord_upper = nodes[0].pos(2);
+    for (int n = 0; n < settings.num_nodes; ++n) {
+        if (settings.init_slide_z_coord_lower > nodes[n].pos(2)) {
+            settings.init_slide_z_coord_lower = nodes[n].pos(2);
             lowest_node = n;
         }
-        if (settings.initSlideZCoord_upper < nodes[n].pos(2)) {
-            settings.initSlideZCoord_upper = nodes[n].pos(2);
+        if (settings.init_slide_z_coord_upper < nodes[n].pos(2)) {
+            settings.init_slide_z_coord_upper = nodes[n].pos(2);
             highest_node = n;
         }
         // Can instead choose initial slide separation directly from settings file, to help avoid 'jumping' when starting a
         // squashing run part way through from a previous run's output.
-        if (settings.SpecifyInitSlideZCoord_upper > -99.0) {
-            settings.initSlideZCoord_upper = settings.SpecifyInitSlideZCoord_upper;
+        if (settings.specify_init_slide_z_coord_upper > -99.0) {
+            settings.init_slide_z_coord_upper = settings.specify_init_slide_z_coord_upper;
         }
-        if (settings.SpecifyInitSlideZCoord_lower > -99.0) {
-            settings.initSlideZCoord_lower = settings.SpecifyInitSlideZCoord_lower;
+        if (settings.specify_init_slide_z_coord_lower > -99.0) {
+            settings.init_slide_z_coord_lower = settings.specify_init_slide_z_coord_lower;
         }
 
         // To do constant-weight slide instead
-        if (settings.constSlideWeightFac > 0) {
-            settings.initSlideZCoord_upper = settings.initSlideZCoord_lower + settings.SpacerHeight *
-                                                                              settings.SampleCharLength;// This used to be settings.SpacerHeight * settings.SampleCharLength instead, which is wrong
+        if (settings.const_slide_weight_fac > 0) {
+            settings.init_slide_z_coord_upper = settings.init_slide_z_coord_lower + settings.spacer_height *
+                                                                                    settings.sample_char_length;// This used to be settings.SpacerHeight * settings.SampleCharLength instead, which is wrong
         }
 
-        settings.upperSlideDisplacement = 0.0;
-        settings.upperSlideVel = 0.0;
-        settings.slideJustReachedEquil = 0;
-        if (settings.isControlledForceEnabled) {
-            settings.upperSlideWeight = settings.InitialSlideWeightForCtrldForceInUnitsOfMuTsq *
-                                        (settings.ShearModulus * settings.SheetThickness *
-                                         settings.SheetThickness);
+        settings.upper_slide_displacement = 0.0;
+        settings.upper_slide_vel = 0.0;
+        settings.is_slide_just_equilibrated = 0;
+        if (settings.is_controlled_force_enabled) {
+            settings.upper_slide_weight = settings.initial_slide_weight_for_ctrld_force_in_units_of_mu_tsq *
+                                          (settings.shear_modulus * settings.sheet_thickness *
+                                           settings.sheet_thickness);
         }
     }
     // Uncomment the following line for single ridge experiment with point(ish) load to applied tip.
@@ -782,12 +766,12 @@ void Simulation::first_step_configuration(double &seide_quotient,
 
     // Readjust for the case of glass cones instead of glass slides. The
     // slide Z coords correspond to the tips of the glass cones.
-    if (settings.GlassCones) {
+    if (settings.glass_cones) {
         setup_glass_cones(highest_node, lowest_node);
     }
 
     // Instead set up imposed-Seide-deformations idea.
-    if (settings.isSeideDeformationsEnabled) {
+    if (settings.is_seide_deformations_enabled) {
         setup_imposed_seide_deformations(seide_quotient, highest_node, lowest_node, nodeUnstressedConePosits);
     }
 }
@@ -798,18 +782,18 @@ void Simulation::begin_equilibrium_search(int counter) {
                                                   counter, programmed_metric_infos,
                                                   inverted_programmed_metrics, programmed_taus,
                                                   programmed_second_fundamental_forms, settings);
-    simulation_status = waitingForEquilibrium;
+    simulation_status = WaitingForEquilibrium;
     // NB an EquilCheck has not actually just occurred, but this has the
     //desired effect of ensuring that each DialInFactor value is held
     //for at least one TimeBetweenEquilChecks.
     timeSinceLastEquilCheck = 0.0;
 
-    settings.NumDampFactor =
-            settings.DampingPrefactor2 *
-            settings.dampingScale; // Set damping factor to waiting phase value.
+    settings.num_damp_factor =
+            settings.equilibriation_damping *
+            settings.damping_scale; // Set damping factor to waiting phase value.
 
     log_stream.open();
-    log_stream << "Reached dial-in factor of " << DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
+    log_stream << "\tReached dial-in factor of " << DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
                << ". Waiting for equilibrium." << std::endl;
     log_stream.close();
 }
@@ -833,14 +817,14 @@ void Simulation::progress_single_step(int counter, std::pair<double, double> upp
     /* Add force contributions from e.g. damping, loads, 'prod' perturbation, and
      account for BCs e.g. clamping. */
     upperAndLowerTotSlideForces = calcNonDeformationForces_and_ImposeBCS(nodes, time, settings);
-    settings.upperTotSlideForce = upperAndLowerTotSlideForces.first;
+    settings.upper_tot_slide_force = upperAndLowerTotSlideForces.first;
 }
 
 void Simulation::update_dial_in_factor() {
     currDialInFactor = DialInFactorValuesToHoldAt[DialInFactorCounter] +
                        (DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
                         - DialInFactorValuesToHoldAt[DialInFactorCounter]) *
-                       timeSinceCurrDiallingInPhaseStarted / settings.DialInStepTime;
+                       timeSinceCurrDiallingInPhaseStarted / settings.dial_in_step_time;
 }
 
 
@@ -848,14 +832,14 @@ void Simulation::save_and_print_details(int counter, double duration_us,
                                         std::pair<double, double> upperAndLowerTotSlideForces) {
     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings);
-    if (settings.isEnergyDensitiesPrinted) {
+    if (settings.is_energy_densities_printed) {
         calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
                                 stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                 cauchyStressEigenvals, cauchyStressEigenvecs, settings);
     }
 
     // Here we hack the angleDeficits to instead tell us whether a node has a Seide displacement imposed or not.
-    for (int n = 0; n < settings.NumNodes; ++n) {
+    for (int n = 0; n < settings.num_nodes; ++n) {
         if (nodes[n].isSeideDisplacementEnabled) {
             angleDeficits[n] = 1;
         } else {
@@ -869,11 +853,8 @@ void Simulation::save_and_print_details(int counter, double duration_us,
                        cauchyStressEigenvals, cauchyStressEigenvecs, settings, outputDirName);
 
     log_stream.open();
-    log_stream << std::fixed << "Wrote VTK output at " << getRealTime() << ", stepCount = " << step_count
-               << ", simulation time = " << time + settings.TimeStep << ", current dial-in factor = "
-               << currDialInFactor << std::scientific;
-    log_stream << ", last step's execution time "
-               << duration_us << " us"
+    log_stream << log_prefix()
+               << "Last step's execution time " << duration_us << " us."
                << std::endl;
 
     log_stream.close();
@@ -882,23 +863,25 @@ void Simulation::save_and_print_details(int counter, double duration_us,
     forceDistFile.open(outputDirName + "/force_displacement_vals.txt", std::ofstream::app);
     forceDistFile << std::scientific << std::setprecision(14)
                   << upperAndLowerTotSlideForces.first /
-                     (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) << " "
+                     (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness) << " "
                   << upperAndLowerTotSlideForces.second /
-                     (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) << " "
-                  << settings.upperSlideDisplacement / settings.SampleCharLength << " "
-                  << settings.currSlideZCoord_upper << " "
-                  << settings.initSlideZCoord_lower << " "
-                  << settings.slideJustReachedEquil << " "
-                  << settings.upperSlideWeight /
-                     (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness)
+                     (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness) << " "
+                  << settings.upper_slide_displacement / settings.sample_char_length << " "
+                  << settings.curr_slide_z_coord_upper << " "
+                  << settings.init_slide_z_coord_lower << " "
+                  << settings.is_slide_just_equilibrated << " "
+                  << settings.upper_slide_weight /
+                     (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness)
                   << std::endl;
     forceDistFile.close();
 }
 
-std::stringstream Simulation::log_prefix() {
+std::string Simulation::log_prefix() {
     std::stringstream ss;
-    ss << getRealTime() << ", step = " << step_count << ", time = " << time;
-    return ss;
+    ss << std::setprecision(3) << std::fixed << getRealTime() << ", step = " << step_count << ", time = " << time
+    << ", dial-in factor = " <<
+       currDialInFactor << ": ";
+    return ss.str();
 }
 
 void Simulation::error_large_force(int counter) {
@@ -911,7 +894,7 @@ void Simulation::error_large_force(int counter) {
 
     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings);
-    if (settings.isEnergyDensitiesPrinted) {
+    if (settings.is_energy_densities_printed) {
         calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
                                 stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                 cauchyStressEigenvals, cauchyStressEigenvecs, settings);
@@ -926,8 +909,7 @@ void Simulation::error_large_force(int counter) {
 
 void Simulation::check_for_equilibrium() {
     log_stream.open();
-    log_stream << "Checking for equilibrium at " << getRealTime() << ", stepCount = " << step_count
-               << ", simulation time = " << time << ", current dial-in factor = " << currDialInFactor
+    log_stream << log_prefix() << "Checking for equilibrium. "
                << std::endl;
     log_stream.close();
 
@@ -953,11 +935,11 @@ void Simulation::check_for_equilibrium() {
 
 void Simulation::setup_reached_equilibrium() {
     log_stream.open();
-    simulation_status = dialling;
+    simulation_status = Dialling;
     timeSinceCurrDiallingInPhaseStarted = 0.0;
     DialInFactorCounter += 1;
-    settings.NumDampFactor = settings.DampingPrefactor1 *
-                             settings.dampingScale; // Set damping factor back to dialling phase value.
+    settings.num_damp_factor = settings.dial_in_damping *
+                               settings.damping_scale; // Set damping factor back to dialling phase value.
     if (DialInFactorCounter <= DialInFactorValuesToHoldAt.size() - 2) {
         log_stream << "New dialling in phase beginning, from value "
                    << DialInFactorValuesToHoldAt[DialInFactorCounter] << ", to "
@@ -978,7 +960,7 @@ void Simulation::run_tensor_increment(int counter) {
     } else {
         // Reset the variables that control each dialling/waiting process.
         timeSinceLastEquilCheck = 0;
-        simulation_status = dialling;
+        simulation_status = Dialling;
         currDialInFactor = 0;
         DialInFactorCounter = 0;
         timeSinceCurrDiallingInPhaseStarted = 0;
@@ -989,22 +971,18 @@ void Simulation::run_tensor_increment(int counter) {
     a slightly hacky way to ensure that no dialling actually occurs, and the
     simulation jumps to a status = waitingForEquilibrium state. The magic number is
     just chosen to be recognisable for debugging.*/
-    if (settings.DialInStepTime < settings.TimeStep) {
-        settings.DialInStepTime = 0.0;
+    if (settings.dial_in_step_time < settings.time_step) {
+        settings.dial_in_step_time = 0.0;
         timeSinceCurrDiallingInPhaseStarted = 1.23456789;
     }
 
-    ///////////////////////////////////////////////////////////////////////////
 
     // Begin dynamical evolution of node positions and velocities.
     log_stream.open();
     log_stream << "\nBeginning dynamical evolution.\n" << std::endl;
-    log_stream.close();
-
-    log_stream.open();
     log_stream << "\nCREATING VECTOR TO STORE UNSTRESSED CONE NODE POSITIONS.\n" << std::endl;
     log_stream.close();
-    std::vector<Eigen::Vector3d> nodeUnstressedConePosits(settings.NumNodes);
+    std::vector<Eigen::Vector3d> nodeUnstressedConePosits(settings.num_nodes);
     double seide_quotient = DBL_MAX;
 
     std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(
@@ -1015,7 +993,7 @@ void Simulation::run_tensor_increment(int counter) {
 
         update_slide_properties();
 
-        if (settings.isSeideDeformationsEnabled) {
+        if (settings.is_seide_deformations_enabled) {
             impose_seide_deformation(seide_quotient, nodeUnstressedConePosits);
         }
 
@@ -1023,14 +1001,14 @@ void Simulation::run_tensor_increment(int counter) {
 
         // Check if still in dialling in phase or whether it is time to wait for
         // equilibrium.
-        if (timeSinceCurrDiallingInPhaseStarted >= settings.DialInStepTime && simulation_status == dialling) {
+        if (timeSinceCurrDiallingInPhaseStarted >= settings.dial_in_step_time && simulation_status == Dialling) {
             begin_equilibrium_search(counter);
         }
 
         /* If not waiting for equilibrium, set the current value of the Dial-In
         Factor, based on linear dialling in between the previously calculated
         'checkpoint' values. */
-        if (simulation_status == dialling) { update_dial_in_factor(); }
+        if (simulation_status == Dialling) { update_dial_in_factor(); }
 
         std::pair<double, double> upperAndLowerTotSlideForces;
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -1043,25 +1021,25 @@ void Simulation::run_tensor_increment(int counter) {
         Can be switched off with settings.PrintFrequency < 0.0.
         Doing the write-out at this point in the loop means the node positions
         and the triangle geometry data match in the output, which is desirable!*/
-        if ((step_count % settings.InversePrintRate == 0 && settings.InversePrintRate > 0) ||
-            settings.slideJustReachedEquil == 1) {
+        if ((step_count % settings.inverse_print_rate == 0 && settings.inverse_print_rate > 0) ||
+            settings.is_slide_just_equilibrated == 1) {
             save_and_print_details(counter, duration_us, upperAndLowerTotSlideForces);
-            settings.slideJustReachedEquil = 0;
+            settings.is_slide_just_equilibrated = 0;
         }
 
 
-        if (!settings.isControlledForceEnabled) {
+        if (!settings.is_controlled_force_enabled) {
             /* If last check for equilibrium or last reaching of a new DialInFactor
              value was more than TimeBetweenEquilChecks ago, check for equilibrium.
              Also print total stretching and bending energies.*/
-            if (timeSinceLastEquilCheck > settings.TimeBetweenEquilChecks &&
-                simulation_status == waitingForEquilibrium) {
+            if (timeSinceLastEquilCheck > settings.time_between_equil_checks &&
+                simulation_status == WaitingForEquilibrium) {
                 check_for_equilibrium();
             }
 
             /* If equilibrium reached, write output data to file, and move to next
             'dialling in' phase. */
-            if (simulation_status == equilibriumReached) {
+            if (simulation_status == EquilibriumReached) {
                 save_and_print_details(counter, duration_us, upperAndLowerTotSlideForces);
                 setup_reached_equilibrium();
             }
@@ -1076,9 +1054,9 @@ void Simulation::run_tensor_increment(int counter) {
         }
 
         // Advance times and step counter.
-        time += settings.TimeStep;
-        timeSinceLastEquilCheck += settings.TimeStep;
-        timeSinceCurrDiallingInPhaseStarted += settings.TimeStep;
+        time += settings.time_step;
+        timeSinceLastEquilCheck += settings.time_step;
+        timeSinceCurrDiallingInPhaseStarted += settings.time_step;
         step_count += 1;
     }
 }

@@ -166,7 +166,7 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
                 double tempAbsConditionNumber = secDerivMatTempSVD.singularValues()(
                         0); //This has dimensions 1/Length^2.
                 tempAbsConditionNumberDividedByThresholdValue = tempAbsConditionNumber * thisPatchSize * thisPatchSize /
-                                                                settings.PatchMatrixDimensionlessConditioningThreshold;
+                                                                settings.patch_matrix_dimensionless_conditioning_threshold;
             }
 
             if (tempAbsConditionNumberDividedByThresholdValue >= 1.0 || !isMatReversible) {

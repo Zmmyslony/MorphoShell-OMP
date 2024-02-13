@@ -48,30 +48,30 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
 
 #pragma omp parallel for reduction (+: totUpperSlideForce, totLowerSlideForce)
     for (int i = 0; i < nodes.size(); i++) {
-        if (!settings.isGradientDescentDynamicsEnabled) {
+        if (!settings.is_gradient_descent_dynamics_enabled) {
             nodes[i].add_damping(settings);
         }
         nodes[i].add_gravity(settings);
 
-        if (time < settings.ProdForceTime) {
+        if (time < settings.prod_force_time) {
             nodes[i].add_prod_force(settings);
         }
 
         // Simple load force.
-        if (time < settings.LoadForceTime) {
+        if (time < settings.load_force_time) {
             nodes[i].add_load_force(settings, time, totUpperSlideForce, totLowerSlideForce);
         }
 
         // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
         // Force from "glass slides".
-        if (!settings.GlassCones) {
-            nodes[i].add_slide_force(settings, settings.initSlideZCoord_lower, true, totLowerSlideForce);
-            nodes[i].add_slide_force(settings, settings.initSlideZCoord_upper, false, totUpperSlideForce);
+        if (!settings.glass_cones) {
+            nodes[i].add_slide_force(settings, settings.init_slide_z_coord_lower, true, totLowerSlideForce);
+            nodes[i].add_slide_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
         }
             // GLASS CONES
         else {
-            nodes[i].add_cone_force(settings, settings.currSlideZCoord_upper, true, totLowerSlideForce);
-            nodes[i].add_cone_force(settings, settings.initSlideZCoord_upper, false, totUpperSlideForce);
+            nodes[i].add_cone_force(settings, settings.curr_slide_z_coord_upper, true, totLowerSlideForce);
+            nodes[i].add_cone_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
 
             /*
             // SEIDE'S HORIZONTAL CLAMP ON ALL BOUNDARY NODES.
@@ -88,8 +88,8 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
             if (nodes[i].isOnBoundary) {
                 double polar_angle = atan2(nodes[i].pos(1), nodes[i].pos(0));
                 Eigen::Vector3d theoryNormalVec;
-                theoryNormalVec << cos(settings.ConeAngle) * cos(polar_angle),
-                        cos(settings.ConeAngle) * sin(polar_angle), sin(settings.ConeAngle);
+                theoryNormalVec << cos(settings.cone_angle) * cos(polar_angle),
+                        cos(settings.cone_angle) * sin(polar_angle), sin(settings.cone_angle);
                 nodes[i].force -= (nodes[i].force.dot(theoryNormalVec)) * theoryNormalVec;
             }
         }

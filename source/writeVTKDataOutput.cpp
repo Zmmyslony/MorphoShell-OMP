@@ -89,10 +89,10 @@ void writeVTKDataOutput(
 
     /* If specified in settings file, also print total stretching and bending
     energies here.*/
-    if (settings.isEnergyDensitiesPrinted) {
-        double nonDimStretchEnergy = kahanSum(stretchEnergies) / settings.charStretchEnergyScale;
-        double nonDimBendEnergy = kahanSum(bendEnergies) / settings.charStretchEnergyScale;
-        double nonDimKineticEnergy = kahanSum(kineticEnergies) / settings.charStretchEnergyScale;
+    if (settings.is_energy_densities_printed) {
+        double nonDimStretchEnergy = kahanSum(stretchEnergies) / settings.char_stretch_energy_scale;
+        double nonDimBendEnergy = kahanSum(bendEnergies) / settings.char_stretch_energy_scale;
+        double nonDimKineticEnergy = kahanSum(kineticEnergies) / settings.char_stretch_energy_scale;
         outFile << ", non-dimensionalised stretch, bend, kinetic, and total energies: "
                 << nonDimStretchEnergy << ", " << nonDimBendEnergy << ", " << nonDimKineticEnergy
                 << ", " << nonDimKineticEnergy << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy;
@@ -102,7 +102,7 @@ void writeVTKDataOutput(
     and boundary node deficits separately, corresponding to the integrated
     Gauss curvature and integrated geodesic curvature terms in Gauss-Bonnet
     respectively.*/
-    if (settings.isAngleDeficitsPrinted) {
+    if (settings.is_angle_deficits_printed) {
         outFile << ", total interior angle deficit = " << kahanSum(interiorNodeAngleDeficits)
                 << ", total boundary angle deficit = " << kahanSum(boundaryNodeAngleDeficits);
     }
@@ -111,91 +111,91 @@ void writeVTKDataOutput(
     // Continue with rest of preamble and then output the relevant data to file.
     outFile << "\n" << "ASCII" << "\n"
             << "DATASET POLYDATA" << "\n"
-            << "POINTS " << settings.NumNodes << " double" << "\n";
+            << "POINTS " << settings.num_nodes << " double" << "\n";
 
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
         outFile << nodes[i].pos(0) << " " << nodes[i].pos(1) << " " << nodes[i].pos(2) << "\n";
     }
 
-    outFile << "POLYGONS " << settings.NumTriangles << " " << 4 * settings.NumTriangles << "\n";
+    outFile << "POLYGONS " << settings.num_triangles << " " << 4 * settings.num_triangles << "\n";
 
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         outFile << "3 " << triangles[i].vertexLabels(0) << " " << triangles[i].vertexLabels(1) << " "
                 << triangles[i].vertexLabels(2) << "\n";
     }
 
-    outFile << "CELL_DATA " << settings.NumTriangles << "\n";
+    outFile << "CELL_DATA " << settings.num_triangles << "\n";
 
     outFile << "SCALARS gaussCurv double 1" << "\n"
             << "LOOKUP_TABLE default" << "\n";
 
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         outFile << gaussCurvatures[i] << "\n";
     }
 
     outFile << "SCALARS meanCurv double 1" << "\n"
             << "LOOKUP_TABLE default" << "\n";
 
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         outFile << meanCurvatures[i] << "\n";
     }
 
     /* Now print non-dimensionalised stretch and bend energies, if specified in
     settings file. Print also our strain measure, which is not completely
     dissimilar to a non-dimensional stretch energy. Also, Cauchy stress info.*/
-    if (settings.isEnergyDensitiesPrinted) {
+    if (settings.is_energy_densities_printed) {
 
         outFile << "SCALARS nonDimStretchEnergyDensity double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < settings.NumTriangles; ++i) {
-            outFile << stretchEnergyDensities[i] / settings.charStretchEnergyDensityScale << "\n";
+        for (int i = 0; i < settings.num_triangles; ++i) {
+            outFile << stretchEnergyDensities[i] / settings.char_stretch_energy_density_scale << "\n";
         }
 
         outFile << "SCALARS nonDimBendEnergyDensity double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < settings.NumTriangles; ++i) {
-            outFile << bendEnergyDensities[i] / settings.charStretchEnergyDensityScale << "\n";
+        for (int i = 0; i < settings.num_triangles; ++i) {
+            outFile << bendEnergyDensities[i] / settings.char_stretch_energy_density_scale << "\n";
         }
 
         outFile << "SCALARS strainMeasure double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < settings.NumTriangles; ++i) {
+        for (int i = 0; i < settings.num_triangles; ++i) {
             outFile << strainMeasures[i] << "\n";
         }
 
 
         outFile << "FIELD cauchyStressInfo 4" << "\n";
 
-        outFile << "dimlessCauchyStressEigenval1 1 " << settings.NumTriangles << "double" << "\n";
-        for (int i = 0; i < settings.NumTriangles; ++i) {
-            outFile << cauchyStressEigenvals[i](0) / (settings.ShearModulus * settings.SheetThickness) << "\n";
+        outFile << "dimlessCauchyStressEigenval1 1 " << settings.num_triangles << "double" << "\n";
+        for (int i = 0; i < settings.num_triangles; ++i) {
+            outFile << cauchyStressEigenvals[i](0) / (settings.shear_modulus * settings.sheet_thickness) << "\n";
         }
-        outFile << "cauchyStressEigenvec1 3 " << settings.NumTriangles << "double" << "\n";
-        for (int i = 0; i < settings.NumTriangles; ++i) {
+        outFile << "cauchyStressEigenvec1 3 " << settings.num_triangles << "double" << "\n";
+        for (int i = 0; i < settings.num_triangles; ++i) {
             outFile << cauchyStressEigenvecs[i](0, 0) << " " << cauchyStressEigenvecs[i](1, 0) << " "
                     << cauchyStressEigenvecs[i](2, 0) << "\n";
         }
-        outFile << "dimlessCauchyStressEigenval2 1 " << settings.NumTriangles << "double" << "\n";
-        for (int i = 0; i < settings.NumTriangles; ++i) {
-            outFile << cauchyStressEigenvals[i](1) / (settings.ShearModulus * settings.SheetThickness) << "\n";
+        outFile << "dimlessCauchyStressEigenval2 1 " << settings.num_triangles << "double" << "\n";
+        for (int i = 0; i < settings.num_triangles; ++i) {
+            outFile << cauchyStressEigenvals[i](1) / (settings.shear_modulus * settings.sheet_thickness) << "\n";
         }
-        outFile << "cauchyStressEigenvec2 3 " << settings.NumTriangles << "double" << "\n";
-        for (int i = 0; i < settings.NumTriangles; ++i) {
+        outFile << "cauchyStressEigenvec2 3 " << settings.num_triangles << "double" << "\n";
+        for (int i = 0; i < settings.num_triangles; ++i) {
             outFile << cauchyStressEigenvecs[i](0, 1) << " " << cauchyStressEigenvecs[i](1, 1) << " "
                     << cauchyStressEigenvecs[i](2, 1) << "\n";
         }
     }
 
     // Now print current triangle areas if specified in settings file.
-    if (settings.isTriangleAreasPrinted) {
+    if (settings.is_triangle_areas_printed) {
 
         outFile << "SCALARS triArea double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < settings.NumTriangles; ++i) {
+        for (int i = 0; i < settings.num_triangles; ++i) {
             outFile << 1.0 / triangles[i].currAreaInv << "\n";
         }
     }
@@ -204,19 +204,19 @@ void writeVTKDataOutput(
     outFile << "SCALARS triRefRadialCoord double 1" << "\n"
             << "LOOKUP_TABLE default" << "\n";
 
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         outFile << triangles[i].refCentroid.norm() << "\n";
     }
 
     // Now print angle deficits at nodes, if specified in settings file.
-    if (settings.isAngleDeficitsPrinted) {
+    if (settings.is_angle_deficits_printed) {
 
-        outFile << "POINT_DATA " << settings.NumNodes << "\n";
+        outFile << "POINT_DATA " << settings.num_nodes << "\n";
 
         outFile << "SCALARS angleDeficit double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < settings.NumNodes; ++i) {
+        for (int i = 0; i < settings.num_nodes; ++i) {
             outFile << angleDeficits[i] << "\n";
         }
     }

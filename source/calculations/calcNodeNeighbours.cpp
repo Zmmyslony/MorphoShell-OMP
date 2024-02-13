@@ -50,7 +50,7 @@ void configureNodeAdjacency(std::vector<Node> &nodes, const std::vector<Edge> &e
     Eigen::VectorXd eventually just because it i) provides an easy way to turn
     bounds checking on and off, and ii) already has overloaded functions set up
     for easy printing out to std::cout etc. */
-    std::vector< std::vector<int> > tempNeighbourNodeLabels(settings.NumNodes);
+    std::vector< std::vector<int> > tempNeighbourNodeLabels(settings.num_nodes);
 
     for (auto &edge: edges) {
         tempNeighbourNodeLabels[edge.nodeLabels(0)].push_back(edge.nodeLabels(1));

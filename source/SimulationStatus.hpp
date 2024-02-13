@@ -29,7 +29,7 @@ the next dialling phase has not yet begun.*/
 #define _SIMULATION_STATUS_ENUM_TAG_
 
 enum SimulationStatus {
-    dialling, waitingForEquilibrium, equilibriumReached
+    Dialling, WaitingForEquilibrium, EquilibriumReached
 };
 
 #endif

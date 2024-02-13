@@ -53,18 +53,18 @@ void Node::add_gravity(const Settings &settings) {
 }
 
 void Node::add_damping(const Settings &settings) {
-    force += -settings.NumDampFactor * mass * vel / settings.InitDensity;
+    force += -settings.num_damp_factor * mass * vel / settings.init_density;
 }
 
 void Node::add_prod_force(const Settings &settings) {
-    force(2) += -settings.ProdStrength * settings.ShearModulus * settings.SheetThickness *
+    force(2) += -settings.prod_strength * settings.shear_modulus * settings.sheet_thickness *
                 sqrt(pos(0) * pos(0) + pos(1) * pos(1));
 
 }
 
 void Node::add_load_force(const Settings &settings, double time, double &upper_slide_force, double &lower_slide_force) {
     if (isLoadForceEnabled) {
-        double pullForce = settings.LoadStrength * settings.charForceScale * time / settings.bending_long_time;
+        double pullForce = settings.load_strength * settings.char_force_scale * time / settings.bending_long_time;
         if (pos(0) < 0) {
             force(0) += -pullForce;
             upper_slide_force += pullForce;
@@ -79,14 +79,14 @@ void Node::add_slide_force(const Settings &settings, double height, bool is_bott
     bool is_interacting = is_bottom_slide && pos(2) < height || !is_bottom_slide && pos(2) > height;
 
     if (is_interacting) {
-        double slice_vert_force = settings.slideStiffnessPrefactor * settings.ShearModulus * settings.SheetThickness *
-                                  (settings.initSlideZCoord_lower - pos(2));
+        double slice_vert_force = settings.slide_stiffness_prefactor * settings.shear_modulus * settings.sheet_thickness *
+                                  (settings.init_slide_z_coord_lower - pos(2));
         force(2) += slice_vert_force;
         total_slide_force += slice_vert_force;
 
         // Friction
         double in_plane_force = sqrt(force(0) * force(0) + force(1) * force(1));
-        double friction_force = settings.slideFrictionCoeff * fabs(slice_vert_force);
+        double friction_force = settings.slide_friction_coefficient * fabs(slice_vert_force);
         if (in_plane_force < friction_force) {
             force(0) = 0;
             force(1) = 0;
@@ -103,19 +103,19 @@ void Node::add_cone_force(const Settings &settings, double tip_height, bool is_b
     double r = sqrt(pos(0) * pos(0) + pos(1) * pos(1));
     double polar_angle = atan2(pos(1), pos(0));
 
-    double distance_from_cone = (pos(2) - r * tan(settings.ConeAngle) - tip_height) * cos(settings.ConeAngle);
+    double distance_from_cone = (pos(2) - r * tan(settings.cone_angle) - tip_height) * cos(settings.cone_angle);
     bool is_interacting = is_bottom_cone && distance_from_cone < 0 || !is_bottom_cone && distance_from_cone > 0;
 
     if (is_interacting) {
-        double slide_force = settings.slideStiffnessPrefactor * settings.ShearModulus * settings.SheetThickness *
+        double slide_force = settings.slide_stiffness_prefactor * settings.shear_modulus * settings.sheet_thickness *
                              distance_from_cone;
         if (is_bottom_cone) {
             slide_force *= -1;
         }
-        force(0) += slide_force * sin(settings.ConeAngle) * cos(polar_angle);
-        force(1) += slide_force * sin(settings.ConeAngle) * sin(polar_angle);
-        force(2) += -slide_force * cos(settings.ConeAngle);
-        total_cone_force += -slide_force * cos(settings.ConeAngle);
+        force(0) += slide_force * sin(settings.cone_angle) * cos(polar_angle);
+        force(1) += slide_force * sin(settings.cone_angle) * sin(polar_angle);
+        force(2) += -slide_force * cos(settings.cone_angle);
+        total_cone_force += -slide_force * cos(settings.cone_angle);
     }
 }
 

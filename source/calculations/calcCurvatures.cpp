@@ -110,9 +110,9 @@ void calcCurvatures(
 
 
     // Calculate angle deficits at nodes, if specified in settings file.
-    if (settings.isAngleDeficitsPrinted) {
+    if (settings.is_angle_deficits_printed) {
 #pragma omp parallel for
-        for (int n = 0; n < settings.NumNodes; ++n) {
+        for (int n = 0; n < settings.num_nodes; ++n) {
             if (!nodes[n].isOnBoundary) {
                 angleDeficits.at(n) = 2.0 * M_PI;
             } else {
@@ -130,7 +130,7 @@ void calcCurvatures(
         separately.*/
         int idxInto_interiorNodeAngleDeficits = 0;
         int idxInto_boundaryNodeAngleDeficits = 0;
-        for (int n = 0; n < settings.NumNodes; ++n) {
+        for (int n = 0; n < settings.num_nodes; ++n) {
 
             if (!nodes[n].isOnBoundary) {
                 interiorNodeAngleDeficits.at(idxInto_interiorNodeAngleDeficits) = angleDeficits[n];

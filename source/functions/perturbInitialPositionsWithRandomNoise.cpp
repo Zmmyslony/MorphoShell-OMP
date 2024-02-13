@@ -52,10 +52,10 @@ void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, const Sett
     /*Set distribution to be symmetric about zero, and extend to a small
     distance relative to the mesh spacing. The 0.1 factor is hard coded but
     could be changed if desired.*/
-    std::uniform_real_distribution<double> distr(-settings.ApproxMinInitElemSize * 0.001,
-                                                 settings.ApproxMinInitElemSize * 0.001);
+    std::uniform_real_distribution<double> distr(-settings.approx_min_init_elem_size * 0.001,
+                                                 settings.approx_min_init_elem_size * 0.001);
 
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
         for (int c = 0; c < 3; ++c) {
             nodes[i].pos(c) += distr(aSimpleEngine);
         }

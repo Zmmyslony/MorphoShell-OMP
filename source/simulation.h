@@ -20,7 +20,7 @@ class Simulation {
     std::string outputDirName;
     Settings settings;
 
-    int step_count;
+    int step_count = 0;
     int time = 0;
 
     std::string settings_filename;
@@ -32,7 +32,7 @@ class Simulation {
     std::vector<Triangle> triangles;
     std::vector<Edge> edges;
 
-    SimulationStatus simulation_status = waitingForEquilibrium;
+    SimulationStatus simulation_status = WaitingForEquilibrium;
 
     std::vector<std::vector<Eigen::Vector3d>> programmed_metric_infos;
     std::vector<std::vector<Eigen::Matrix<double, 2, 2> >> inverted_programmed_metrics;
@@ -201,7 +201,7 @@ class Simulation {
 
     void setup_reached_equilibrium();
 
-    std::stringstream log_prefix();
+    std::string log_prefix();
 
     void init(int argc, char *argv[]);
 

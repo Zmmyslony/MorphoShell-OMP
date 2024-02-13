@@ -57,7 +57,7 @@ void setRemainingInitCond_and_NodeMasses(
     Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > tempinitSidesMatDecomp;
 
 
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
         //Set all initial node velocities to zero
         nodes[i].vel.fill(0.0);
         //Set all nodes masses to zero before calculating them next
@@ -66,12 +66,12 @@ void setRemainingInitCond_and_NodeMasses(
 
     //Resize the vector to hold the first ('trivial') programmed tensors, that
     //is populated in the next loop.
-    programmedMetricInfos[0].resize(settings.NumTriangles);
-    programmedInvertedMetrics[0].resize(settings.NumTriangles);
-    programmedTaus[0].resize(settings.NumTriangles);
-    programmedSecondFundamentalForms[0].resize(settings.NumTriangles);
+    programmedMetricInfos[0].resize(settings.num_triangles);
+    programmedInvertedMetrics[0].resize(settings.num_triangles);
+    programmedTaus[0].resize(settings.num_triangles);
+    programmedSecondFundamentalForms[0].resize(settings.num_triangles);
 
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         /*set triangle sides' initial in-plane x-y basis components.*/
 //        initSidesMat(0, 0) = triangles[i].currSides(0, 0);
 //        initSidesMat(1, 0) = triangles[i].currSides(1, 0);
@@ -119,13 +119,13 @@ void setRemainingInitCond_and_NodeMasses(
         /* Add 1/3 of the mass of each triangle to each of its vertices.*/
         for (int v = 0; v < 3; ++v) {
             nodes[triangles[i].vertexLabels(v)].mass +=
-                    settings.InitDensity * triangles[i].initArea * settings.SheetThickness / 3.0;
+                    settings.init_density * triangles[i].initArea * settings.sheet_thickness / 3.0;
         }
 
         /* Set first set of programmed tensors to be the trivial ones for the
         flat plane. This may be overridden later if
         settings.isDialingFromAnsatzEnabled == true. See main().*/
-        if (settings.isLCEModeEnabled) {
+        if (settings.is_lce_mode_enabled) {
             programmedMetricInfos[0][i] << programmedMetricInfos[1][i](0), 1.0, programmedMetricInfos[1][i](
                     2);
             programmedTaus[0][i] = 1.0;

@@ -49,7 +49,7 @@ void updateFirstFundamentalForms(
         std::vector<Triangle> &triangles,
         const Settings &settings) {
 
-    double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
+    double stretchingPreFac = 0.5 * settings.sheet_thickness * settings.shear_modulus;
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         triangles[i].updateFirstFundamentalForm(stretchingPreFac);
@@ -60,12 +60,12 @@ void updateSecondFundamentalForms(
         std::vector<Triangle> &triangles,
         const Settings &settings) {
 
-    double bendingPreFac = 0.5 * pow(settings.SheetThickness, 3) * settings.ShearModulus / 12;
-    double JPreFactor = settings.GentFactor / (settings.SheetThickness * settings.SheetThickness);
+    double bendingPreFac = 0.5 * pow(settings.sheet_thickness, 3) * settings.shear_modulus / 12;
+    double JPreFactor = settings.gent_factor / (settings.sheet_thickness * settings.sheet_thickness);
 
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].updateSecondFundamentalForm(bendingPreFac, JPreFactor, settings.PoissonRatio);
+        triangles[i].updateSecondFundamentalForm(bendingPreFac, JPreFactor, settings.poisson_ratio);
     }
 }
 
@@ -87,7 +87,7 @@ void calcEnergiesAndStresses(
     updateSecondFundamentalForms(triangles, settings);
     // Loop over triangles and calculate potential energies and energy densities.
 #pragma omp parallel for
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         stretchEnergyDensities[i] = triangles[i].stretchEnergyDensity;
         bendEnergyDensities[i] = triangles[i].bendEnergyDensity;
 
@@ -124,7 +124,7 @@ void calcEnergiesAndStresses(
     }
 
 #pragma omp parallel for
-    for (int n = 0; n < settings.NumNodes; ++n) {
+    for (int n = 0; n < settings.num_nodes; ++n) {
         kineticEnergies[n] = 0.5 * nodes[n].mass * nodes[n].vel.dot(nodes[n].vel);
     }
 }

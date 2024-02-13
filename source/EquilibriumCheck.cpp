@@ -55,10 +55,11 @@ SimulationStatus equilibriumCheck(
     std::vector<double> velocity(nodes.size());
 
 #pragma omp parallel for
-    for (int i = 0; i < settings.NumNodes; ++i) {
-        if (!settings.isGradientDescentDynamicsEnabled) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
+        if (!settings.is_gradient_descent_dynamics_enabled) {
             nodeNonDampingForce[i] = (nodes[i].force +
-                                (settings.NumDampFactor * nodes[i].mass * nodes[i].vel / settings.InitDensity)).norm();
+                                      (settings.num_damp_factor * nodes[i].mass * nodes[i].vel /
+                                       settings.init_density)).norm();
         } else {
             nodeNonDampingForce[i] = nodes[i].force.norm();
         }
@@ -84,32 +85,38 @@ SimulationStatus equilibriumCheck(
         velocity[i] = nodes[i].vel.norm();
     }
 
-    int maxNonDampForceNode = std::max_element(nodeNonDampingForce.begin(), nodeNonDampingForce.end()) - nodeNonDampingForce.begin();
-    double maxNonDampForce = *std::max_element(nodeNonDampingForce.begin(), nodeNonDampingForce.end());
+    int max_non_damp_force_node =
+            std::max_element(nodeNonDampingForce.begin(), nodeNonDampingForce.end()) - nodeNonDampingForce.begin();
+    double max_non_damp_force = *std::max_element(nodeNonDampingForce.begin(), nodeNonDampingForce.end());
 
-    double smallestIncidentProgTau = *std::max_element(incidentProgTau.begin(), incidentProgTau.end());
-    double stretchingWaveSpeed = sqrt(smallestIncidentProgTau * settings.ShearModulus / settings.InitDensity);
+    double smallest_incident_prog_tau = *std::max_element(incidentProgTau.begin(), incidentProgTau.end());
+    double stretching_wave_speed = sqrt(smallest_incident_prog_tau * settings.shear_modulus / settings.init_density);
 
-    int maxRelativeSpeedNode = std::max_element(velocity.begin(), velocity.end()) - velocity.begin();
-    double maxRelativeSpeed = *std::max_element(velocity.begin(), velocity.end()) / stretchingWaveSpeed;
+    int max_relative_speed_node = std::max_element(velocity.begin(), velocity.end()) - velocity.begin();
+    double max_relative_speed = *std::max_element(velocity.begin(), velocity.end()) / stretching_wave_speed;
 
     /* Now check whether non-damping force and speed ratios are below chosen
     `equilibrium' thresholds.*/
+
+    double max_relative_force = max_non_damp_force / settings.char_force_scale;
     logStream.open();
-    logStream << "\tRatio of max non-damping force to characteristic force = "
-              << maxNonDampForce / settings.charForceScale << " (node " << maxNonDampForceNode << ")." << std::endl;
-    logStream << "\tMax ratio of node speed to local stretching wave speed = "
-              << maxRelativeSpeed << " (node " << maxRelativeSpeedNode << ")." << std::endl;
 
-    if ((maxNonDampForce / settings.charForceScale) < settings.Equil_Force_To_CharForce_Ratio_Threshold
-        && maxRelativeSpeed < settings.Equil_Speed_To_SoundSpeed_Ratio_Threshold) {
+    SimulationStatus status;
+    if (max_relative_force < settings.char_force
+        && max_relative_speed < settings.char_speed) {
 
-        logStream << "Equilibrium reached." << std::endl;
-        logStream.close();
-        return equilibriumReached;
+        logStream << "\tEquilibrium reached." << std::endl;
+        status = EquilibriumReached;
     } else {
-        logStream << "Equilibrium not reached." << std::endl;
-        logStream.close();
-        return waitingForEquilibrium;
+        logStream << "\tEquilibrium not reached." << std::endl;
+        status = WaitingForEquilibrium;
     }
+    logStream << "\tRatio of max non-damping force to characteristic force = "
+              << max_relative_force / settings.char_force
+              << " (node " << max_non_damp_force_node << ")." << std::endl
+              << "\tRatio of max node speed to local stretching wave speed = "
+              << max_relative_speed / settings.char_speed
+              << " (node " << max_relative_speed_node << ")." << std::endl;
+    logStream.close();
+    return status;
 }

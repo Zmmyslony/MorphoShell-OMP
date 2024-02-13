@@ -40,7 +40,7 @@ The forces are also checked, to catch code crashed in which the forces usually
 
 
 bool isForceThresholdExceeded(const Node &node, const Settings &settings) {
-    return node.force.norm() >= 100000.0 * settings.charForceScale;
+    return node.force.norm() >= 1e5 * settings.char_force_scale;
 }
 
 
@@ -63,7 +63,7 @@ void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, Set
 void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, Settings &settings,
                      CustomOutStreamClass &logStream) {
 
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
         if (isForceThresholdExceeded(nodes[i], settings)) {
             logForceThresholdExceeded(nodes[i], triangles, settings, logStream);
         }
@@ -74,21 +74,21 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
 
         /* Set velocities based on either Gradient Descent (over dampened) dynamics
         or Newtonian dynamics. Then advance positions accordingly. */
-        if (settings.isGradientDescentDynamicsEnabled) {
+        if (settings.is_gradient_descent_dynamics_enabled) {
             // Gradient Descent dynamics.
-            nodes[i].vel = settings.InitDensity * nodes[i].force / (settings.NumDampFactor * nodes[i].mass);
+            nodes[i].vel = settings.init_density * nodes[i].force / (settings.num_damp_factor * nodes[i].mass);
         } else {
             // Newtonian Dynamics.
             /* Advance velocity and *then* position (Semi-Implicit Euler, also
             called Symplectic Euler).*/
-            nodes[i].vel += (settings.TimeStep / nodes[i].mass) * nodes[i].force;
+            nodes[i].vel += (settings.time_step / nodes[i].mass) * nodes[i].force;
         }
 
         // Advance position.
-        nodes[i].pos += settings.TimeStep * nodes[i].vel;
+        nodes[i].pos += settings.time_step * nodes[i].vel;
     }
 
-    if (settings.isControlledForceEnabled) {
+    if (settings.is_controlled_force_enabled) {
         /*
         double gravAccel = settings.ApproxMinInitElemSize / (settings.TimeStep * settings.TimeStep);// Set g to be related to a characteristic acceleration in simulation.
         double upperSlideMass = settings.upperSlideWeight / gravAccel;
@@ -99,15 +99,15 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
 
 
         // Advance upper slide too, displacement and velocity taken downwards.
-        settings.upperSlideVel = (settings.upperTotSlideForce + settings.upperSlideWeight) / settings.slideDampingParam;
+        settings.upper_slide_vel = (settings.upper_tot_slide_force + settings.upper_slide_weight) / settings.slide_damping_param;
 
         // If doing constant weight experiment, need spacer to avoid squashing completely flat.
-        if (settings.constSlideWeightFac > 0 && settings.upperSlideVel > 0 &&
-            (settings.currSlideZCoord_upper - settings.initSlideZCoord_lower) <
-            settings.SpacerHeight * settings.SampleCharLength) {
-            settings.upperSlideVel = 0.0;
+        if (settings.const_slide_weight_fac > 0 && settings.upper_slide_vel > 0 &&
+                (settings.curr_slide_z_coord_upper - settings.init_slide_z_coord_lower) <
+                settings.spacer_height * settings.sample_char_length) {
+            settings.upper_slide_vel = 0.0;
         }
 
-        settings.upperSlideDisplacement += settings.TimeStep * settings.upperSlideVel;
+        settings.upper_slide_displacement += settings.time_step * settings.upper_slide_vel;
     }
 }

@@ -52,8 +52,8 @@ void calcTrianglesIncidentOnNodes(std::vector<Node> &nodes, const std::vector<Tr
     bounds checking on and off, and ii) already has overloaded functions set up
     for easy printing out to std::cout etc. */
 
-    std::vector<std::vector<int> > tempNodesIncidentTriLabels(settings.NumNodes);
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    std::vector<std::vector<int> > tempNodesIncidentTriLabels(settings.num_nodes);
+    for (int i = 0; i < settings.num_triangles; ++i) {
         //Add this triangle's label to each of its vertices in turn
         for (int v = 0; v < 3; ++v) {
             tempNodesIncidentTriLabels[triangles[i].vertexLabels(v)].push_back(i);
@@ -64,7 +64,7 @@ void calcTrianglesIncidentOnNodes(std::vector<Node> &nodes, const std::vector<Tr
     /* Now we know how many triangles are incident on each node, we put the
     labels in the corresponding node member data Eigen::VectorXd.*/
 //#pragma omp parallel for
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
 
         nodes[i].incidentTriLabels.resize(tempNodesIncidentTriLabels[i].size());
 

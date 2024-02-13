@@ -175,8 +175,8 @@ void calcTriangleGeometries_and_DialledProgTensors(
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         triangles[i].updateMetric(nodes);
-        if (status == dialling) {
-            if (settings.isLCEModeEnabled && !settings.isDialingFromAnsatzEnabled) {
+        if (status == Dialling) {
+            if (settings.is_lce_mode_enabled && !settings.is_dialing_from_ansatz_enabled) {
                 updateDialledInverseProgrammedMetricForATriangleWithoutAnsatz(i, triangles, currDialInFactor,
                                                                               progTensorSequenceCounter,
                                                                               programmedMetricInfoSequence);

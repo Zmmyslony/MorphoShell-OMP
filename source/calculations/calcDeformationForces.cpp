@@ -58,7 +58,7 @@ void calcDeformationForces(
         const Settings &settings,
         const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
 
-    double stretchingPreFac = 0.5 * settings.SheetThickness * settings.ShearModulus;
+    double stretchingPreFac = 0.5 * settings.sheet_thickness * settings.shear_modulus;
     std::vector<Eigen::Vector3d> forcesForEachTriangle(6 * triangles.size());
 #pragma omp parallel
     {

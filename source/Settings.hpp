@@ -40,63 +40,63 @@ struct Settings {
 
     // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
     // Z-coordinates of bottom and top slides.
-    int numberOfCores = 1;
+    int number_of_cores = 1;
     double gravity_sign;
-    double initSlideZCoord_lower;
-    double initSlideZCoord_upper;
-    double currSlideZCoord_upper;
+    double init_slide_z_coord_lower;
+    double init_slide_z_coord_upper;
+    double curr_slide_z_coord_upper;
     // Spring stiffness of 'glass' slides (modelled as linear springs) is this
     // prefactor * mu * t
-    double slideStiffnessPrefactor;
+    double slide_stiffness_prefactor;
     // Slide speed is this prefactor * char longest-wavelength mode speed.
-    double slideSpeedPrefactor;
+    double slide_speed_prefactor;
     // Upper slide's downwards displacement from its initial position.
-    double upperSlideDisplacement;
+    double upper_slide_displacement;
     // Coefficient of slide friction
-    double slideFrictionCoeff;
+    double slide_friction_coefficient;
     // If using an ansatz, all nodes less than this many thicknesses vertically
     // above the node with the lowest initial (ansatz) z coord will be clamped.
     // Set to negative value to turn off.
-    double ThicknessesAboveLowestNodeToClampUpTo;
+    double thicknesses_above_lowest_node_to_clamp_up_to;
     double bending_long_time;
-    double dampingScale;
-    double smallestSizeOverRootTau;
-    bool isDialingDisabled;
-    bool GlassCones;
-    double ConeAngle;
+    double damping_scale;
+    double smallest_size_over_root_tau;
+    bool is_dialing_disabled;
+    bool glass_cones;
+    double cone_angle;
     double lambda; //LCE lambda.
-    int testTriangle; // which triangle to print out stress for.
+    int test_triangle; // which triangle to print out stress for.
 
-    bool isControlledForceEnabled; // If true do controlled-force experiment rather than controlled-displacement.
-    double slideWeightDialSpeedFac; // Control how big the jumps in weight are every time slide equil is reached.
-    double totalSlideForceToMuTSqRatioEquilThreshold; // Control how fussy the slide is about being in equilibrium (material equilibrium checked for separately).
-    double InitialSlideWeightForCtrldForceInUnitsOfMuTsq; // Initial weight of slide in units of mu t^2, when doing a controlled force experiment.
-    int slideJustReachedEquil; // 0 unless equil just reached, then set to 1 to trigger printout, then immediately returned to 0.
-    double slideDampingParam; // Ratio between total force on upper slide, and it's velocity (we do viscous dynamics for the slide).
-    double upperSlideWeight; // Slide weight as multiple of charForceScale. If doing controlled-force experiment, slideSpeedPrefactor set's dial speed of this weight rather than slide displacement.
+    bool is_controlled_force_enabled; // If true do controlled-force experiment rather than controlled-displacement.
+    double slide_weight_dial_speed_fac; // Control how big the jumps in weight are every time slide equil is reached.
+    double total_slide_force_to_mu_t_sq_ratio_equil_threshold; // Control how fussy the slide is about being in equilibrium (material equilibrium checked for separately).
+    double initial_slide_weight_for_ctrld_force_in_units_of_mu_tsq; // Initial weight of slide in units of mu t^2, when doing a controlled force experiment.
+    int is_slide_just_equilibrated; // 0 unless equil just reached, then set to 1 to trigger printout, then immediately returned to 0.
+    double slide_damping_param; // Ratio between total force on upper slide, and it's velocity (we do viscous dynamics for the slide).
+    double upper_slide_weight; // Slide weight as multiple of charForceScale. If doing controlled-force experiment, slideSpeedPrefactor set's dial speed of this weight rather than slide displacement.
     // Upper slide's downwards velocity, in a controlled-force experiment.
-    double upperSlideVel;
+    double upper_slide_vel;
     // Total upwards force on upper slide, only needs to be stored here for controlled-force experiment.
-    double upperTotSlideForce;
+    double upper_tot_slide_force;
     // To instead hold slide weight constant while you change lambda, set this to be
     // positive. The weight will be this times mu t^2. If this is negative instead slide
     // weight is varied according to the other settings.
-    double constSlideWeightFac;
-    double SpacerHeight; // Height of spacer in units of thickness.
+    double const_slide_weight_fac;
+    double spacer_height; // Height of spacer in units of thickness.
 
-    bool isSeideDeformationsEnabled; // In regions near the top and bottom rim, hopefully better at getting Seide buckling result than glass squashing.
+    bool is_seide_deformations_enabled; // In regions near the top and bottom rim, hopefully better at getting Seide buckling result than glass squashing.
     double p; // Seide's load force.
-    double pSpeedPrefactor; // Control how quickly p increases from 0.
+    double p_speed_prefactor; // Control how quickly p increases from 0.
 
 
     // To allow specifying initial slide positions directly in settings file.
-    double SpecifyInitSlideZCoord_upper;
-    double SpecifyInitSlideZCoord_lower;
+    double specify_init_slide_z_coord_upper;
+    double specify_init_slide_z_coord_lower;
 
     /* Inverse print rate - results data will be saved in .vtk file every
     InversePrintRate steps. This is based on the dial-in time and the time step,
     and should be tuned via the PrintFrequency setting. */
-    long int InversePrintRate;
+    long int inverse_print_rate;
 
     /* Dimensionless tunable setting, that sets roughly how many output files
     will be generated over the course of one dial-in step. Output will be printed
@@ -104,28 +104,28 @@ struct Settings {
     specified with a decimal point as it is a double. Switch off these prints
     entirely by setting PrintFrequency to a negative number. Currently,
     PrintFrequency values in [0.0, 1.0) are not permitted. */
-    double PrintFrequency;
+    double print_frequency;
 
     /* If true, the LCE parameter is dialled directly, rather than the components
     of the programmed metric (which are non-linear functions of lambda). This is
     useful for making physically correct evolution videos, but less so for efficiently
     reaching final states because it does not play well with isDialingFromAnsatzEnabled.*/
-    bool isLCEModeEnabled;
+    bool is_lce_mode_enabled;
 
     /* Bool to determine whether the output files include stretching and
     bending energy densities for each triangle in addition to curvatures.*/
-    bool isEnergyDensitiesPrinted;
+    bool is_energy_densities_printed;
 
     /* Bool to determine whether the output files include triangle areas.
     */
-    bool isTriangleAreasPrinted;
+    bool is_triangle_areas_printed;
 
     /* Bool to determine whether the output files include the 'angular
     deficit' for each node: 2*Pi - Sum(incident triangle angles).*/
-    bool isAngleDeficitsPrinted;
+    bool is_angle_deficits_printed;
 
     // Total numbers of nodes, triangles, and edges.
-    int NumNodes, NumTriangles, NumEdges;
+    int num_nodes, num_triangles, num_edges;
 
     /* Numerical damping factor, such that damping force on a node is equal to
      -mass*velocity*NumDampFactor/InitDensity
@@ -135,9 +135,9 @@ struct Settings {
     The first is used during dialling in, the second is used instead when waiting
     for equilibrium.
     */
-    double NumDampFactor;
-    double DampingPrefactor1;
-    double DampingPrefactor2;
+    double num_damp_factor;
+    double dial_in_damping;
+    double equilibriation_damping;
 
     /* Dimensionless number which modifies the bending energy density in the
     *spirit* of the Gent 3D elastic energy. This parameter is *analogous* to the
@@ -153,18 +153,18 @@ struct Settings {
     evaluated for a curvature of 1/thickness. We take it to be that scale,
     multiplied by the tunable GentFactor below, which should therefore be rougly
     O(1). We generally use values between 1 and 10.*/
-    double GentFactor;
+    double gent_factor;
 
     /* Prefactor in time step calculation, chosen
 empirically to avoid `blowing up'. */
-    double TimeStepPrefactor;
+    double time_step_prefactor;
 
     // Time step
-    double TimeStep;
+    double time_step;
 
     /* Force (largest) to characteristic force and speed (largest) to sound
     speed ratios below which system is considered to be in equilbirum. */
-    double Equil_Force_To_CharForce_Ratio_Threshold, Equil_Speed_To_SoundSpeed_Ratio_Threshold;
+    double char_force, char_speed;
 
     /* Bool determining whether Gradient Descent dynamics are used as opposed to
     the default Newtonian Dynamics. Gradient Descent is equivalent to fully
@@ -172,7 +172,7 @@ empirically to avoid `blowing up'. */
     of motion, giving (for linear damping):
     velocity = non-damping force / damping coefficient,
     where damping coefficient = mass*NumDampFactor/InitDensity in this code.*/
-    bool isGradientDescentDynamicsEnabled;
+    bool is_gradient_descent_dynamics_enabled;
 
     /* When this bool is set to true, the progMetric and
     progSecFF that we would normally be dialling FROM at the start of the run,
@@ -188,7 +188,7 @@ empirically to avoid `blowing up'. */
     To use it, you probably want to supply an ansatz file with its
     currDialInFactor CHANGED TO = 0. See main() for more details, including the
     intended use case. */
-    bool ForInitialPortionOfProgTensorsSequence_DialProgTauButJumpProgMetricAndProgSecFF;
+    bool for_initial_portion_of_prog_tensors_sequence_dial_prog_tau_but_jump_prog_metric_and_prog_sec_ff;
 
     /* If settings.isDialingFromAnsatzEnabled == true AND an ansatz data file
     is being used, the state of dial-in given by the header line in the ansatz
@@ -200,7 +200,7 @@ empirically to avoid `blowing up'. */
     This setting is very handy if you can only make an
     approximate guess at a solution, and want to start from there and see
     where things go without explosive dynamics.*/
-    bool isDialingFromAnsatzEnabled;
+    bool is_dialing_from_ansatz_enabled;
 
 
     /* Variables used to control the programmed properties' time variation.
@@ -223,72 +223,72 @@ empirically to avoid `blowing up'. */
     equal the characteristic decay time for the longest wavelength bending mode
     when it is critically damped. The value can be tuned in the settings file
     with a dimensionless prefactor. */
-    double DialInResolution;
-    double DialInStepTime;
-    double TimeBetweenEquilChecksPrefactor;
-    double TimeBetweenEquilChecks;
-    double DialInStepTimePrefactor;
+    double dial_in_resolution;
+    double dial_in_step_time;
+    double time_between_equil_checks_prefactor;
+    double time_between_equil_checks;
+    double dial_in_step_time_prefactor;
 
     // Amount of time (from start) that 'prod' force should be applied for
-    double ProdForceTime;
+    double prod_force_time;
 
     /* Factor determining strength of prod force. Values less than 0.01 are
     probably recommended. */
-    double ProdStrength;
+    double prod_strength;
 
     /* Amount of time (from start) that simple downward load force should be
     applied for (to nodes with isLoadForceEnabled = true, set via input data file).*/
-    double LoadForceTime;
+    double load_force_time;
 
     /* Factor determining strength of load force, which has magnitude
     LoadStrength*ShearModulus*ApproxMinInitElemSize*SheetThickness. */
-    double LoadStrength;
+    double load_strength;
 
     /* Bool determining whether to perturb node positions with a small amount of
     random noise just before dynamical evolution begins, to 'break away' from
     an initial planar geometry, for example. */
-    bool isPerturbationOfInitialPositionsEnabled;
+    bool is_perturbation_of_initial_positions_enabled;
 
     /* Bool determining whether to clamp whole boundary in addition to the clamp
     indicators given in the input data file. */
-    bool isBoundaryClamped;
+    bool is_boundary_clamped;
 
     // Mechanical Poisson ratio of sheet material.
-    double PoissonRatio;
+    double poisson_ratio;
 
     /* Approximate length scale of expected minimum wavevector in the system,
     e.g. the longest length scale in the sample. */
-    double SampleCharLength;
+    double sample_char_length;
 
     /* Approximate scales of stretching energy and energy density.*/
-    double charStretchEnergyDensityScale;
+    double char_stretch_energy_density_scale;
     // double charBendEnergyDensityScale;
-    double charStretchEnergyScale;
+    double char_stretch_energy_scale;
     // double charBendEnergyScale;
 
     // Initial sheet thickness, which determines the balance between the
     //stretching and bending energies.
-    double SheetThickness;
+    double sheet_thickness;
 
     // Shear modulus.
-    double ShearModulus;
+    double shear_modulus;
 
     // Young's Modulus.
-    double YoungsModulus;
+    double youngs_modulus;
 
     // Initial( reference) state density.
-    double InitDensity;
+    double init_density;
 
     /* Square root of the smallest initial element area, used in calculating time step
     and characteristic force scale for testing equilibrium. */
-    double ApproxMinInitElemSize;
+    double approx_min_init_elem_size;
 
     // Number of boundary nodes.
-    int numBoundaryNodes;
+    int num_boundary_nodes;
 
     /* Characteristic force scale in the simulation, determined from other
     parameters (in main.cpp). */
-    double charForceScale;
+    double char_force_scale;
 
     /* Factor to determine the threshold for the allowed condition number of the
     matrices which are inverted in finding the second fundamental form
@@ -299,7 +299,7 @@ empirically to avoid `blowing up'. */
     possible patches. In general, choose as low a value as possible that
     allows all triangles to find a patch successfully.
     */
-    double PatchMatrixDimensionlessConditioningThreshold;
+    double patch_matrix_dimensionless_conditioning_threshold;
 
     double * getParameterAddressDouble(const std::string &parameterName);
 

@@ -243,7 +243,7 @@ See Settings.hpp for details of settings. */
         return -1;
     }
 // Calculate Young's Modulus
-    settings.YoungsModulus = 2.0 * settings.ShearModulus * (1.0 + settings.PoissonRatio);
+    settings.youngs_modulus = 2.0 * settings.shear_modulus * (1.0 + settings.poisson_ratio);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -306,13 +306,13 @@ further on in the sequence of programmed tensors. */
 
 // Print numbers of nodes and triangles.
     logStream.open();
-    logStream << "Number of nodes = " << settings.NumNodes << std::endl;
-    logStream << "Number of triangles = " << settings.NumTriangles << std::endl;
+    logStream << "Number of nodes = " << settings.num_nodes << std::endl;
+    logStream << "Number of triangles = " << settings.num_triangles << std::endl;
 /* Print warning if number of triangles is low - in this case boundary effects
 will dominate, and the code should not be trusted, both due to the reduced
 accuracy in the treatment of the boundary in e.g. the 2nd F.F. approx, and due
 to possible bugs in this rather special case.*/
-    if (settings.NumTriangles < 50) {
+    if (settings.num_triangles < 50) {
         logStream << "Your mesh has a small number of triangles. \nBeware that the code "
                      "is likely to be less accurate in this case, \nand unforeseen bugs are more "
                      "likely in extreme cases." << std::endl;
@@ -321,10 +321,10 @@ to possible bugs in this rather special case.*/
 
 /* Set the nodes and triangles debugging display functions to print to the
 same output log file as logStream (could send somewhere else in principle).*/
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
         nodes[i].nodeLogStream.setOutputFileName(logStream.getOutputFileName());
     }
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         triangles[i].triLogStream.setOutputFileName(logStream.getOutputFileName());
     }
 
@@ -346,7 +346,7 @@ set up an 'edges' data structure to store further edge information.*/
 
 /* Set the edges debugging display functions to print to the same output log
 file as logStream (could send somewhere else in principle).*/
-    for (int i = 0; i < settings.NumEdges; ++i) {
+    for (int i = 0; i < settings.num_edges; ++i) {
         edges[i].edgeLogStream.setOutputFileName(logStream.getOutputFileName());
     }
 
@@ -356,9 +356,9 @@ Also calculate the total initial perimeter of the sample, to be used as a
 characteristic sample length in estimating characteristic times, time steps
 etc.*/
     int numBoundaryEdges = 0;
-    std::vector<double> initBoundaryEdgeLengths(settings.NumEdges);
+    std::vector<double> initBoundaryEdgeLengths(settings.num_edges);
 
-    for (int i = 0; i < settings.NumEdges; ++i) {
+    for (int i = 0; i < settings.num_edges; ++i) {
         if (edges[i].isOnBoundary) {
 
             numBoundaryEdges += 1;
@@ -368,7 +368,7 @@ etc.*/
 
             //If chosen in settings, clamp whole boundary in addition to clamp
             //indicators from data file.
-            if (settings.isBoundaryClamped) {
+            if (settings.is_boundary_clamped) {
                 nodes[edges[i].nodeLabels(0)].isClamped = true;
                 nodes[edges[i].nodeLabels(1)].isClamped = true;
             }
@@ -380,7 +380,7 @@ etc.*/
 
 // Do sum to calculate perimeter, and set the characteristic sample length to it.
     double initPerimeter = kahanSum(initBoundaryEdgeLengths);
-    settings.SampleCharLength = initPerimeter;
+    settings.sample_char_length = initPerimeter;
     logStream.open();
     logStream << "Initial perimeter = " << initPerimeter << std::endl;
     logStream.close();
@@ -388,7 +388,7 @@ etc.*/
 
 //A further check that things are ok:
     try {
-        if (3 * settings.NumTriangles != 2 * settings.NumEdges - numBoundaryEdges) {
+        if (3 * settings.num_triangles != 2 * settings.num_edges - numBoundaryEdges) {
             throw std::runtime_error(
                     "Something has gone wrong in calculating triangle adjacencies and/or edges: the current edge and triangle counts violate a topological identity.");
         }
@@ -399,16 +399,16 @@ etc.*/
     }
 
     logStream.open();
-    logStream << "Number of edges = " << settings.NumEdges << std::endl;
+    logStream << "Number of edges = " << settings.num_edges << std::endl;
     logStream << "Number of boundary edges = " << numBoundaryEdges << std::endl;
-    logStream << "Number of non-boundary edges = " << settings.NumEdges - numBoundaryEdges << std::endl;
+    logStream << "Number of non-boundary edges = " << settings.num_edges - numBoundaryEdges << std::endl;
     logStream.close();
 
 
 /* Now set triangle boundary indicators, based on whether they have any *edges*
 on the sample boundary.*/
     int numBoundaryTriangles = 0;
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         if (triangles[i].isOnBoundary) {
             numBoundaryTriangles += 1;
         }
@@ -416,11 +416,11 @@ on the sample boundary.*/
 
     logStream.open();
     logStream << "Number of boundary triangles = " << numBoundaryTriangles << std::endl;
-    logStream << "Number of holes in mesh = " << 1 + settings.NumEdges - settings.NumNodes - settings.NumTriangles
+    logStream << "Number of holes in mesh = " << 1 + settings.num_edges - settings.num_nodes - settings.num_triangles
               << std::endl; // From Euler's formula for a planar graph.
     logStream.close();
     try {
-        if (1 + settings.NumEdges - settings.NumNodes - settings.NumTriangles < 0) {
+        if (1 + settings.num_edges - settings.num_nodes - settings.num_triangles < 0) {
             throw std::runtime_error(
                     "Something is very wrong with the mesh, because the code thinks it has a negative number of holes! A first thing to check is that all nodes touch at least one tri.");
         }
@@ -437,12 +437,12 @@ share an edge).*/
 
 // Calculate and store number of boundary nodes.
     int numBoundaryNodes = 0;
-    for (int n = 0; n < settings.NumNodes; ++n) {
+    for (int n = 0; n < settings.num_nodes; ++n) {
         if (nodes[n].isOnBoundary) {
             numBoundaryNodes += 1;
         }
     }
-    settings.numBoundaryNodes = numBoundaryNodes;
+    settings.num_boundary_nodes = numBoundaryNodes;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -498,12 +498,12 @@ shuffling the labels for those with negative-z-component normals, before
 recalculating the initial normals, areas etc. Note, a more complex procedure
 will be required for non-planar initial geometries. The magic numbers in the
 argument list are just debugging values that should not matter here.*/
-    calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, -12345, 98765,
+    calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, WaitingForEquilibrium, -12345, 98765,
                                                   programmed_metric_infos, inverted_programmed_metrics,
                                                   programmed_taus, programmed_second_fundamental_forms, settings);
     Eigen::Vector3d tempZAxisVec;
     tempZAxisVec << 0.0, 0.0, 1.0;
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    for (int i = 0; i < settings.num_triangles; ++i) {
         if (tempZAxisVec.dot(triangles[i].currSides.col(0).cross(triangles[i].currSides.col(1))) < 0) {
             int tempLabel = triangles[i].vertexLabels(2);
             triangles[i].vertexLabels(2) = triangles[i].vertexLabels(1);
@@ -511,7 +511,7 @@ argument list are just debugging values that should not matter here.*/
         }
     }
     std::cout << "CHECK THIS - should shuffle normals before patch matrix calc I think?" << std::endl;
-    calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, -12345, 98765,
+    calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, WaitingForEquilibrium, -12345, 98765,
                                                   programmed_metric_infos, inverted_programmed_metrics,
                                                   programmed_taus, programmed_second_fundamental_forms, settings);
 
@@ -542,8 +542,8 @@ begin with. */
     much bigger for other sets in the sequence. If you wanted to get even fancier,
     you could change the time step as prog_Tau is dialled in between two sets in the
     sequence.*/
-    settings.ApproxMinInitElemSize = DBL_MAX;
-    settings.smallestSizeOverRootTau = DBL_MAX;
+    settings.approx_min_init_elem_size = DBL_MAX;
+    settings.smallest_size_over_root_tau = DBL_MAX;
 //    int smallestTri = 0;
     for (int i = 0; i < triangles.size(); ++i) {
 
@@ -557,54 +557,54 @@ begin with. */
             }
         }
 
-        if (settings.ApproxMinInitElemSize > smallestAltitude) {
-            settings.ApproxMinInitElemSize = smallestAltitude;
+        if (settings.approx_min_init_elem_size > smallestAltitude) {
+            settings.approx_min_init_elem_size = smallestAltitude;
         }
 
         for (auto &sequenceOf_ProgTau: programmed_taus) {
-            if (settings.smallestSizeOverRootTau > smallestAltitude / sqrt(sequenceOf_ProgTau[i])) {
-                settings.smallestSizeOverRootTau = smallestAltitude / sqrt(sequenceOf_ProgTau[i]);
+            if (settings.smallest_size_over_root_tau > smallestAltitude / sqrt(sequenceOf_ProgTau[i])) {
+                settings.smallest_size_over_root_tau = smallestAltitude / sqrt(sequenceOf_ProgTau[i]);
             }
         }
     }
     logStream.open();
-    logStream << "Sheet thickness = " << settings.SheetThickness << std::endl;
-    logStream << "Approx smallest element linear size = " << settings.ApproxMinInitElemSize << std::endl;
+    logStream << "Sheet thickness = " << settings.sheet_thickness << std::endl;
+    logStream << "Approx smallest element linear size = " << settings.approx_min_init_elem_size << std::endl;
     logStream.close();
     settings.SetupDialIn(logStream);
 
 /* Set settings.TimeBetweenEquilChecks based on the tunable dimensionless value
 in the settings file, which relates this time to settings.DialInStepTime.*/
-    settings.TimeBetweenEquilChecks = settings.TimeBetweenEquilChecksPrefactor * settings.DialInStepTime;
+    settings.time_between_equil_checks = settings.time_between_equil_checks_prefactor * settings.dial_in_step_time;
     settings.SetupStepTime(logStream);
     settings.SetupPrintFrequency(logStream);
 
 
 // Print total load force.
     int numLoadedNodes = 0;
-    for (int i = 0; i < settings.NumNodes; ++i) {
+    for (int i = 0; i < settings.num_nodes; ++i) {
         if (nodes[i].isLoadForceEnabled) {
             numLoadedNodes += 1;
         }
     }
     logStream.open();
     logStream << "Total load force applied = " <<
-              numLoadedNodes * settings.LoadStrength * settings.ShearModulus * settings.ApproxMinInitElemSize *
-              settings.SheetThickness << std::endl;
+                                               numLoadedNodes * settings.load_strength * settings.shear_modulus * settings.approx_min_init_elem_size *
+                                               settings.sheet_thickness << std::endl;
     logStream.close();
 
 
 // Calculate and store characteristic force, energy, and energy density scales.
-    settings.charForceScale = settings.ShearModulus * settings.ApproxMinInitElemSize * settings.SheetThickness;
-    settings.charStretchEnergyDensityScale = settings.ShearModulus * settings.SheetThickness;
+    settings.char_force_scale = settings.shear_modulus * settings.approx_min_init_elem_size * settings.sheet_thickness;
+    settings.char_stretch_energy_density_scale = settings.shear_modulus * settings.sheet_thickness;
 // settings.charBendEnergyDensityScale = settings.ShearModulus * settings.SheetThickness * settings.SheetThickness * settings.SheetThickness / (settings.SampleCharLength * settings.SampleCharLength);
     double totInitArea = 0;
-    std::vector<double> initAreas(settings.NumTriangles);
-    for (int i = 0; i < settings.NumTriangles; ++i) {
+    std::vector<double> initAreas(settings.num_triangles);
+    for (int i = 0; i < settings.num_triangles; ++i) {
         initAreas[i] = triangles[i].initArea;
     }
     totInitArea = kahanSum(initAreas);
-    settings.charStretchEnergyScale = settings.charStretchEnergyDensityScale * totInitArea;
+    settings.char_stretch_energy_scale = settings.char_stretch_energy_density_scale * totInitArea;
 // settings.charBendEnergyScale = settings.charBendEnergyDensityScale * totInitArea;
 
 
@@ -634,10 +634,10 @@ given in the input file.
 
     std::vector<double> DialInFactorValuesToHoldAt;
     double tempDialInFactor = 0.0;
-    if (settings.DialInResolution > 0 && settings.DialInStepTime >= 0) {
+    if (settings.dial_in_resolution > 0 && settings.dial_in_step_time >= 0) {
         while (tempDialInFactor < 1.0) {
             DialInFactorValuesToHoldAt.push_back(tempDialInFactor);
-            tempDialInFactor += settings.DialInResolution;
+            tempDialInFactor += settings.dial_in_resolution;
         }
         DialInFactorValuesToHoldAt.push_back(1.0);
     } else {
@@ -652,27 +652,27 @@ given in the input file.
 /* Create std::vectors (with one element for each triangle) that will be passed
 by reference to functions calculating the Gauss and mean curvatures, and
 stretching and bending energies and energy densities. */
-    std::vector<double> gaussCurvatures(settings.NumTriangles,
+    std::vector<double> gaussCurvatures(settings.num_triangles,
                                         DBL_MAX); //Recognisable initialisation for debugging.
-    std::vector<double> meanCurvatures(settings.NumTriangles, DBL_MAX);
-    std::vector<double> stretchEnergies(settings.NumTriangles, DBL_MAX);
-    std::vector<double> bendEnergies(settings.NumTriangles, DBL_MAX);
-    std::vector<double> stretchEnergyDensities(settings.NumTriangles, DBL_MAX);
-    std::vector<double> bendEnergyDensities(settings.NumTriangles, DBL_MAX);
-    std::vector<double> kineticEnergies(settings.NumNodes, DBL_MAX);
-    std::vector<double> strainMeasures(settings.NumTriangles, DBL_MAX);
-    std::vector<Eigen::Vector2d> cauchyStressEigenvals(settings.NumTriangles);
-    std::vector<Eigen::Matrix<double, 3, 2>> cauchyStressEigenvecs(settings.NumTriangles);
+    std::vector<double> meanCurvatures(settings.num_triangles, DBL_MAX);
+    std::vector<double> stretchEnergies(settings.num_triangles, DBL_MAX);
+    std::vector<double> bendEnergies(settings.num_triangles, DBL_MAX);
+    std::vector<double> stretchEnergyDensities(settings.num_triangles, DBL_MAX);
+    std::vector<double> bendEnergyDensities(settings.num_triangles, DBL_MAX);
+    std::vector<double> kineticEnergies(settings.num_nodes, DBL_MAX);
+    std::vector<double> strainMeasures(settings.num_triangles, DBL_MAX);
+    std::vector<Eigen::Vector2d> cauchyStressEigenvals(settings.num_triangles);
+    std::vector<Eigen::Matrix<double, 3, 2>> cauchyStressEigenvecs(settings.num_triangles);
 
 
 /* Create further std::vectors to store angle deficits if specified in settings
 file.*/
-    std::vector<double> angleDeficits(settings.NumNodes, DBL_MAX);
+    std::vector<double> angleDeficits(settings.num_nodes, DBL_MAX);
 //std::vector<double> interiorNodeAngleDeficits(settings.NumNodes - settings.numBoundaryNodes, DBL_MAX);
 //std::vector<double> boundaryNodeAngleDeficits(settings.numBoundaryNodes, DBL_MAX);
     std::cout << "CHECK THIS" << std::endl;
-    std::vector<double> interiorNodeAngleDeficits(settings.NumNodes, DBL_MAX);
-    std::vector<double> boundaryNodeAngleDeficits(settings.NumNodes, DBL_MAX);
+    std::vector<double> interiorNodeAngleDeficits(settings.num_nodes, DBL_MAX);
+    std::vector<double> boundaryNodeAngleDeficits(settings.num_nodes, DBL_MAX);
 
 /*
 std::cout<< "STORING NODE REF POSITIONS TO HELP MAKE EXACT CONE." << std::endl;
@@ -684,7 +684,7 @@ for(int n = 0; n < settings.NumNodes; ++n){
 /* Perturb node positions with small random noise if desired, to allow 'breaking
 away' from flat plane initial condition, for example. This will have no effect
 if an ansatz is used. */
-    if (settings.isPerturbationOfInitialPositionsEnabled) {
+    if (settings.is_perturbation_of_initial_positions_enabled) {
         perturbInitialPositionsWithRandomNoise(nodes, settings);
     }
 
@@ -713,14 +713,14 @@ cases for this code, where only a single set of programmed tensors is supplied.*
         if (ansatz_data_file_name_str != "no_ansatz_file" &&
             progTensorSequenceCounter == progTensorSequenceCounterToStartFrom) {
 
-            for (int i = 0; i < settings.NumNodes; ++i) {
+            for (int i = 0; i < settings.num_nodes; ++i) {
                 nodes[i].pos = nodeAnsatzPositions[i];
             }
 
             timeSinceLastEquilCheck = 0.0;
-            status = dialling;
+            status = Dialling;
 
-            if (!settings.isDialingFromAnsatzEnabled) {
+            if (!settings.is_dialing_from_ansatz_enabled) {
 
                 currDialInFactor = dialInFactorToStartFrom;
                 DialInFactorCounter = 0;
@@ -733,7 +733,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 timeSinceCurrDiallingInPhaseStarted =
                         ((currDialInFactor - DialInFactorValuesToHoldAt[DialInFactorCounter]) /
                          (DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
-                          - DialInFactorValuesToHoldAt[DialInFactorCounter])) * settings.DialInStepTime;
+                          - DialInFactorValuesToHoldAt[DialInFactorCounter])) * settings.dial_in_step_time;
 
                 /* Here we implement another feature, in which the progMetric and
                 progSecFF that we would normally be dialling FROM at this point, are
@@ -764,8 +764,8 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 that you thought you started close to, pumping unnecessary energy in
                 to the system and wasting time.
                 There may be other uses for this feature too.*/
-                if (settings.ForInitialPortionOfProgTensorsSequence_DialProgTauButJumpProgMetricAndProgSecFF) {
-                    for (int i = 0; i < settings.NumTriangles; ++i) {
+                if (settings.for_initial_portion_of_prog_tensors_sequence_dial_prog_tau_but_jump_prog_metric_and_prog_sec_ff) {
+                    for (int i = 0; i < settings.num_triangles; ++i) {
                         programmed_second_fundamental_forms[progTensorSequenceCounterToStartFrom][i] = programmed_second_fundamental_forms[
                                 progTensorSequenceCounterToStartFrom + 1][i];
                         programmed_metric_infos[progTensorSequenceCounterToStartFrom][i] = programmed_metric_infos[
@@ -800,7 +800,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 timeSinceCurrDiallingInPhaseStarted = 0.0;
 
                 // Calculate all necessary geometry for the ansatz state.
-                calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, waitingForEquilibrium, currDialInFactor,
+                calcTriangleGeometries_and_DialledProgTensors(nodes, triangles, WaitingForEquilibrium, currDialInFactor,
                                                               progTensorSequenceCounter, programmed_metric_infos,
                                                               inverted_programmed_metrics, programmed_taus,
                                                               programmed_second_fundamental_forms, settings);
@@ -814,7 +814,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 /* Alter inverted_programmed_metrics[progTensorSequenceCounterToStartFrom] and similar to change where
                 the programmed quantities are dialling from.*/
 
-                for (int i = 0; i < settings.NumTriangles; ++i) {
+                for (int i = 0; i < settings.num_triangles; ++i) {
 
                     // Test for invertibility of metric before taking inverse.
                     try {
@@ -827,7 +827,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                         } else {
                             inverted_programmed_metrics[progTensorSequenceCounterToStartFrom][i] = (
                                     triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
-                            if (settings.isDialingDisabled) {
+                            if (settings.is_dialing_disabled) {
                                 inverted_programmed_metrics[progTensorSequenceCounterToStartFrom + 1][i] = (
                                         triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
                             }
@@ -844,7 +844,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     programmed_taus[progTensorSequenceCounterToStartFrom][i] = programmed_taus[
                             progTensorSequenceCounterToStartFrom + 1][i];
                     programmed_second_fundamental_forms[progTensorSequenceCounterToStartFrom][i] = triangles[i].secFF;
-                    if (settings.isDialingDisabled) {
+                    if (settings.is_dialing_disabled) {
                         programmed_taus[progTensorSequenceCounterToStartFrom + 1][i] = programmed_taus[
                                 progTensorSequenceCounterToStartFrom + 1][i];
                         programmed_second_fundamental_forms[progTensorSequenceCounterToStartFrom +
@@ -857,17 +857,17 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
             // If set in settings file, clamp all nodes within a certain vertical distance
             // above the node with the lowest initial z value (only works with ansazt clearly).
-            if (settings.ThicknessesAboveLowestNodeToClampUpTo > 0) {
+            if (settings.thicknesses_above_lowest_node_to_clamp_up_to > 0) {
                 double minNodeZCoord = nodes[0].pos(2);
-                for (int n = 0; n < settings.NumNodes; ++n) {
+                for (int n = 0; n < settings.num_nodes; ++n) {
                     if (minNodeZCoord > nodes[n].pos(2)) {
                         minNodeZCoord = nodes[n].pos(2);
                     }
                 }
 
-                for (int n = 0; n < settings.NumNodes; ++n) {
+                for (int n = 0; n < settings.num_nodes; ++n) {
                     if (nodes[n].pos(2) - minNodeZCoord <
-                        settings.ThicknessesAboveLowestNodeToClampUpTo * settings.SheetThickness) {
+                        settings.thicknesses_above_lowest_node_to_clamp_up_to * settings.sheet_thickness) {
                         nodes[n].isClamped = true;
                     }
                 }
@@ -880,7 +880,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
         else {
             // Reset the variables that control each dialling/waiting process.
             timeSinceLastEquilCheck = 0.0;
-            status = dialling;
+            status = Dialling;
             currDialInFactor = 0.0;
             DialInFactorCounter = 0;
             timeSinceCurrDiallingInPhaseStarted = 0.0;
@@ -891,8 +891,8 @@ cases for this code, where only a single set of programmed tensors is supplied.*
         a slightly hacky way to ensure that no dialling actually occurs, and the
         simulation jumps to a status = waitingForEquilibrium state. The magic number is
         just chosen to be recognisable for debugging.*/
-        if (settings.DialInStepTime < settings.TimeStep) {
-            settings.DialInStepTime = 0.0;
+        if (settings.dial_in_step_time < settings.time_step) {
+            settings.dial_in_step_time = 0.0;
             timeSinceCurrDiallingInPhaseStarted = 1.23456789;
         }
 
@@ -906,7 +906,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
         logStream.open();
         logStream << "\nCREATING VECTOR TO STORE UNSTRESSED CONE NODE POSITIONS.\n" << std::endl;
         logStream.close();
-        std::vector<Eigen::Vector3d> nodeUnstressedConePosits(settings.NumNodes);
+        std::vector<Eigen::Vector3d> nodeUnstressedConePosits(settings.num_nodes);
         double s1 = 12345678.9;
         //double sTest = 98765432.1;
 
@@ -918,39 +918,39 @@ cases for this code, where only a single set of programmed tensors is supplied.*
             int highestNode = -99;
             int lowestNode = -99;
             if (stepCount == 0) {
-                settings.initSlideZCoord_lower = nodes[0].pos(2);
-                settings.initSlideZCoord_upper = nodes[0].pos(2);
-                for (int n = 0; n < settings.NumNodes; ++n) {
-                    if (settings.initSlideZCoord_lower > nodes[n].pos(2)) {
-                        settings.initSlideZCoord_lower = nodes[n].pos(2);
+                settings.init_slide_z_coord_lower = nodes[0].pos(2);
+                settings.init_slide_z_coord_upper = nodes[0].pos(2);
+                for (int n = 0; n < settings.num_nodes; ++n) {
+                    if (settings.init_slide_z_coord_lower > nodes[n].pos(2)) {
+                        settings.init_slide_z_coord_lower = nodes[n].pos(2);
                         lowestNode = n;
                     }
-                    if (settings.initSlideZCoord_upper < nodes[n].pos(2)) {
-                        settings.initSlideZCoord_upper = nodes[n].pos(2);
+                    if (settings.init_slide_z_coord_upper < nodes[n].pos(2)) {
+                        settings.init_slide_z_coord_upper = nodes[n].pos(2);
                         highestNode = n;
                     }
                     // Can instead choose initial slide separation directly from settings file, to help avoid 'jumping' when starting a
                     // squashing run part way through from a previous run's output.
-                    if (settings.SpecifyInitSlideZCoord_upper > -99.0) {
-                        settings.initSlideZCoord_upper = settings.SpecifyInitSlideZCoord_upper;
+                    if (settings.specify_init_slide_z_coord_upper > -99.0) {
+                        settings.init_slide_z_coord_upper = settings.specify_init_slide_z_coord_upper;
                     }
-                    if (settings.SpecifyInitSlideZCoord_lower > -99.0) {
-                        settings.initSlideZCoord_lower = settings.SpecifyInitSlideZCoord_lower;
+                    if (settings.specify_init_slide_z_coord_lower > -99.0) {
+                        settings.init_slide_z_coord_lower = settings.specify_init_slide_z_coord_lower;
                     }
 
                     // To do constant-weight slide instead
-                    if (settings.constSlideWeightFac > 0) {
-                        settings.initSlideZCoord_upper = settings.initSlideZCoord_lower + settings.SpacerHeight *
-                                                                                          settings.SampleCharLength;// This used to be settings.SpacerHeight * settings.SampleCharLength instead, which is wrong
+                    if (settings.const_slide_weight_fac > 0) {
+                        settings.init_slide_z_coord_upper = settings.init_slide_z_coord_lower + settings.spacer_height *
+                                                                                                settings.sample_char_length;// This used to be settings.SpacerHeight * settings.SampleCharLength instead, which is wrong
                     }
 
-                    settings.upperSlideDisplacement = 0.0;
-                    settings.upperSlideVel = 0.0;
-                    settings.slideJustReachedEquil = 0;
-                    if (settings.isControlledForceEnabled) {
-                        settings.upperSlideWeight = settings.InitialSlideWeightForCtrldForceInUnitsOfMuTsq *
-                                                    (settings.ShearModulus * settings.SheetThickness *
-                                                     settings.SheetThickness);
+                    settings.upper_slide_displacement = 0.0;
+                    settings.upper_slide_vel = 0.0;
+                    settings.is_slide_just_equilibrated = 0;
+                    if (settings.is_controlled_force_enabled) {
+                        settings.upper_slide_weight = settings.initial_slide_weight_for_ctrld_force_in_units_of_mu_tsq *
+                                                      (settings.shear_modulus * settings.sheet_thickness *
+                                                       settings.sheet_thickness);
                     }
                 }
                 // Uncomment the following line for single ridge experiment with point(ish) load to applied tip.
@@ -958,13 +958,13 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
                 // Readjust for the case of glass cones instead of glass slides. The
                 // slide Z coords correspond to the tips of the glass cones.
-                if (settings.GlassCones) {
-                    settings.ConeAngle = 1.02327019;
-                    settings.initSlideZCoord_upper += -tan(settings.ConeAngle) *
-                                                      sqrt(nodes[highestNode].pos(0) * nodes[highestNode].pos(0) +
+                if (settings.glass_cones) {
+                    settings.cone_angle = 1.02327019;
+                    settings.init_slide_z_coord_upper += -tan(settings.cone_angle) *
+                                                         sqrt(nodes[highestNode].pos(0) * nodes[highestNode].pos(0) +
                                                            nodes[highestNode].pos(1) * nodes[highestNode].pos(1));
-                    settings.initSlideZCoord_lower += -tan(settings.ConeAngle) *
-                                                      sqrt(nodes[lowestNode].pos(0) * nodes[lowestNode].pos(0) +
+                    settings.init_slide_z_coord_lower += -tan(settings.cone_angle) *
+                                                         sqrt(nodes[lowestNode].pos(0) * nodes[lowestNode].pos(0) +
                                                            nodes[lowestNode].pos(1) * nodes[lowestNode].pos(1));
                     logStream.open();
                     logStream << "USING TWO GLASS CONES FOR SQUASHING." << std::endl;
@@ -974,14 +974,14 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     // forces we will modify to kill any components not tangential to
                     // a perfect cone base state. We do this to nodes within an intermediate
                     // distance vertically from the ends of the cone.
-                    double intermLengthScaleUpper = 2.0 * sqrt(settings.SheetThickness * 0.18);
-                    double intermLengthScaleLower = 2.0 * sqrt(settings.SheetThickness * 1.8);
+                    double intermLengthScaleUpper = 2.0 * sqrt(settings.sheet_thickness * 0.18);
+                    double intermLengthScaleLower = 2.0 * sqrt(settings.sheet_thickness * 1.8);
                     logStream.open();
                     logStream
                             << "Apply normal-force-killer within the following vertical distances of the top and bottom: "
                             << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
                     logStream.close();
-                    for (int n = 0; n < settings.NumNodes; ++n) {
+                    for (int n = 0; n < settings.num_nodes; ++n) {
                         if (((nodes[highestNode].pos(2) - nodes[n].pos(2)) < intermLengthScaleUpper) ||
                             ((nodes[n].pos(2) - nodes[lowestNode].pos(2)) < intermLengthScaleLower)) {
                             nodes[n].isOnBoundary = true;
@@ -990,9 +990,9 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 }
 
                 // Instead set up imposed-Seide-deformations idea.
-                if (settings.isSeideDeformationsEnabled) {
+                if (settings.is_seide_deformations_enabled) {
                     settings.lambda = 0.9;
-                    settings.ConeAngle = asin(pow(settings.lambda, 1.5));
+                    settings.cone_angle = asin(pow(settings.lambda, 1.5));
                     logStream.open();
                     logStream << "IMPOSING SEIDE DEFORMATIONS." << std::endl;
                     logStream.close();
@@ -1001,14 +1001,14 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     // positions we will force to be those of Seide's setup (found
                     // by findng the membrane stress solution for his base state, and
                     // integrating the strains etc).
-                    double intermLengthScaleUpper = 3.0 * sqrt(settings.SheetThickness * 0.18);
-                    double intermLengthScaleLower = 3.0 * sqrt(settings.SheetThickness * 1.8);
+                    double intermLengthScaleUpper = 3.0 * sqrt(settings.sheet_thickness * 0.18);
+                    double intermLengthScaleLower = 3.0 * sqrt(settings.sheet_thickness * 1.8);
                     logStream.open();
                     logStream
                             << "Imposing Seide displacements within the following (initial) vertical distances of the top and bottom: "
                             << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
                     logStream.close();
-                    for (int n = 0; n < settings.NumNodes; ++n) {
+                    for (int n = 0; n < settings.num_nodes; ++n) {
                         if (((nodes[highestNode].pos(2) - nodes[n].pos(2)) < intermLengthScaleUpper) ||
                             ((nodes[n].pos(2) - nodes[lowestNode].pos(2)) < intermLengthScaleLower)) {
                             nodes[n].isSeideDisplacementEnabled = true;
@@ -1016,83 +1016,83 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     }
 
                     // STORE PERFECT CONE ANSATZ
-                    for (int n = 0; n < settings.NumNodes; ++n) {
+                    for (int n = 0; n < settings.num_nodes; ++n) {
                         nodeUnstressedConePosits[n] = nodes[n].pos;
                     }
                     s1 = sqrt(nodes[highestNode].pos(0) * nodes[highestNode].pos(0) +
-                              nodes[highestNode].pos(1) * nodes[highestNode].pos(1)) / sin(settings.ConeAngle);
+                              nodes[highestNode].pos(1) * nodes[highestNode].pos(1)) / sin(settings.cone_angle);
 
                     Eigen::Vector3d testTriCurrCentroid;
-                    testTriCurrCentroid = (nodes[triangles[settings.testTriangle].vertexLabels(0)].pos +
-                                           nodes[triangles[settings.testTriangle].vertexLabels(1)].pos +
-                                           nodes[triangles[settings.testTriangle].vertexLabels(2)].pos) / 3;
+                    testTriCurrCentroid = (nodes[triangles[settings.test_triangle].vertexLabels(0)].pos +
+                                           nodes[triangles[settings.test_triangle].vertexLabels(1)].pos +
+                                           nodes[triangles[settings.test_triangle].vertexLabels(2)].pos) / 3;
                     //sTest = sqrt(testTriCurrCentroid(0)*testTriCurrCentroid(0) + testTriCurrCentroid(1)*testTriCurrCentroid(1)) / sin(settings.ConeAngle);
                 }
             }
 
 
-            if (!settings.isControlledForceEnabled) {
-                settings.upperSlideDisplacement =
-                        time * settings.slideSpeedPrefactor * settings.SampleCharLength / settings.bending_long_time;
+            if (!settings.is_controlled_force_enabled) {
+                settings.upper_slide_displacement =
+                        time * settings.slide_speed_prefactor * settings.sample_char_length / settings.bending_long_time;
             } else { // settings.isControlledForceEnabled == true instead
                 //settings.upperSlideWeight = (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) * (time * settings.slideSpeedPrefactor / bending_long_time);
-                settings.slideDampingParam =
-                        0.4 * settings.ShearModulus * settings.SheetThickness * settings.SheetThickness /
-                        (settings.slideSpeedPrefactor * settings.SampleCharLength / settings.bending_long_time);
-                if (fabs(settings.upperTotSlideForce + settings.upperSlideWeight) /
-                    (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) <
-                    settings.totalSlideForceToMuTSqRatioEquilThreshold
-                    && settings.constSlideWeightFac < 0) {
-                    if (timeSinceLastEquilCheck > settings.TimeBetweenEquilChecks) {
-                        if (equilibriumCheck(nodes, triangles, settings, logStream) == equilibriumReached) {
-                            settings.slideJustReachedEquil = 1;
-                            settings.upperSlideWeight +=
-                                    settings.slideWeightDialSpeedFac *
-                                    (settings.TimeStep / settings.bending_long_time) *
-                                    (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness);
+                settings.slide_damping_param =
+                        0.4 * settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness /
+                        (settings.slide_speed_prefactor * settings.sample_char_length / settings.bending_long_time);
+                if (fabs(settings.upper_tot_slide_force + settings.upper_slide_weight) /
+                    (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness) <
+                    settings.total_slide_force_to_mu_t_sq_ratio_equil_threshold
+                    && settings.const_slide_weight_fac < 0) {
+                    if (timeSinceLastEquilCheck > settings.time_between_equil_checks) {
+                        if (equilibriumCheck(nodes, triangles, settings, logStream) == EquilibriumReached) {
+                            settings.is_slide_just_equilibrated = 1;
+                            settings.upper_slide_weight +=
+                                    settings.slide_weight_dial_speed_fac *
+                                    (settings.time_step / settings.bending_long_time) *
+                                    (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness);
                         }
                         timeSinceLastEquilCheck = 0.0;
                     }
                 }
 
                 // To do constant-weight slide instead
-                if (settings.constSlideWeightFac > 0) {
-                    settings.upperSlideWeight =
-                            settings.constSlideWeightFac * settings.ShearModulus * settings.SheetThickness *
-                            settings.SheetThickness;
+                if (settings.const_slide_weight_fac > 0) {
+                    settings.upper_slide_weight =
+                            settings.const_slide_weight_fac * settings.shear_modulus * settings.sheet_thickness *
+                            settings.sheet_thickness;
                 }
             }
-            settings.currSlideZCoord_upper = settings.initSlideZCoord_upper - settings.upperSlideDisplacement;
+            settings.curr_slide_z_coord_upper = settings.init_slide_z_coord_upper - settings.upper_slide_displacement;
             std::pair<double, double> upperAndLowerTotSlideForces;
 
             // Impose Seide deformations.
-            if (settings.isSeideDeformationsEnabled) {
-                double pInit = 3.0 * (settings.ShearModulus * settings.SheetThickness *
-                                      settings.SheetThickness); // So we don't have to start all the way from p=0, chosen based on previous sims.
-                settings.p = pInit + time * settings.pSpeedPrefactor * settings.ShearModulus * settings.SheetThickness *
-                                     settings.SheetThickness / settings.bending_long_time;
+            if (settings.is_seide_deformations_enabled) {
+                double pInit = 3.0 * (settings.shear_modulus * settings.sheet_thickness *
+                                      settings.sheet_thickness); // So we don't have to start all the way from p=0, chosen based on previous sims.
+                settings.p = pInit + time * settings.p_speed_prefactor * settings.shear_modulus * settings.sheet_thickness *
+                                     settings.sheet_thickness / settings.bending_long_time;
 
-                for (int n = 0; n < settings.NumNodes; ++n) {
+                for (int n = 0; n < settings.num_nodes; ++n) {
                     if (nodes[n].isSeideDisplacementEnabled || stepCount == 0) {
 
-                        double tCone = settings.SheetThickness / sqrt(settings.lambda);
+                        double tCone = settings.sheet_thickness / sqrt(settings.lambda);
 
                         double polarAng = atan2(nodeUnstressedConePosits[n](1), nodeUnstressedConePosits[n](0));
                         double s = sqrt(nodeUnstressedConePosits[n](0) * nodeUnstressedConePosits[n](0) +
                                         nodeUnstressedConePosits[n](1) * nodeUnstressedConePosits[n](1)) /
-                                   sin(settings.ConeAngle);
+                                   sin(settings.cone_angle);
                         Eigen::Vector3d uHat;
-                        uHat << sin(settings.ConeAngle) * cos(polarAng), sin(settings.ConeAngle) * sin(polarAng), -cos(
-                                settings.ConeAngle);
+                        uHat << sin(settings.cone_angle) * cos(polarAng), sin(settings.cone_angle) * sin(polarAng), -cos(
+                                settings.cone_angle);
                         Eigen::Vector3d wHat;
-                        wHat << -cos(settings.ConeAngle) * cos(polarAng), -cos(settings.ConeAngle) *
-                                                                          sin(polarAng), -sin(settings.ConeAngle);
+                        wHat << -cos(settings.cone_angle) * cos(polarAng), -cos(settings.cone_angle) *
+                                                                           sin(polarAng), -sin(settings.cone_angle);
                         double u = -settings.p * log(s / s1) /
-                                   (2.0 * M_PI * settings.YoungsModulus * tCone * sin(settings.ConeAngle) *
-                                    cos(settings.ConeAngle));
-                        double w = -settings.p * (log(s / s1) + settings.PoissonRatio) /
-                                   (2.0 * M_PI * settings.YoungsModulus * tCone * cos(settings.ConeAngle) *
-                                    cos(settings.ConeAngle));
+                                   (2.0 * M_PI * settings.youngs_modulus * tCone * sin(settings.cone_angle) *
+                                    cos(settings.cone_angle));
+                        double w = -settings.p * (log(s / s1) + settings.poisson_ratio) /
+                                   (2.0 * M_PI * settings.youngs_modulus * tCone * cos(settings.cone_angle) *
+                                    cos(settings.cone_angle));
                         nodes[n].pos = nodeUnstressedConePosits[n] + u * uHat + w * wHat;
                     }
                 }
@@ -1105,7 +1105,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
             // Check if still in dialling in phase or whether it is time to wait for
             //equilibrium.
-            if (timeSinceCurrDiallingInPhaseStarted >= settings.DialInStepTime && status == dialling) {
+            if (timeSinceCurrDiallingInPhaseStarted >= settings.dial_in_step_time && status == Dialling) {
 
                 /* If the current dialling phase has indeed finished, set
                 currDialInFactor to the value that was being dialled up to in
@@ -1115,15 +1115,15 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                                                               progTensorSequenceCounter, programmed_metric_infos,
                                                               inverted_programmed_metrics, programmed_taus,
                                                               programmed_second_fundamental_forms, settings);
-                status = waitingForEquilibrium;
+                status = WaitingForEquilibrium;
                 // NB an EquilCheck has not actually just occurred, but this has the
                 //desired effect of ensuring that each DialInFactor value is held
                 //for at least one TimeBetweenEquilChecks.
                 timeSinceLastEquilCheck = 0.0;
 
-                settings.NumDampFactor =
-                        settings.DampingPrefactor2 *
-                        settings.dampingScale; // Set damping factor to waiting phase value.
+                settings.num_damp_factor =
+                        settings.equilibriation_damping *
+                        settings.damping_scale; // Set damping factor to waiting phase value.
 
                 logStream.open();
                 logStream << "Reached Dial-In Factor of " << DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
@@ -1134,12 +1134,12 @@ cases for this code, where only a single set of programmed tensors is supplied.*
             /* If not waiting for equilibrium, set the current value of the Dial-In
             Factor, based on linear dialling in between the previously calculated
             'checkpoint' values. */
-            if (status == dialling) {
+            if (status == Dialling) {
 
                 currDialInFactor = DialInFactorValuesToHoldAt[DialInFactorCounter] +
                                    (DialInFactorValuesToHoldAt[DialInFactorCounter + 1]
                                     - DialInFactorValuesToHoldAt[DialInFactorCounter]) *
-                                   timeSinceCurrDiallingInPhaseStarted / settings.DialInStepTime;
+                                   timeSinceCurrDiallingInPhaseStarted / settings.dial_in_step_time;
             }
 
             /* Calculate sides, areas...etc of each triangle, as well as the current
@@ -1166,7 +1166,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
              account for BCs e.g. clamping. */
             upperAndLowerTotSlideForces = calcNonDeformationForces_and_ImposeBCS(nodes, time, settings);
             std::chrono::steady_clock::time_point end4 = std::chrono::steady_clock::now();
-            settings.upperTotSlideForce = upperAndLowerTotSlideForces.first;
+            settings.upper_tot_slide_force = upperAndLowerTotSlideForces.first;
 
 
             // Hijack upperSlideDisplacement to hold end displacement in pulling experiment.
@@ -1184,19 +1184,19 @@ cases for this code, where only a single set of programmed tensors is supplied.*
             Can be switched off with settings.PrintFrequency < 0.0.
             Doing the write-out at this point in the loop means the node positions
             and the triangle geometry data match in the output, which is desirable!*/
-            if ((stepCount % settings.InversePrintRate == 0 && settings.InversePrintRate > 0) ||
-                settings.slideJustReachedEquil == 1) {
+            if ((stepCount % settings.inverse_print_rate == 0 && settings.inverse_print_rate > 0) ||
+                settings.is_slide_just_equilibrated == 1) {
                 try {
                     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings);
-                    if (settings.isEnergyDensitiesPrinted) {
+                    if (settings.is_energy_densities_printed) {
                         calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
                                                 stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                                 cauchyStressEigenvals, cauchyStressEigenvecs, settings);
                     }
 
                     // Here we hack the angleDeficits to instead tell us whether a node has a Seide displacement imposed or not.
-                    for (int n = 0; n < settings.NumNodes; ++n) {
+                    for (int n = 0; n < settings.num_nodes; ++n) {
                         if (nodes[n].isSeideDisplacementEnabled) {
                             angleDeficits[n] = 1;
                         } else {
@@ -1215,7 +1215,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 }
                 logStream.open();
                 logStream << std::fixed << "Wrote VTK output at " << getRealTime() << ", stepCount = " << stepCount
-                          << ", simulation time = " << time + settings.TimeStep << ", current dial-in factor = "
+                          << ", simulation time = " << time + settings.time_step << ", current dial-in factor = "
                           << currDialInFactor << std::scientific;
                 logStream << ", last step's execution time "
                           << std::chrono::duration_cast<std::chrono::microseconds>(end4 - begin).count() << " us"
@@ -1239,32 +1239,32 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 forceDistFile.open(outputDirName + "/force_displacement_vals.txt", std::ofstream::app);
                 forceDistFile << std::scientific << std::setprecision(14)
                               << upperAndLowerTotSlideForces.first /
-                                 (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) << " "
+                                 (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness) << " "
                               << upperAndLowerTotSlideForces.second /
-                                 (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) << " "
-                              << settings.upperSlideDisplacement / settings.SampleCharLength << " "
-                              << settings.currSlideZCoord_upper << " "
-                              << settings.initSlideZCoord_lower << " "
-                              << settings.slideJustReachedEquil << " "
-                              << settings.upperSlideWeight /
-                                 (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness)
+                                 (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness) << " "
+                              << settings.upper_slide_displacement / settings.sample_char_length << " "
+                              << settings.curr_slide_z_coord_upper << " "
+                              << settings.init_slide_z_coord_lower << " "
+                              << settings.is_slide_just_equilibrated << " "
+                              << settings.upper_slide_weight /
+                                 (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness)
 
                               //<< settings.p / (settings.ShearModulus*settings.SheetThickness*settings.SheetThickness) << " "
                               //<< cauchyStressEigenvals.at(settings.testTriangle)(0) * sTest / (settings.ShearModulus*settings.SheetThickness*settings.SheetThickness) << " "
                               //<< cauchyStressEigenvals.at(settings.testTriangle)(1) * sTest / (settings.ShearModulus*settings.SheetThickness*settings.SheetThickness) << " " << std::endl;
                               << std::endl;
                 forceDistFile.close();
-                settings.slideJustReachedEquil = 0;
+                settings.is_slide_just_equilibrated = 0;
             }
 
 
-            if (!settings.isControlledForceEnabled) {
+            if (!settings.is_controlled_force_enabled) {
 
 
                 /* If last check for equilibrium or last reaching of a new DialInFactor
                  value was more than TimeBetweenEquilChecks ago, check for equilibrium.
                  Also print total stretching and bending energies.*/
-                if (timeSinceLastEquilCheck > settings.TimeBetweenEquilChecks && status == waitingForEquilibrium) {
+                if (timeSinceLastEquilCheck > settings.time_between_equil_checks && status == WaitingForEquilibrium) {
                     logStream.open();
                     logStream << "Checking for equilibrium at " << getRealTime() << ", stepCount = " << stepCount
                               << ", simulation time = " << time << ", current dial-in factor = " << currDialInFactor
@@ -1277,9 +1277,9 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
                                             stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                             cauchyStressEigenvals, cauchyStressEigenvecs, settings);
-                    double nonDimStretchEnergy = kahanSum(stretchEnergies) / settings.charStretchEnergyScale;
-                    double nonDimBendEnergy = kahanSum(bendEnergies) / settings.charStretchEnergyScale;
-                    double nonDimKineticEnergy = kahanSum(kineticEnergies) / settings.charStretchEnergyScale;
+                    double nonDimStretchEnergy = kahanSum(stretchEnergies) / settings.char_stretch_energy_scale;
+                    double nonDimBendEnergy = kahanSum(bendEnergies) / settings.char_stretch_energy_scale;
+                    double nonDimKineticEnergy = kahanSum(kineticEnergies) / settings.char_stretch_energy_scale;
 
                     logStream.open();
                     logStream << "Non-dimensionalised energies:" << std::endl;
@@ -1293,11 +1293,11 @@ cases for this code, where only a single set of programmed tensors is supplied.*
 
                 /* If equilibrium reached, write output data to file, and move to next
                 'dialling in' phase. */
-                if (status == equilibriumReached) {
+                if (status == EquilibriumReached) {
                     try {
                         calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                                        interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings);
-                        if (settings.isEnergyDensitiesPrinted) {
+                        if (settings.is_energy_densities_printed) {
                             calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
                                                     stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                                     cauchyStressEigenvals, cauchyStressEigenvecs, settings);
@@ -1319,11 +1319,11 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                     logStream << "Equilibrium reached. Wrote VTK output at " << getRealTime() << ", stepCount = "
                               << stepCount << ", simulation time = " << time << ", current dial-in factor = "
                               << currDialInFactor << std::endl;
-                    status = dialling;
+                    status = Dialling;
                     timeSinceCurrDiallingInPhaseStarted = 0.0;
                     DialInFactorCounter += 1;
-                    settings.NumDampFactor = settings.DampingPrefactor1 *
-                                             settings.dampingScale; // Set damping factor back to dialling phase value.
+                    settings.num_damp_factor = settings.dial_in_damping *
+                                               settings.damping_scale; // Set damping factor back to dialling phase value.
                     if (DialInFactorCounter <= DialInFactorValuesToHoldAt.size() - 2) {
                         logStream << "New dialling in phase beginning, from value "
                                   << DialInFactorValuesToHoldAt[DialInFactorCounter] << ", to "
@@ -1350,7 +1350,7 @@ cases for this code, where only a single set of programmed tensors is supplied.*
                 try {
                     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings);
-                    if (settings.isEnergyDensitiesPrinted) {
+                    if (settings.is_energy_densities_printed) {
                         calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
                                                 stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                                 cauchyStressEigenvals, cauchyStressEigenvecs, settings);
@@ -1371,9 +1371,9 @@ cases for this code, where only a single set of programmed tensors is supplied.*
             }
 
             // Advance times and step counter.
-            time += settings.TimeStep;
-            timeSinceLastEquilCheck += settings.TimeStep;
-            timeSinceCurrDiallingInPhaseStarted += settings.TimeStep;
+            time += settings.time_step;
+            timeSinceLastEquilCheck += settings.time_step;
+            timeSinceCurrDiallingInPhaseStarted += settings.time_step;
             stepCount += 1;
         }
 
