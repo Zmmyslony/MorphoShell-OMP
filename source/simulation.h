@@ -21,7 +21,7 @@ class Simulation {
     Settings settings;
 
     int step_count = 0;
-    int time = 0;
+    double time = 0;
 
     std::string settings_filename;
     std::string initialisation_filename;
