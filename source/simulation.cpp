@@ -338,8 +338,8 @@ void Simulation::print_total_load_force() {
     }
     log_stream.open();
     log_stream << "Total load force applied = " <<
-                                                numLoadedNodes * settings.load_strength * settings.shear_modulus * settings.approx_min_init_elem_size *
-                                                settings.sheet_thickness << std::endl;
+               numLoadedNodes * settings.load_strength * settings.shear_modulus * settings.approx_min_init_elem_size *
+               settings.sheet_thickness << std::endl;
     log_stream.close();
 }
 
@@ -626,10 +626,10 @@ void Simulation::setup_glass_cones(int highest_node, int lowest_node) {
     settings.cone_angle = 1.02327019;
     settings.init_slide_z_coord_upper += -tan(settings.cone_angle) *
                                          sqrt(nodes[highest_node].pos(0) * nodes[highest_node].pos(0) +
-                                           nodes[highest_node].pos(1) * nodes[highest_node].pos(1));
+                                              nodes[highest_node].pos(1) * nodes[highest_node].pos(1));
     settings.init_slide_z_coord_lower += -tan(settings.cone_angle) *
                                          sqrt(nodes[lowest_node].pos(0) * nodes[lowest_node].pos(0) +
-                                           nodes[lowest_node].pos(1) * nodes[lowest_node].pos(1));
+                                              nodes[lowest_node].pos(1) * nodes[lowest_node].pos(1));
     log_stream.open();
     log_stream << "USING TWO GLASS CONES FOR SQUASHING." << std::endl;
     log_stream.close();
@@ -722,57 +722,52 @@ void Simulation::impose_seide_deformation(double s1, const std::vector<Eigen::Ve
     }
 }
 
+bool is_node_lower(const Node &first, const Node &second) {
+    return first.pos(2) < second.pos(2);
+}
+
 void Simulation::first_step_configuration(double &seide_quotient,
                                           std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
-    int highest_node = INT_MIN;
-    int lowest_node = INT_MIN;
+    int lowest_node_index = std::min_element(nodes.begin(), nodes.end(), is_node_lower) - nodes.begin();
+    int highest_node_index = std::max_element(nodes.begin(), nodes.end(), is_node_lower) - nodes.begin();
     settings.init_slide_z_coord_lower = nodes[0].pos(2);
     settings.init_slide_z_coord_upper = nodes[0].pos(2);
-    for (int n = 0; n < settings.num_nodes; ++n) {
-        if (settings.init_slide_z_coord_lower > nodes[n].pos(2)) {
-            settings.init_slide_z_coord_lower = nodes[n].pos(2);
-            lowest_node = n;
-        }
-        if (settings.init_slide_z_coord_upper < nodes[n].pos(2)) {
-            settings.init_slide_z_coord_upper = nodes[n].pos(2);
-            highest_node = n;
-        }
-        // Can instead choose initial slide separation directly from settings file, to help avoid 'jumping' when starting a
-        // squashing run part way through from a previous run's output.
-        if (settings.specify_init_slide_z_coord_upper > -99.0) {
-            settings.init_slide_z_coord_upper = settings.specify_init_slide_z_coord_upper;
-        }
-        if (settings.specify_init_slide_z_coord_lower > -99.0) {
-            settings.init_slide_z_coord_lower = settings.specify_init_slide_z_coord_lower;
-        }
 
-        // To do constant-weight slide instead
-        if (settings.const_slide_weight_fac > 0) {
-            settings.init_slide_z_coord_upper = settings.init_slide_z_coord_lower + settings.spacer_height *
-                                                                                    settings.sample_char_length;// This used to be settings.SpacerHeight * settings.SampleCharLength instead, which is wrong
-        }
 
-        settings.upper_slide_displacement = 0.0;
-        settings.upper_slide_vel = 0.0;
-        settings.is_slide_just_equilibrated = 0;
-        if (settings.is_controlled_force_enabled) {
-            settings.upper_slide_weight = settings.initial_slide_weight_for_ctrld_force_in_units_of_mu_tsq *
-                                          (settings.shear_modulus * settings.sheet_thickness *
-                                           settings.sheet_thickness);
-        }
+    if (settings.specify_init_slide_z_coord_upper > -100) {
+        settings.init_slide_z_coord_upper = settings.specify_init_slide_z_coord_upper;
+    } else {
+        settings.init_slide_z_coord_upper = nodes[highest_node_index].pos(2);
     }
+
+    if (settings.specify_init_slide_z_coord_lower > -100) {
+        settings.init_slide_z_coord_lower = settings.specify_init_slide_z_coord_lower;
+    } else {
+        settings.init_slide_z_coord_lower = nodes[lowest_node_index].pos(2);
+    }
+
+    settings.upper_slide_displacement = 0.0;
+    settings.upper_slide_vel = 0.0;
+    settings.is_slide_just_equilibrated = 0;
+    if (settings.is_controlled_force_enabled) {
+        settings.upper_slide_weight = settings.initial_slide_weight_for_ctrld_force_in_units_of_mu_tsq *
+                                      (settings.shear_modulus * settings.sheet_thickness *
+                                       settings.sheet_thickness);
+    }
+
     // Uncomment the following line for single ridge experiment with point(ish) load to applied tip.
     //settings.initSlideZCoord_upper = settings.initSlideZCoord_lower + 2.0 * settings.SheetThickness; // to apply point(ish) load to tip
 
     // Readjust for the case of glass cones instead of glass slides. The
     // slide Z coords correspond to the tips of the glass cones.
     if (settings.glass_cones) {
-        setup_glass_cones(highest_node, lowest_node);
+        setup_glass_cones(highest_node_index, lowest_node_index);
     }
 
     // Instead set up imposed-Seide-deformations idea.
     if (settings.is_seide_deformations_enabled) {
-        setup_imposed_seide_deformations(seide_quotient, highest_node, lowest_node, nodeUnstressedConePosits);
+        setup_imposed_seide_deformations(seide_quotient, highest_node_index, lowest_node_index,
+                                         nodeUnstressedConePosits);
     }
 }
 
@@ -879,7 +874,7 @@ void Simulation::save_and_print_details(int counter, double duration_us,
 std::string Simulation::log_prefix() {
     std::stringstream ss;
     ss << std::setprecision(3) << std::fixed << getRealTime() << ", step = " << step_count << ", time = " << time
-    << ", dial-in factor = " <<
+       << ", dial-in factor = " <<
        currDialInFactor << ": ";
     return ss.str();
 }

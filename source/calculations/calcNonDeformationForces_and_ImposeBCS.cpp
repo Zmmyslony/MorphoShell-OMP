@@ -62,35 +62,24 @@ std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Nod
             nodes[i].add_load_force(settings, time, totUpperSlideForce, totLowerSlideForce);
         }
 
-        // FOR CONE SQUASHING/BUCKLING BETWEEN TWO SLIDES.
-        // Force from "glass slides".
-        if (!settings.glass_cones) {
-            nodes[i].add_slide_force(settings, settings.init_slide_z_coord_lower, true, totLowerSlideForce);
-            nodes[i].add_slide_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
-        }
-            // GLASS CONES
-        else {
-            nodes[i].add_cone_force(settings, settings.curr_slide_z_coord_upper, true, totLowerSlideForce);
-            nodes[i].add_cone_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
-
-            /*
-            // SEIDE'S HORIZONTAL CLAMP ON ALL BOUNDARY NODES.
-            if( nodes[i].isOnBoundary == true ){
-                nodes[i].force(0) = 0.0;
-                nodes[i].force(1) = 0.0;
+        // If slide stiffness is positive, apply forces from the slides.
+        if (settings.slide_stiffness_prefactor > 0) {
+            if (!settings.glass_cones) {
+                nodes[i].add_slide_force(settings, settings.init_slide_z_coord_lower, true, totLowerSlideForce);
+                nodes[i].add_slide_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
             }
-            */
+                // GLASS CONES
+            else {
+                nodes[i].add_cone_force(settings, settings.curr_slide_z_coord_upper, true, totLowerSlideForce);
+                nodes[i].add_cone_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
 
-            // For all nodes within a certain distance,
-            // of the top or bottom in terms of vertical distance, we here kill any force component
-            // not tangent to the simple expected base state (Seide) of a perfect cone with only
-            // a single in-plane stress component.
-            if (nodes[i].isOnBoundary) {
-                double polar_angle = atan2(nodes[i].pos(1), nodes[i].pos(0));
-                Eigen::Vector3d theoryNormalVec;
-                theoryNormalVec << cos(settings.cone_angle) * cos(polar_angle),
-                        cos(settings.cone_angle) * sin(polar_angle), sin(settings.cone_angle);
-                nodes[i].force -= (nodes[i].force.dot(theoryNormalVec)) * theoryNormalVec;
+                if (nodes[i].isOnBoundary) {
+                    double polar_angle = atan2(nodes[i].pos(1), nodes[i].pos(0));
+                    Eigen::Vector3d theoryNormalVec;
+                    theoryNormalVec << cos(settings.cone_angle) * cos(polar_angle),
+                            cos(settings.cone_angle) * sin(polar_angle), sin(settings.cone_angle);
+                    nodes[i].force -= (nodes[i].force.dot(theoryNormalVec)) * theoryNormalVec;
+                }
             }
         }
 

@@ -123,6 +123,6 @@ void Node::apply_boundary_conditions() {
     if (isClamped) {
         force(0) = 0;
         force(1) = 0;
-        force(2) = 0;
+//        force(2) = 0;
     }
 }
