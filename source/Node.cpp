@@ -49,18 +49,21 @@ void Node::display() {
 }
 
 void Node::add_gravity(const Settings &settings) {
-    force(2) -= settings.gravity_sign * mass * 9.81;
+    // 10e3 Factor comes from the fact that the natural dimension in the simulations are millimetres.
+    force(2) -= settings.gravity_sign * mass * 9.80665 * 10e3;
 }
+
 
 void Node::add_damping(const Settings &settings) {
     force += -settings.num_damp_factor * mass * vel / settings.init_density;
 }
 
+
 void Node::add_prod_force(const Settings &settings) {
     force(2) += -settings.prod_strength * settings.shear_modulus * settings.sheet_thickness *
                 sqrt(pos(0) * pos(0) + pos(1) * pos(1));
-
 }
+
 
 void Node::add_load_force(const Settings &settings, double time, double &upper_slide_force, double &lower_slide_force) {
     if (isLoadForceEnabled) {
@@ -80,7 +83,7 @@ void Node::add_slide_force(const Settings &settings, double height, bool is_bott
 
     if (is_interacting) {
         double slice_vert_force = settings.slide_stiffness_prefactor * settings.shear_modulus * settings.sheet_thickness *
-                                  (settings.init_slide_z_coord_lower - pos(2));
+                                  (height - pos(2));
         force(2) += slice_vert_force;
         total_slide_force += slice_vert_force;
 
@@ -103,7 +106,7 @@ void Node::add_cone_force(const Settings &settings, double tip_height, bool is_b
     double r = sqrt(pos(0) * pos(0) + pos(1) * pos(1));
     double polar_angle = atan2(pos(1), pos(0));
 
-    double distance_from_cone = (pos(2) - r * tan(settings.cone_angle) - tip_height) * cos(settings.cone_angle);
+    double distance_from_cone = (pos(2) - tip_height - r * tan(settings.cone_angle)) * cos(settings.cone_angle);
     bool is_interacting = is_bottom_cone && distance_from_cone < 0 || !is_bottom_cone && distance_from_cone > 0;
 
     if (is_interacting) {

@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
-project(ShelloMorph)
+project(Morphoshell)
 
 find_package(OpenMP REQUIRED)
+
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -27,12 +31,16 @@ set(SOURCE_FILES
         source/Settings.hpp source/SimulationStatus.hpp source/Triangle.cpp source/Triangle.hpp source/writeVTKDataOutput.cpp source/writeVTKDataOutput.hpp source/functions/zeroForces.cpp
         source/functions/zeroForces.hpp source/Settings.cpp source/InitialisationFunctions.h source/InitialisationFunctions.cpp
         source/simulation.cpp
-        source/simulation.h)
+        source/simulation.h
+        source/configuration/gravity_config.cpp
+        source/configuration/gravity_config.h
+        source/configuration/config_base.cpp
+        source/configuration/config_base.h)
 
-add_executable(ShelloMorph ${SOURCE_FILES})
+add_executable(Morphoshell ${SOURCE_FILES})
 
-target_include_directories(ShelloMorph PRIVATE ${LIBCONFIG_DIR})
-target_link_libraries(ShelloMorph PRIVATE ${LIBCONFIGPP_LIB})
-target_link_libraries(ShelloMorph PRIVATE OpenMP::OpenMP_CXX)
-target_link_libraries (ShelloMorph PRIVATE Eigen3::Eigen)
+target_include_directories(Morphoshell PRIVATE ${LIBCONFIG_DIR})
+target_link_libraries(Morphoshell PRIVATE ${LIBCONFIGPP_LIB})
+target_link_libraries(Morphoshell PRIVATE OpenMP::OpenMP_CXX)
+target_link_libraries (Morphoshell PRIVATE Eigen3::Eigen)
 

@@ -116,6 +116,11 @@ public:
      */
     void add_gravity(const Settings &settings);
 
+    /**
+     * Adds damping force that is proportional to the velocity and numerical damping factor:
+     * F = - a * v * m / rho
+     * @param settings
+     */
     void add_damping(const Settings &settings);
 
     /** Perturbing 'prod' force, to prompt the sheet to buckle in the upward
