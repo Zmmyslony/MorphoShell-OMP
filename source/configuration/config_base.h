@@ -24,14 +24,14 @@ public:
      * @param target Address into which the option is to be read
      * @return true = success, false = failure
      */
-    bool get(const std::string &name, std::string &target);
-    bool get(const std::string &name, int &target);
-    bool get(const std::string &name, double &target);
-    bool get(const std::string &name, bool &target);
-    bool get(const std::string &name, std::vector<std::string> &target);
-    bool get(const std::string &name, std::vector<double> &target);
-    bool get(const std::string &name, std::vector<int> &target);
-    bool get(const std::string &name, std::vector<bool> &target);
+    bool get(const std::string &name, std::string &target) const;
+    bool get(const std::string &name, int &target) const;
+    bool get(const std::string &name, double &target) const;
+    bool get(const std::string &name, bool &target) const;
+    bool get(const std::string &name, std::vector<std::string> &target) const;
+    bool get(const std::string &name, std::vector<double> &target) const;
+    bool get(const std::string &name, std::vector<int> &target) const;
+    bool get(const std::string &name, std::vector<bool> &target) const;
 
 };
 

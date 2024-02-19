@@ -64,7 +64,7 @@ ConfigBase::ConfigBase(const fs::path &config_path) {
     }
 }
 
-bool ConfigBase::get(const std::string &name, std::string &target) {
+bool ConfigBase::get(const std::string &name, std::string &target) const {
     std::string normalised_name = clean_line(name);
     for (auto &pair : config_options) {
         if (pair.first == normalised_name) {
@@ -76,7 +76,7 @@ bool ConfigBase::get(const std::string &name, std::string &target) {
     return false;
 }
 
-bool ConfigBase::get(const std::string &name, double &target) {
+bool ConfigBase::get(const std::string &name, double &target) const {
     std::string read_value;
     bool is_in_config = get(name, read_value);
     if (is_in_config) {
@@ -86,7 +86,7 @@ bool ConfigBase::get(const std::string &name, double &target) {
     return false;
 }
 
-bool ConfigBase::get(const std::string &name, int &target) {
+bool ConfigBase::get(const std::string &name, int &target) const {
     std::string read_value;
     bool is_in_config = get(name, read_value);
     if (is_in_config) {
@@ -96,7 +96,7 @@ bool ConfigBase::get(const std::string &name, int &target) {
     return false;
 }
 
-bool ConfigBase::get(const std::string &name, bool &target) {
+bool ConfigBase::get(const std::string &name, bool &target) const {
     std::string read_value;
     bool is_in_config = get(name, read_value);
     if (is_in_config) {
@@ -106,7 +106,7 @@ bool ConfigBase::get(const std::string &name, bool &target) {
     return false;
 }
 
-bool ConfigBase::get(const std::string &name, std::vector<std::string> &target) {
+bool ConfigBase::get(const std::string &name, std::vector<std::string> &target) const {
     std::string read_value;
     bool is_in_config = get(name, read_value);
 
@@ -123,7 +123,7 @@ bool ConfigBase::get(const std::string &name, std::vector<std::string> &target) 
     return false;
 }
 
-bool ConfigBase::get(const std::string &name, std::vector<double> &target) {
+bool ConfigBase::get(const std::string &name, std::vector<double> &target) const {
     std::vector<std::string> read_vector;
     bool is_in_config = get(name, read_vector);
 
@@ -139,7 +139,7 @@ bool ConfigBase::get(const std::string &name, std::vector<double> &target) {
     return false;
 }
 
-bool ConfigBase::get(const std::string &name, std::vector<int> &target) {
+bool ConfigBase::get(const std::string &name, std::vector<int> &target) const {
     std::vector<std::string> read_vector;
     bool is_in_config = get(name, read_vector);
 
@@ -155,7 +155,7 @@ bool ConfigBase::get(const std::string &name, std::vector<int> &target) {
     return false;
 }
 
-bool ConfigBase::get(const std::string &name, std::vector<bool> &target) {
+bool ConfigBase::get(const std::string &name, std::vector<bool> &target) const {
     std::vector<std::string> read_vector;
     bool is_in_config = get(name, read_vector);
 

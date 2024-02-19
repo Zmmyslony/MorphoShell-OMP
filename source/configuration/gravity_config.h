@@ -8,13 +8,11 @@
 
 #include "config_base.h"
 
-class GravityConfig : ConfigBase {
+class GravityConfig {
     bool is_gravity_enabled = false;
     double x_gravity_component = 0;
     double y_gravity_component = 0;
     double z_gravity_component = 0;
-
-    void read_fields_from_config();
 
 public:
     GravityConfig();

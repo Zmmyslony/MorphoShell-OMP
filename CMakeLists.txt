@@ -35,7 +35,9 @@ set(SOURCE_FILES
         source/configuration/gravity_config.cpp
         source/configuration/gravity_config.h
         source/configuration/config_base.cpp
-        source/configuration/config_base.h)
+        source/configuration/config_base.h
+        source/configuration/core_config.cpp
+        source/configuration/core_config.h)
 
 add_executable(Morphoshell ${SOURCE_FILES})
 
