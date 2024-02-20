@@ -5,15 +5,18 @@
 #ifndef MORPHOSHELL_CORE_CONFIG_H
 #define MORPHOSHELL_CORE_CONFIG_H
 
-#include "config_base.h"
 #include <boost/filesystem/path.hpp>
+
+#include "config_base.h"
 
 namespace fs = boost::filesystem;
 
-
+/**
+ * Core settings controlling the simulation. Need to include thickness and shear_modulus.
+ */
 class CoreConfig {
-    double thickness{};
-    double shear_modulus{};
+    double thickness = DBL_MIN;
+    double shear_modulus = DBL_MIN;
 
     // Number of cores used for parallelization.
     int core_number = 0;
@@ -58,10 +61,59 @@ class CoreConfig {
     double patch_matrix_threshold = 10;
 
 public:
+    CoreConfig();
+
     explicit CoreConfig(const ConfigBase &config_base);
-    explicit CoreConfig(const fs::path& path);
 
+    explicit CoreConfig(const fs::path &path);
 
+    double getThickness() const;
+
+    double getShearModulus() const;
+
+    int getCoreNumber() const;
+
+    double getEquilibriumForceScale() const;
+
+    double getEquilibriumSpeedScale() const;
+
+    double getPoissonRatio() const;
+
+    double getDensity() const;
+
+    double getDampingPrefactor() const;
+
+    double getDialInDamping() const;
+
+    double getEquilibriationDamping() const;
+
+    double getPrintFrequency() const;
+
+    double getDialInResolution() const;
+
+    double getTimeBetweenEquilibriumChecks() const;
+
+    double getDialInTimePrefactor() const;
+
+    double getTimeStepPrefactor() const;
+
+    bool isLceModeEnabled() const;
+
+    bool isSimpleSecFfUsed() const;
+
+    bool isBoundaryClamped() const;
+
+    bool isEnergyPrinted() const;
+
+    bool isTriangleAreaPrinted() const;
+
+    bool isAngleDeficitPrinted() const;
+
+    bool isGradientDescentDynamics() const;
+
+    bool isAnsatzMetricUsed() const;
+
+    double getPatchMatrixThreshold() const;
 
 };
 

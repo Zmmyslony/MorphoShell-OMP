@@ -174,4 +174,12 @@ bool ConfigBase::get(const std::string &name, std::vector<bool> &target) const {
 }
 
 
+bool ConfigBase::isEqual(const std::string &name, const std::string &test_string) const {
+    std::string target;
+    get(name, target);
+    std::string cleaned_string = clean_line(test_string);
+    return target == cleaned_string;
+}
+
+
 

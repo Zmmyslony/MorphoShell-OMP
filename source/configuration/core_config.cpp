@@ -5,6 +5,7 @@
 #include "core_config.h"
 #include <thread>
 
+CoreConfig::CoreConfig() = default;
 
 CoreConfig::CoreConfig(const ConfigBase &config_base) {
     // Required fields.
@@ -54,3 +55,99 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
 
 CoreConfig::CoreConfig(const fs::path &path) :
         CoreConfig(ConfigBase(path)) {}
+
+double CoreConfig::getThickness() const {
+    return thickness;
+}
+
+double CoreConfig::getShearModulus() const {
+    return shear_modulus;
+}
+
+int CoreConfig::getCoreNumber() const {
+    return core_number;
+}
+
+double CoreConfig::getEquilibriumForceScale() const {
+    return equilibrium_force_scale;
+}
+
+double CoreConfig::getEquilibriumSpeedScale() const {
+    return equilibrium_speed_scale;
+}
+
+double CoreConfig::getPoissonRatio() const {
+    return poisson_ratio;
+}
+
+double CoreConfig::getDensity() const {
+    return density;
+}
+
+double CoreConfig::getDampingPrefactor() const {
+    return damping_prefactor;
+}
+
+double CoreConfig::getDialInDamping() const {
+    return dial_in_damping;
+}
+
+double CoreConfig::getEquilibriationDamping() const {
+    return equilibriation_damping;
+}
+
+double CoreConfig::getPrintFrequency() const {
+    return print_frequency;
+}
+
+double CoreConfig::getDialInResolution() const {
+    return dial_in_resolution;
+}
+
+double CoreConfig::getTimeBetweenEquilibriumChecks() const {
+    return time_between_equilibrium_checks;
+}
+
+double CoreConfig::getDialInTimePrefactor() const {
+    return dial_in_time_prefactor;
+}
+
+double CoreConfig::getTimeStepPrefactor() const {
+    return time_step_prefactor;
+}
+
+bool CoreConfig::isLceModeEnabled() const {
+    return is_lce_mode_enabled;
+}
+
+bool CoreConfig::isSimpleSecFfUsed() const {
+    return is_simple_sec_ff_used;
+}
+
+bool CoreConfig::isBoundaryClamped() const {
+    return is_boundary_clamped;
+}
+
+bool CoreConfig::isEnergyPrinted() const {
+    return is_energy_printed;
+}
+
+bool CoreConfig::isTriangleAreaPrinted() const {
+    return is_triangle_area_printed;
+}
+
+bool CoreConfig::isAngleDeficitPrinted() const {
+    return is_angle_deficit_printed;
+}
+
+bool CoreConfig::isGradientDescentDynamics() const {
+    return is_gradient_descent_dynamics;
+}
+
+bool CoreConfig::isAnsatzMetricUsed() const {
+    return is_ansatz_metric_used;
+}
+
+double CoreConfig::getPatchMatrixThreshold() const {
+    return patch_matrix_threshold;
+}
