@@ -9,7 +9,7 @@
 
 #include <map>
 
-std::map<std::string, int> slide_type {
+const std::map<std::string, int> slide_type {
         {"fixed", 0},
         {"load_controlled", 1},
         {"displacement_controlled", 2}

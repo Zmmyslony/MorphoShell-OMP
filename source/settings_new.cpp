@@ -8,7 +8,8 @@
 
 std::map<std::string, int> config_map{
         {"core", 0},
-        {"gravity", 1}
+        {"gravity", 1},
+        {"slide", 2}
 };
 
 
@@ -34,6 +35,9 @@ SettingsNew::SettingsNew(const std::vector<fs::path> &config_paths) {
                 gravity = GravityConfig(config);
                 is_gravity_read = true;
                 break;
+            case 2:
+                slides.emplace_back(config);
+                break;
             default:
                 throw std::runtime_error("Unknown configuration file provided.");
         }
@@ -41,4 +45,16 @@ SettingsNew::SettingsNew(const std::vector<fs::path> &config_paths) {
 
     if (!is_core_read) { throw std::runtime_error("Core config missing from input arguments."); }
 
+}
+
+const CoreConfig &SettingsNew::getCore() const {
+    return core;
+}
+
+const GravityConfig &SettingsNew::getGravity() const {
+    return gravity;
+}
+
+const std::vector<Slide> &SettingsNew::getSlides() const {
+    return slides;
 }

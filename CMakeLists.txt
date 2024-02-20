@@ -41,7 +41,9 @@ set(SOURCE_FILES
         source/settings_new.cpp
         source/settings_new.h
         source/configuration/slide_configuration.cpp
-        source/configuration/slide_configuration.h)
+        source/configuration/slide_configuration.h
+        source/physics/slide.cpp
+        source/physics/slide.h)
 
 add_executable(Morphoshell ${SOURCE_FILES})
 
