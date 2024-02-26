@@ -273,7 +273,7 @@ int main(int argc, char *argv[]) {
 //dynamics should start from. The default (zero) is used unless an ansatz file was
 //given, in which case it may be that evolution from the ansatz should start from
 //further on in the sequence of programmed tensors. */
-//    std::size_t initial_programmed_tensor_index = 0;
+//    std::size_t initial_stage = 0;
 //// This is the equivalent variable for dial_in_factor.
 //    double dialInFactorToStartFrom = 0.0;
 //// Create container to store node ansatz positions, if given.
@@ -289,7 +289,7 @@ int main(int argc, char *argv[]) {
 //    try {
 //        readVTKData(nodes, triangles, programmed_metric_infos, inverted_programmed_metrics, programmed_taus,
 //                    programmed_second_fundamental_forms, settings, initial_data_file_name_str,
-//                    initial_programmed_tensor_index,
+//                    initial_stage,
 //                    dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_data_file_name_str, logStream);
 //    }
 //    catch (const std::out_of_range &out_of_bounds_error) {
@@ -702,7 +702,7 @@ int main(int argc, char *argv[]) {
 ///* Loop over the sequence of programmed tensors, dialling-in and waiting for
 //equilibrium between each pair in the sequence. This loop is redundant in most use
 //cases for this code, where only a single set of programmed tensors is supplied.*/
-//    for (std::size_t progTensorSequenceCounter = initial_programmed_tensor_index;
+//    for (std::size_t progTensorSequenceCounter = initial_stage;
 //         progTensorSequenceCounter <= programmed_metric_infos.size() - 2; ++progTensorSequenceCounter) {
 //
 //        /* A third input file specifying an ansatz for the node positions may have
@@ -711,7 +711,7 @@ int main(int argc, char *argv[]) {
 //        previous simulation left off. In this case, the nodes are moved to their
 //        ansatz positions here, and other relevant variables are set up. */
 //        if (ansatz_data_file_name_str != "no_ansatz_file" &&
-//            progTensorSequenceCounter == initial_programmed_tensor_index) {
+//            progTensorSequenceCounter == initial_stage) {
 //
 //            for (int i = 0; i < settings.num_nodes; ++i) {
 //                nodes[i].pos = nodeAnsatzPositions[i];
@@ -766,10 +766,10 @@ int main(int argc, char *argv[]) {
 //                There may be other uses for this feature too.*/
 //                if (settings.for_initial_portion_of_prog_tensors_sequence_dial_prog_tau_but_jump_prog_metric_and_prog_sec_ff) {
 //                    for (int i = 0; i < settings.num_triangles; ++i) {
-//                        programmed_second_fundamental_forms[initial_programmed_tensor_index][i] = programmed_second_fundamental_forms[
-//                                initial_programmed_tensor_index + 1][i];
-//                        programmed_metric_infos[initial_programmed_tensor_index][i] = programmed_metric_infos[
-//                                initial_programmed_tensor_index + 1][i];
+//                        programmed_second_fundamental_forms[initial_stage][i] = programmed_second_fundamental_forms[
+//                                initial_stage + 1][i];
+//                        programmed_metric_infos[initial_stage][i] = programmed_metric_infos[
+//                                initial_stage + 1][i];
 //                    }
 //                }
 //            }
@@ -811,7 +811,7 @@ int main(int argc, char *argv[]) {
 //                Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > tempMetricDecomp;
 //
 //
-//                /* Alter inverted_programmed_metrics[initial_programmed_tensor_index] and similar to change where
+//                /* Alter inverted_programmed_metrics[initial_stage] and similar to change where
 //                the programmed quantities are dialling from.*/
 //
 //                for (int i = 0; i < settings.num_triangles; ++i) {
@@ -825,10 +825,10 @@ int main(int argc, char *argv[]) {
 //                                    "At least one triangle had a non-invertible metric in the ansatz state. \n"
 //                                    "This should not occur in a reasonable mesh. Aborting.");
 //                        } else {
-//                            inverted_programmed_metrics[initial_programmed_tensor_index][i] = (
+//                            inverted_programmed_metrics[initial_stage][i] = (
 //                                    triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
 //                            if (settings.is_dialing_disabled) {
-//                                inverted_programmed_metrics[initial_programmed_tensor_index + 1][i] = (
+//                                inverted_programmed_metrics[initial_stage + 1][i] = (
 //                                        triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
 //                            }
 //                        }
@@ -841,13 +841,13 @@ int main(int argc, char *argv[]) {
 //                    }
 //
 //                    // Other quantities require no inverse, so are easier.
-//                    programmed_taus[initial_programmed_tensor_index][i] = programmed_taus[
-//                            initial_programmed_tensor_index + 1][i];
-//                    programmed_second_fundamental_forms[initial_programmed_tensor_index][i] = triangles[i].secFF;
+//                    programmed_taus[initial_stage][i] = programmed_taus[
+//                            initial_stage + 1][i];
+//                    programmed_second_fundamental_forms[initial_stage][i] = triangles[i].secFF;
 //                    if (settings.is_dialing_disabled) {
-//                        programmed_taus[initial_programmed_tensor_index + 1][i] = programmed_taus[
-//                                initial_programmed_tensor_index + 1][i];
-//                        programmed_second_fundamental_forms[initial_programmed_tensor_index +
+//                        programmed_taus[initial_stage + 1][i] = programmed_taus[
+//                                initial_stage + 1][i];
+//                        programmed_second_fundamental_forms[initial_stage +
 //                                                            1][i] = triangles[i].secFF;
 //                    }
 //                }

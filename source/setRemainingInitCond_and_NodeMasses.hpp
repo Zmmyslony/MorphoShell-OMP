@@ -31,12 +31,5 @@ Header file for setRemainingInitCond_and_NodeMasses.cpp Function.
 #include "Settings.hpp"
 #include "settings_new.h"
 
-void setRemainingInitCond_and_NodeMasses(
-        std::vector<Node> &nodes,
-        std::vector<Triangle> &triangles,
-        std::vector<Edge> &edges,
-        std::vector<std::vector<Eigen::Vector3d> > &programmedMetricInfos,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedInvertedMetrics,
-        std::vector<std::vector<double> > &programmedTaus,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedSecondFundamentalForms,
-        const SettingsNew &settings);
+void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+                                         std::vector<Edge> &edges, const SettingsNew &settings);

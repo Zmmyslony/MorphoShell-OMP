@@ -40,7 +40,7 @@ void readVTKData(
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_InvProgMetrics,
         std::vector<std::vector<double> > &sequenceOf_ProgTaus,
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
-        SettingsNew &settings,
+        bool is_lce_mode_enabled,
         const std::string &init_data_file_name_str,
         std::size_t &progTensorSequenceCounterToStartFrom,
         double &dialInFactorToStartFrom,

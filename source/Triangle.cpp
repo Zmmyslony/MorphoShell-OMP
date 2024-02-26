@@ -122,6 +122,7 @@ void Triangle::updateMetric(const std::vector<Node> &nodes) {
 }
 
 void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
+    updateMetric(nodes);
     Eigen::Matrix<double, 3, 6> matrixOfPatchNodeCoords;
     for (int n = 0; n < 6; ++n) {
         if (n < 3) {
@@ -196,4 +197,55 @@ double Triangle::getLinearSize() const {
 
     double shortest_altitude = 2 * initArea / longest_side;
     return shortest_altitude;
+}
+
+void Triangle::updateProgrammedMetricFromLCEInfo(int stage_counter, double dial_in_factor) {
+    Eigen::Vector3d metric_previous = programmed_metric_infos[stage_counter];
+    Eigen::Vector3d metric_next = programmed_metric_infos[stage_counter + 1];
+    double dirAng = (1.0 - dial_in_factor) * metric_previous(0) + dial_in_factor * metric_next(0);
+    double cosDirAng = cos(dirAng);
+    double sinDirAng = sin(dirAng);
+    double lambda = (1.0 - dial_in_factor) * metric_previous(1) + dial_in_factor * metric_next(1);
+    double nu = (1.0 - dial_in_factor) * metric_previous(2) + dial_in_factor * metric_next(2);
+    double lambdaToTheMinus2 = 1.0 / (lambda * lambda);
+    double lambdaToThe2Nu = pow(lambda, 2.0 * nu);
+
+    programmedMetInv(0, 0) =
+            lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
+    programmedMetInv(0, 1) = (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
+    programmedMetInv(1, 0) = programmedMetInv(0, 1);
+    programmedMetInv(1, 1) =
+            lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
+}
+
+void Triangle::updateProgrammedMetric(int stage_counter, double dial_in_factor) {
+    Eigen::Matrix<double, 2, 2> metric_previous = programmed_metric_inv[stage_counter];
+    Eigen::Matrix<double, 2, 2> metric_next = programmed_metric_inv[stage_counter + 1];
+    programmedMetInv = (1.0 - dial_in_factor) * metric_previous + dial_in_factor * metric_next;
+    programmedMetInvDet = programmedMetInv.determinant();
+}
+
+void Triangle::updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root) {
+    Eigen::Matrix<double, 2, 2> fundamental_form_previous = programmed_second_fundamental_form[stage_counter];
+    Eigen::Matrix<double, 2, 2> fundamental_form_next = programmed_second_fundamental_form[stage_counter + 1];
+
+    programmedSecFF =
+            (1.0 - dial_in_factor_root) * fundamental_form_previous +
+            dial_in_factor_root * fundamental_form_next;
+}
+
+void Triangle::updateProgrammedTaus(int stage_counter, double dial_in_factor) {
+    double tau_previous = programmed_taus[stage_counter];
+    double tau_next = programmed_taus[stage_counter + 1];
+    dialledProgTau = (1.0 - dial_in_factor) * tau_previous + dial_in_factor * tau_next;
+}
+
+void Triangle::updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root, bool is_LCE_metric_used) {
+    if (is_LCE_metric_used) {
+        updateProgrammedMetricFromLCEInfo(stage_counter, dial_in_factor);
+    } else {
+        updateProgrammedMetric(stage_counter, dial_in_factor);
+    }
+    updateProgrammedSecondFundamentalForm(stage_counter, dial_in_factor_root);
+    updateProgrammedTaus(stage_counter, dial_in_factor);
 }

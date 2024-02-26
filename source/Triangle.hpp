@@ -124,6 +124,11 @@ public:
     /* Dialled in programmed scalar 'tau' factor.*/
     double dialledProgTau;
 
+    std::vector<Eigen::Vector3d> programmed_metric_infos = {{1, 1, 1}};
+    std::vector<Eigen::Matrix<double, 2, 2>> programmed_metric_inv {Eigen::Matrix<double, 2, 2>::Identity()};
+    std::vector<Eigen::Matrix<double, 2, 2>> programmed_second_fundamental_form = {Eigen::Matrix<double, 2, 2>::Zero()};
+    std::vector<double> programmed_taus {1};
+
     /* Matrix representing the components of the *energetically* favoured
     (programmed) Second Fundamental Form in the x-y cartesian coordinate system
     of the initial flat state. */
@@ -168,6 +173,16 @@ public:
     /* The derivative of the bending energy density with respect to the metric.*/
     Eigen::Matrix<double, 2, 2> bendEnergyDensityDerivWRTMetric;
 
+private:
+    void updateProgrammedMetric(int stage_counter, double dial_in_factor);
+
+    void updateProgrammedMetricFromLCEInfo(int stage_counter, double dial_in_factor);
+
+    void updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root);
+
+    void updateProgrammedTaus(int stage_counter, double dial_in_factor);
+
+public:
     double bendEnergyDensity;
     double stretchEnergyDensity;
 
@@ -238,6 +253,10 @@ public:
      * @return
      */
     double getLinearSize() const;
+
+
+    void updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
+                                    bool is_LCE_metric_used);
 };
 
 #endif

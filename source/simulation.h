@@ -56,14 +56,11 @@ class Simulation {
     std::vector<Node> nodes;
     std::vector<Triangle> triangles;
     std::vector<Edge> edges;
+    int stage_count = 0;
 
     SimulationStatus simulation_status = WaitingForEquilibrium;
 
-    std::vector<std::vector<Eigen::Vector3d>> programmed_metric_infos;
-    std::vector<std::vector<Eigen::Matrix<double, 2, 2> >> inverted_programmed_metrics;
-    std::vector<std::vector<double>> programmed_taus;
-    std::vector<std::vector<Eigen::Matrix<double, 2, 2> >> programmed_second_fundamental_forms;
-    std::size_t initial_programmed_tensor_index = 0;
+    std::size_t initial_stage = 0;
     // This is the equivalent variable for dial_in_factor.
     double dialInFactorToStartFrom = 0.0;
     // Create container to store node ansatz positions, if given.
@@ -191,7 +188,7 @@ class Simulation {
 
     void run_ansatz(int counter);
 
-    void run_tensor_increment(int counter);
+    void run_tensor_increment(int stage_counter);
 
 //    void impose_seide_deformation(double s, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
 //
@@ -205,7 +202,7 @@ class Simulation {
     void first_step_configuration(double &seide_quotient, std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
 
     void progress_single_step(int counter,
-                              std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes);
+                              const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes);
 
     void update_dial_in_factor();
 
@@ -234,6 +231,8 @@ public :
     void advance_time();
 
     void add_non_elastic_forces();
+
+    void add_elastic_forces(const std::vector<std::vector<std::pair<int, int>>> &vector);
 };
 
 
