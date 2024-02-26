@@ -49,8 +49,8 @@ nodes, its adjacent triangles etc.
 #include "../Triangle.hpp"
 #include "../Edge.hpp"
 
-void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
-                                       std::vector<Edge> &edges, Settings &settings) {
+int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+                                      std::vector<Edge> &edges) {
 
     /* Initially we store the adjacent triangle labels for each triangle in a
     std::vector of std::vectors. At the end, the same information will then be
@@ -61,19 +61,19 @@ void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vect
     Eigen::VectorXd eventually just because it i) provides an easy way to turn
     bounds checking on and off, and ii) already has overloaded functions set up
     for easy printing out to std::cout etc. */
-    std::vector<std::vector<int> > tempAdjTriLabels(settings.num_triangles);
+    std::vector<std::vector<int> > tempAdjTriLabels(triangles.size());
 
     // We do the same thing for the triangles' edge labels' member data
-    std::vector<std::vector<int> > tempTriEdgeLabels(settings.num_triangles);
+    std::vector<std::vector<int> > tempTriEdgeLabels(triangles.size());
 
     /* We don't yet know how many edges there are, but it will be a lot of most of
     the time, so we use reserve suitable space using an upper bound on the
     number of edges. */
-    edges.reserve(3 * settings.num_triangles);
+    edges.reserve(3 * triangles.size());
     int e = 0; //Index for edges std::vector container
 
     // Begin main loop over triangles.
-    for (int i = 0; i < settings.num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
 
         //Loop over vertices of this triangle
         for (int v = 0; v < 3; ++v) {
@@ -140,7 +140,7 @@ void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vect
     this whole operation only happens once and therefore life is too short to
     worry about such small optimisations. Also, readability is more important
     here anyway.*/
-    for (int i = 0; i < settings.num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
 
         // i.e. if(this triangle has some boundary edges)...
         if (tempTriEdgeLabels[i].size() < 3) {
@@ -207,7 +207,7 @@ void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vect
 
     We also calculate the indicesIntoEdgeSharingTriLabelsOfNeighbours member
     data for triangles here - see Triangle.hpp for explanation. */
-    for (int i = 0; i < settings.num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
 
         triangles[i].edgeSharingTriLabels.resize(tempAdjTriLabels[i].size());
         triangles[i].indicesIntoEdgeSharingTriLabelsOfNeighbours.resize(tempAdjTriLabels[i].size());
@@ -279,7 +279,7 @@ void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vect
 
     /* Calculate edgeAdjTriLabelSelectors for each triangle. See
     Triangle.hpp for more info.*/
-    for (int i = 0; i < settings.num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
         triangles[i].edgeAdjTriLabelSelectors.resize(triangles[i].edgeSharingTriLabels.size());
 
         for (int ed = 0; ed < triangles[i].edgeAdjTriLabelSelectors.size(); ++ed) {
@@ -297,7 +297,7 @@ void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vect
     indicate a very concerning mesh where some triangles share no edges with
     other triangles. More checks would be possible here; some are better than
     none.*/
-    for (int i = 0; i < settings.num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
         if (
                 static_cast<int>(edges.size()) != e
                 || triangles[i].edgeLabels.size() != 3
@@ -314,5 +314,5 @@ void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vect
         }
     }
     // If no problems have been spotted, store the total number of edges
-    settings.num_edges = e;
+    return e;
 }

@@ -10,15 +10,13 @@
 
 #include "../configuration/config_base.h"
 
+#define FIXED 0
+#define LOAD_CONTROLLED 1
+#define DISPLACEMENT_CONTROLLED 2
 
-std::map<std::string, int> slide_types{
-        {"fixed",                   0},
-        {"load_controlled",         1},
-        {"displacement_controlled", 2}
-};
 
 class Slide {
-    int slide_type = slide_types["fixed"];
+    int slide_type = FIXED;
     // If it is not provided, the position will be found as the position of the last node in direction opposite to normal.
     bool is_origin_provided = false;
     Eigen::Vector3d normal = {0, 0, 1};

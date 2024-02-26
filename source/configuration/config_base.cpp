@@ -27,7 +27,7 @@ std::string clean_line(std::string line) {
 bool is_comment(const std::string &option) {
     if (option.empty() ||
         option[0] == '#' ||
-        option.size() > 2 && option[0] == '\\' && option[1] == '\\'
+        option.size() > 2 && option[0] == '/' && option[1] == '/'
             ) {
         return true;
     }
@@ -41,7 +41,7 @@ ConfigBase::ConfigBase(const fs::path &config_path) {
     while (std::getline(file, line)) {
         std::string cleaned_line = clean_line(line);
         std::string element;
-        std::stringstream line_stream(line);
+        std::stringstream line_stream(cleaned_line);
 
         std::vector<std::string> row;
 
@@ -49,7 +49,7 @@ ConfigBase::ConfigBase(const fs::path &config_path) {
             row.push_back(element);
         }
 
-        if (is_comment(row[0])) {
+        if (row.empty() || is_comment(row[0])) {
             continue;
         }
         if (row.size() > 2) {
@@ -57,6 +57,7 @@ ConfigBase::ConfigBase(const fs::path &config_path) {
                                        ".\nUsing only the first read value." << std::endl;
         } else if (row.size() < 2) {
             std::cerr << "Too few entries for " << row[0] << " in " << config_path.string() << "." << std::endl;
+
         }
 
         std::pair<std::string, std::string> config_pair = {row[0], row[1]};

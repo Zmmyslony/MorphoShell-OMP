@@ -2,8 +2,14 @@
 // Created by Michał Zmyślony on 19/02/2024.
 //
 
+#define _USE_MATH_DEFINES
+
 #include "core_config.h"
 #include <thread>
+#include <cmath>
+#include <math.h>
+#include <omp.h>
+
 
 CoreConfig::CoreConfig() = default;
 
@@ -27,6 +33,7 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
                       << std::endl;
         }
     }
+    omp_set_num_threads(core_number);
 
     // Optional fields that have defined defaults.
     config_base.get("equilibrium_force_scale", equilibrium_force_scale);
@@ -38,7 +45,7 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
     config_base.get("equilibriation_damping", equilibriation_damping);
     config_base.get("print_frequency", print_frequency);
     config_base.get("dial_in_resolution", dial_in_resolution);
-    config_base.get("time_between_equilibrium_checks", time_between_equilibrium_checks);
+    config_base.get("interval_equilibrium_check", time_between_equilibrium_checks);
     config_base.get("dial_in_time_prefactor", dial_in_time_prefactor);
     config_base.get("time_step_prefactor", time_step_prefactor);
     config_base.get("is_lce_mode_enabled", is_lce_mode_enabled);
@@ -151,3 +158,66 @@ bool CoreConfig::isAnsatzMetricUsed() const {
 double CoreConfig::getPatchMatrixThreshold() const {
     return patch_matrix_threshold;
 }
+
+double CoreConfig::getDampingScale(double size_factor) const {
+    double min_wave_vector = 2 * M_PI / size_factor;
+    return 2 * sqrt(density * shear_modulus / (6 * (1 - poisson_ratio))) * thickness * pow(min_wave_vector, 2);
+
+}
+
+double CoreConfig::getStretchingTimeStep(double size_factor) const {
+    return time_step_prefactor * sqrt(density / shear_modulus) * size_factor;
+}
+
+double CoreConfig::getBendingTimeStep(double size_factor) const {
+    return time_step_prefactor * sqrt(density * 6 * (1 - poisson_ratio) / shear_modulus) / (2 * M_PI * thickness) *
+           pow(size_factor, 2);
+}
+
+double CoreConfig::getStretchingTimeStepGradientDescent(double size_factor) const {
+    /* Use equilibrium damping factor, since we should only be using gradient descent
+    for already dialled-in states. Note the damping factor cancels out in the
+    dynamics and has no effect - but only if you are consistent with which one
+    you use!*/
+    double numerical_damping = equilibriation_damping * damping_prefactor;
+    return time_step_prefactor * (numerical_damping / shear_modulus) * pow(size_factor / (2 * M_PI), 2);
+
+}
+
+double CoreConfig::getBendingTimeStepGradientDescent(double size_factor) const {
+    /* Use equilibrium damping factor, since we should only be using gradient descent
+    for already dialled-in states. Note the damping factor cancels out in the
+    dynamics and has no effect - but only if you are consistent with which one
+    you use!*/
+    double numerical_damping = equilibriation_damping * damping_prefactor;
+    return time_step_prefactor * numerical_damping * (6 * (1 - poisson_ratio) / (pow(thickness, 2) * shear_modulus))
+           * pow(size_factor / (2 * M_PI), 4);
+}
+
+double CoreConfig::getStretchingTimeScale(double size_factor) const {
+    double min_wave_vector = 2 * M_PI / size_factor;
+    return sqrt(density / shear_modulus) / min_wave_vector * dial_in_time_prefactor;
+}
+
+double CoreConfig::getBendingTimeScale(double size_factor) const {
+    double min_wave_vector = 2 * M_PI / size_factor;
+    return sqrt(density * 6 * (1 - poisson_ratio) / shear_modulus) / (thickness * pow(min_wave_vector, 2)) *
+    dial_in_time_prefactor;
+}
+
+bool CoreConfig::isInitialPositionsPerturbed() const {
+    return is_initial_positions_perturbed;
+}
+
+bool CoreConfig::isFirstTensorSkipped() const {
+    return is_first_tensor_skipped;
+}
+
+double CoreConfig::getGentFactor() const {
+    return gentFactor;
+}
+
+bool CoreConfig::isSeideDeformations() const {
+    return is_seide_deformations;
+}
+

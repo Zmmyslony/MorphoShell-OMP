@@ -34,16 +34,16 @@ Header file for readVTKData.cpp function.
 #include "CustomOutStreamClass.hpp"
 
 void readVTKData(
-        std::vector<Node> &,
-        std::vector<Triangle> &,
-        std::vector<std::vector<Eigen::Vector3d> > &,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &,
-        std::vector<std::vector<double> > &,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &,
-        Settings &,
-        const std::string &,
-        size_t &,
-        double &,
-        std::vector<Eigen::Vector3d> &,
-        const std::string &,
-        CustomOutStreamClass &);
+        std::vector<Node> &nodes,
+        std::vector<Triangle> &triangles,
+        std::vector<std::vector<Eigen::Vector3d> > &sequenceOf_ProgMetricInfo,
+        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_InvProgMetrics,
+        std::vector<std::vector<double> > &sequenceOf_ProgTaus,
+        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
+        SettingsNew &settings,
+        const std::string &init_data_file_name_str,
+        std::size_t &progTensorSequenceCounterToStartFrom,
+        double &dialInFactorToStartFrom,
+        std::vector<Eigen::Vector3d> &nodeAnsatzPositions,
+        const std::string &ansatz_data_file_name_str,
+        CustomOutStreamClass &logStream);

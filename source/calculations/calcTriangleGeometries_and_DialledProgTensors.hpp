@@ -31,15 +31,16 @@ Header file for calcTriangleGeometries_and_DialledProgTensors.cpp function.
 #include "../Triangle.hpp"
 #include "../SimulationStatus.hpp"
 #include "../Settings.hpp"
+#include "../settings_new.h"
 
 void calcTriangleGeometries_and_DialledProgTensors(
-        const std::vector<Node> &,
-        std::vector<Triangle> &,
-        const SimulationStatus &,
-        const double &,
-        const size_t &,
-        const std::vector<std::vector<Eigen::Vector3d>> &,
-        const std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> &,
-        const std::vector<std::vector<double>> &,
-        const std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> &,
-        const Settings &);
+        const std::vector<Node> &nodes,
+        std::vector<Triangle> &triangles,
+        const SimulationStatus &status,
+        const double &currDialInFactor,
+        const size_t &progTensorSequenceCounter,
+        const std::vector<std::vector<Eigen::Vector3d>> &programmedMetricInfoSequence,
+        const std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> &programmedMetricSequence,
+        const std::vector<std::vector<double>> &programmedTausSequence,
+        const std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> &programmedSecondFundamentalFormSequence,
+        const SettingsNew &settings);

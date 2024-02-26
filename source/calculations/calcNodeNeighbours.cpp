@@ -40,7 +40,7 @@ by edges).
 #include "../Node.hpp"
 #include "../Edge.hpp"
 
-void configureNodeAdjacency(std::vector<Node> &nodes, const std::vector<Edge> &edges, const Settings &settings){
+void configureNodeAdjacency(std::vector<Node> &nodes, const std::vector<Edge> &edges) {
     /* Temporarily, we will store the node neighbour labels in a std::vector of
     std::vectors. At the end, the same information will then be stored as a
     dynamic-sized Eigen::VectorXd at each node. We use std::vector here because
@@ -50,7 +50,7 @@ void configureNodeAdjacency(std::vector<Node> &nodes, const std::vector<Edge> &e
     Eigen::VectorXd eventually just because it i) provides an easy way to turn
     bounds checking on and off, and ii) already has overloaded functions set up
     for easy printing out to std::cout etc. */
-    std::vector< std::vector<int> > tempNeighbourNodeLabels(settings.num_nodes);
+    std::vector< std::vector<int> > tempNeighbourNodeLabels(nodes.size());
 
     for (auto &edge: edges) {
         tempNeighbourNodeLabels[edge.nodeLabels(0)].push_back(edge.nodeLabels(1));

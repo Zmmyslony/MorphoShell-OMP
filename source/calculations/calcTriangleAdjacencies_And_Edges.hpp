@@ -32,5 +32,5 @@ Header file for calcTriangleAdjacencies_And_Edges.cpp function.
 
 /* Calculate triangle edge-sharing adjacencies (triangle member data), and
 set up an 'edges' data structure to store further edge information. */
-void calcTriangleAdjacencies_And_Edges(const std::vector<Node> &, std::vector<Triangle> &,
-                                       std::vector<Edge> &, Settings &);
+int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+                                      std::vector<Edge> &edges);

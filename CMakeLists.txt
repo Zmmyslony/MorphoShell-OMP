@@ -2,19 +2,19 @@ cmake_minimum_required(VERSION 3.16)
 project(Morphoshell)
 
 find_package(OpenMP REQUIRED)
-
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(VTK COMPONENTS)
 
 set(CMAKE_CXX_STANDARD 17)
 
 find_path(LIBCONFIG_DIR libconfig.h REQUIRED)
 find_library(LIBCONFIGPP_LIB libconfig++)
-if(NOT LIBCONFIGPP_LIB)
+if (NOT LIBCONFIGPP_LIB)
     find_library(LIBCONFIGPP_LIB config++)
-endif()
+endif ()
 
 set(SOURCE_FILES
         source/main.cpp source/advanceDynamics.cpp source/advanceDynamics.hpp source/calculations/calc_nonVertexPatchNodes_and_MatForPatchDerivs.cpp
@@ -43,12 +43,21 @@ set(SOURCE_FILES
         source/configuration/slide_configuration.cpp
         source/configuration/slide_configuration.h
         source/physics/slide.cpp
-        source/physics/slide.h)
+        source/physics/slide.h
+        source/configuration/derived_configuration.cpp
+        source/configuration/derived_configuration.h)
 
 add_executable(Morphoshell ${SOURCE_FILES})
 
+target_link_libraries(Morphoshell PRIVATE ${Boost_LIBRARIES})
 target_include_directories(Morphoshell PRIVATE ${LIBCONFIG_DIR})
 target_link_libraries(Morphoshell PRIVATE ${LIBCONFIGPP_LIB})
 target_link_libraries(Morphoshell PRIVATE OpenMP::OpenMP_CXX)
-target_link_libraries (Morphoshell PRIVATE Eigen3::Eigen)
+target_link_libraries(Morphoshell PRIVATE Eigen3::Eigen)
+target_link_libraries(Morphoshell PRIVATE ${VTK_LIBRARIES})
+#
+#vtk_module_autoinit(
+#        TARGETS Morphoshell
+#        MODULES ${VTK_LIBRARIES}
+#)
 

@@ -56,12 +56,17 @@ std::cout << teststring << std::endl;
 #include <limits>
 #include <Eigen/Dense>
 #include <stdexcept>
+//#include <vtk>
 
 #include "readVTKData.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
+
+void readVTKDataNew() {
+
+}
 
 void readVTKData(
         std::vector<Node> &nodes,
@@ -70,7 +75,7 @@ void readVTKData(
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_InvProgMetrics,
         std::vector<std::vector<double> > &sequenceOf_ProgTaus,
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
-        Settings &settings,
+        SettingsNew &settings,
         const std::string &init_data_file_name_str,
         std::size_t &progTensorSequenceCounterToStartFrom,
         double &dialInFactorToStartFrom,
@@ -106,19 +111,20 @@ void readVTKData(
     init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
 
     // Get number of nodes and resize nodes container accordingly.
-    init_DataFile >> settings.num_nodes;
-    if (settings.num_nodes <= 0) {
+    int num_nodes;
+    init_DataFile >> num_nodes;
+    if (num_nodes <= 0) {
         throw std::runtime_error(
                 "Error: Problem with (or before) line giving number of nodes in non-ansatz data file.");
     } else {
-        nodes.resize(settings.num_nodes);
+        nodes.resize(num_nodes);
     }
 
     // Ignore rest of line.
     init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     // Put node label and coordinates in nodes container.
-    for (int nodeLabel = 0; nodeLabel < settings.num_nodes; ++nodeLabel) {
+    for (int nodeLabel = 0; nodeLabel < num_nodes; ++nodeLabel) {
         nodes.at(nodeLabel).label = nodeLabel;
         init_DataFile >> nodes.at(nodeLabel).pos(0);
         init_DataFile >> nodes.at(nodeLabel).pos(1);
@@ -138,18 +144,19 @@ void readVTKData(
 
     /* Get number of triangles and resize triangles, director angles and
     director twists containers accordingly. */
-    init_DataFile >> settings.num_triangles;
-    if (settings.num_triangles <= 0) {
+    int num_triangles;
+    init_DataFile >> num_triangles;
+    if (num_triangles <= 0) {
         throw std::runtime_error("Error: Problem with line giving number of triangles in non-ansatz data file.");
-    } else {
-        triangles.resize(settings.num_triangles);
     }
+    triangles.resize(num_triangles);
+
 
     // Ignore rest of line.
     init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     // Put triangles' self and vertex labels in triangles container.
-    for (int triangleLabel = 0; triangleLabel < settings.num_triangles; ++triangleLabel) {
+    for (int triangleLabel = 0; triangleLabel < num_triangles; ++triangleLabel) {
         triangles.at(triangleLabel).label = triangleLabel;
         /* Ignore first number of each row, which just says this polygon has
         3 vertices.*/
@@ -197,10 +204,10 @@ void readVTKData(
     // Now loop to read in the full sequence of programmed tensors.
     for (int sequenceIdx = 1; sequenceIdx < numProgTensorsInSequence + 1; ++sequenceIdx) {
 
-        sequenceOf_ProgMetricInfo.at(sequenceIdx).resize(settings.num_triangles);
-        sequenceOf_InvProgMetrics.at(sequenceIdx).resize(settings.num_triangles);
-        sequenceOf_ProgTaus.at(sequenceIdx).resize(settings.num_triangles);
-        sequenceOf_ProgSecFFs.at(sequenceIdx).resize(settings.num_triangles);
+        sequenceOf_ProgMetricInfo.at(sequenceIdx).resize(num_triangles);
+        sequenceOf_InvProgMetrics.at(sequenceIdx).resize(num_triangles);
+        sequenceOf_ProgTaus.at(sequenceIdx).resize(num_triangles);
+        sequenceOf_ProgSecFFs.at(sequenceIdx).resize(num_triangles);
 
         // Check we've arrived at the expected line of the file: 'progMetricInfo'...
         init_DataFile >> tempString;
@@ -215,13 +222,13 @@ void readVTKData(
         Eigen::Vector3d tempProgMetricInfo;
         Eigen::Matrix<double, 2, 2> tempProgMetric;
         Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > lu;
-        for (int triangleLabel = 0; triangleLabel < settings.num_triangles; ++triangleLabel) {
+        for (int triangleLabel = 0; triangleLabel < num_triangles; ++triangleLabel) {
 
             init_DataFile >> tempProgMetricInfo(0);
             init_DataFile >> tempProgMetricInfo(1);
             init_DataFile >> tempProgMetricInfo(2);
 
-            if (settings.is_lce_mode_enabled) {
+            if (settings.getCore().isLceModeEnabled()) {
 
                 sequenceOf_ProgMetricInfo.at(sequenceIdx).at(triangleLabel) = tempProgMetricInfo;
 
@@ -279,7 +286,7 @@ void readVTKData(
 
         /* Put triangles' programmed (energetically favoured) second fundamental
         forms in their container.*/
-        for (int triangleLabel = 0; triangleLabel < settings.num_triangles; ++triangleLabel) {
+        for (int triangleLabel = 0; triangleLabel < num_triangles; ++triangleLabel) {
             init_DataFile >> sequenceOf_ProgSecFFs.at(sequenceIdx).at(triangleLabel)(0, 0);
             init_DataFile >> sequenceOf_ProgSecFFs.at(sequenceIdx).at(triangleLabel)(0, 1);
             sequenceOf_ProgSecFFs.at(sequenceIdx).at(triangleLabel)(1, 0) = sequenceOf_ProgSecFFs.at(sequenceIdx).at(
@@ -300,7 +307,7 @@ void readVTKData(
         init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         // Put triangles' programmed tau values in their container.
-        for (int triangleLabel = 0; triangleLabel < settings.num_triangles; ++triangleLabel) {
+        for (int triangleLabel = 0; triangleLabel < num_triangles; ++triangleLabel) {
             init_DataFile >> sequenceOf_ProgTaus.at(sequenceIdx).at(triangleLabel);
             init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
@@ -322,7 +329,7 @@ void readVTKData(
     // Put node clamp and load indicators in nodes container.
     // std::ios_base::boolalpha ensures that '0's and '1's  will be interpreted as bools.
     init_DataFile.unsetf(std::ios_base::boolalpha);
-    for (int nodeLabel = 0; nodeLabel < settings.num_nodes; ++nodeLabel) {
+    for (int nodeLabel = 0; nodeLabel < num_nodes; ++nodeLabel) {
         init_DataFile >> nodes.at(nodeLabel).isClamped;
         init_DataFile >> nodes.at(nodeLabel).isLoadForceEnabled;
         init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -401,7 +408,7 @@ void readVTKData(
         ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
         int ansatzStatedNumNodes;
         ansatz_DataFile >> ansatzStatedNumNodes;
-        if (ansatzStatedNumNodes != settings.num_nodes) {
+        if (ansatzStatedNumNodes != num_nodes) {
             throw std::runtime_error(
                     "Error: Problem with (or before) line giving number of nodes in ansatz data file. "
                     "E.g. you may have supplied ansatz and initial data files with inconsistent numbers of nodes.");
@@ -411,8 +418,8 @@ void readVTKData(
 
 
         // Put node ansatz coordinates into suitable container.
-        nodeAnsatzPositions.resize(settings.num_nodes);
-        for (int nodeLabel = 0; nodeLabel < settings.num_nodes; ++nodeLabel) {
+        nodeAnsatzPositions.resize(num_nodes);
+        for (int nodeLabel = 0; nodeLabel < num_nodes; ++nodeLabel) {
             ansatz_DataFile >> nodeAnsatzPositions.at(nodeLabel)(0);
             ansatz_DataFile >> nodeAnsatzPositions.at(nodeLabel)(1);
             ansatz_DataFile >> nodeAnsatzPositions.at(nodeLabel)(2);

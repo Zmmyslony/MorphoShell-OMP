@@ -43,23 +43,22 @@ scale - the (stretching) sound speed.*/
 #include "SimulationStatus.hpp"
 #include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
+#include "configuration/core_config.h"
 
-SimulationStatus equilibriumCheck(
-        const std::vector<Node> &nodes,
-        const std::vector<Triangle> &triangles,
-        const Settings &settings,
-        CustomOutStreamClass &logStream) {
+SimulationStatus
+equilibriumCheck(const std::vector<Node> &nodes, const SettingsNew &settings, const std::vector<Triangle> &triangles,
+                 CustomOutStreamClass &logStream) {
 
     std::vector<double> nodeNonDampingForce(nodes.size());
     std::vector<double> incidentProgTau(nodes.size());
     std::vector<double> velocity(nodes.size());
 
 #pragma omp parallel for
-    for (int i = 0; i < settings.num_nodes; ++i) {
-        if (!settings.is_gradient_descent_dynamics_enabled) {
+    for (int i = 0; i < nodes.size(); ++i) {
+        if (!settings.getCore().isGradientDescentDynamics()) {
             nodeNonDampingForce[i] = (nodes[i].force +
-                                      (settings.num_damp_factor * nodes[i].mass * nodes[i].vel /
-                                       settings.init_density)).norm();
+                                      (settings.getDampingFactor() * nodes[i].mass * nodes[i].vel /
+                                       settings.getCore().getDensity())).norm();
         } else {
             nodeNonDampingForce[i] = nodes[i].force.norm();
         }
@@ -90,7 +89,8 @@ SimulationStatus equilibriumCheck(
     double max_non_damp_force = *std::max_element(nodeNonDampingForce.begin(), nodeNonDampingForce.end());
 
     double smallest_incident_prog_tau = *std::max_element(incidentProgTau.begin(), incidentProgTau.end());
-    double stretching_wave_speed = sqrt(smallest_incident_prog_tau * settings.shear_modulus / settings.init_density);
+    double stretching_wave_speed = sqrt(smallest_incident_prog_tau * settings.getCore().getShearModulus() /
+                                        settings.getCore().getDensity());
 
     int max_relative_speed_node = std::max_element(velocity.begin(), velocity.end()) - velocity.begin();
     double max_relative_speed = *std::max_element(velocity.begin(), velocity.end()) / stretching_wave_speed;
@@ -98,12 +98,12 @@ SimulationStatus equilibriumCheck(
     /* Now check whether non-damping force and speed ratios are below chosen
     `equilibrium' thresholds.*/
 
-    double max_relative_force = max_non_damp_force / settings.char_force_scale;
+    double max_relative_force = max_non_damp_force / settings.getForceScale();
     logStream.open();
 
     SimulationStatus status;
-    if (max_relative_force < settings.char_force
-        && max_relative_speed < settings.char_speed) {
+    if (max_relative_force < settings.getForceScale()
+        && max_relative_speed < settings.getCore().getEquilibriumSpeedScale()) {
 
         logStream << "\tEquilibrium reached." << std::endl;
         status = EquilibriumReached;
@@ -112,10 +112,10 @@ SimulationStatus equilibriumCheck(
         status = WaitingForEquilibrium;
     }
     logStream << "\tRatio of max non-damping force to characteristic force = "
-              << max_relative_force / settings.char_force
+              << max_relative_force / settings.getForceScale()
               << " (node " << max_non_damp_force_node << ")." << std::endl
               << "\tRatio of max node speed to local stretching wave speed = "
-              << max_relative_speed / settings.char_speed
+              << max_relative_speed / settings.getCore().getEquilibriumSpeedScale()
               << " (node " << max_relative_speed_node << ")." << std::endl;
     logStream.close();
     return status;

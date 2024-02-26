@@ -39,8 +39,7 @@ having it as a vertex), and store these as node member data.*/
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 
-void calcTrianglesIncidentOnNodes(std::vector<Node> &nodes, const std::vector<Triangle> &triangles,
-                                  const Settings &settings) {
+void calcTrianglesIncidentOnNodes(std::vector<Node> &nodes, const std::vector<Triangle> &triangles) {
 
     /* Temporarily, we will store the incident triangle labels for nodes in a
     std::vector of std::vectors. At the end, the same information will then be
@@ -52,8 +51,8 @@ void calcTrianglesIncidentOnNodes(std::vector<Node> &nodes, const std::vector<Tr
     bounds checking on and off, and ii) already has overloaded functions set up
     for easy printing out to std::cout etc. */
 
-    std::vector<std::vector<int> > tempNodesIncidentTriLabels(settings.num_nodes);
-    for (int i = 0; i < settings.num_triangles; ++i) {
+    std::vector<std::vector<int> > tempNodesIncidentTriLabels(nodes.size());
+    for (int i = 0; i < triangles.size(); ++i) {
         //Add this triangle's label to each of its vertices in turn
         for (int v = 0; v < 3; ++v) {
             tempNodesIncidentTriLabels[triangles[i].vertexLabels(v)].push_back(i);
@@ -64,7 +63,7 @@ void calcTrianglesIncidentOnNodes(std::vector<Node> &nodes, const std::vector<Tr
     /* Now we know how many triangles are incident on each node, we put the
     labels in the corresponding node member data Eigen::VectorXd.*/
 //#pragma omp parallel for
-    for (int i = 0; i < settings.num_nodes; ++i) {
+    for (int i = 0; i < nodes.size(); ++i) {
 
         nodes[i].incidentTriLabels.resize(tempNodesIncidentTriLabels[i].size());
 

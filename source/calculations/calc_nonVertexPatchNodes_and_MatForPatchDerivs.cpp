@@ -51,11 +51,8 @@ later.
 #include "../Triangle.hpp"
 
 
-void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
-        const std::vector<Node> &nodes,
-        std::vector<Triangle> &triangles,
-        const Settings &settings,
-        CustomOutStreamClass &logStream) {
+void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+                                                    CustomOutStreamClass &logStream, double patch_threshold) {
 
     //Some temporary variables
     int numNonBoundaryTrisThatTriedMultiplePatchChoices = 0;
@@ -166,7 +163,7 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(
                 double tempAbsConditionNumber = secDerivMatTempSVD.singularValues()(
                         0); //This has dimensions 1/Length^2.
                 tempAbsConditionNumberDividedByThresholdValue = tempAbsConditionNumber * thisPatchSize * thisPatchSize /
-                                                                settings.patch_matrix_dimensionless_conditioning_threshold;
+                                                                patch_threshold;
             }
 
             if (tempAbsConditionNumberDividedByThresholdValue >= 1.0 || !isMatReversible) {

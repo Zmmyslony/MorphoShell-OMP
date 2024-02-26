@@ -3,6 +3,7 @@
 //
 
 #include "slide.h"
+#include <cfloat>
 
 double Slide::distance(const Eigen::Vector3d &pos) const {
     return (pos - position).dot(normal);
@@ -28,11 +29,11 @@ void Slide::loadType(const ConfigBase &config) {
     config.get("control_type", control_type);
 
     if (control_type == clean_line("fixed")) {
-        slide_type = slide_types["fixed"];
+        slide_type = FIXED;
     } else if (control_type == clean_line("load_controlled")) {
-        slide_type = slide_types["load_controlled"];
+        slide_type = LOAD_CONTROLLED;
     } else if (control_type == clean_line("displacement_controlled")) {
-        slide_type = slide_types["displacement_controlled"];
+        slide_type = DISPLACEMENT_CONTROLLED;
         bool is_displacement_loaded = config.get("x_displacement", displacement[0]) ||
                                       config.get("y_displacement", displacement[1]) ||
                                       config.get("z_displacement", displacement[2]);
@@ -60,7 +61,7 @@ void Slide::validate() const {
     if (friction_coefficient < 0) {
         throw std::runtime_error("'friction_coefficient' needs to be a non-negative number.");
     }
-    if (slide_type == slide_types["load_controlled"] && weight <= 0) {
+    if (slide_type == LOAD_CONTROLLED && weight <= 0) {
         throw std::runtime_error("'weight' needs to be positive for a 'load_controlled' slide.");
     }
 }
@@ -86,7 +87,7 @@ void Slide::initialise(const std::vector<Eigen::Vector3d> &node_pos, double dial
         }
         position += furthest_distance * normal;
     }
-    if (slide_type == slide_types["displacement_controlled"]) {
+    if (slide_type == DISPLACEMENT_CONTROLLED) {
         velocity = displacement / dial_in_time;
     }
 }

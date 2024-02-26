@@ -36,6 +36,8 @@ containing the node's position, velocity etc.*/
 
 #include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
+#include "configuration/gravity_config.h"
+#include "settings_new.h"
 
 class Node {
 public:
@@ -112,16 +114,16 @@ public:
     /**
      * Adds gravitational force using the multiplier from the settings file. Use multiplier = 1 for normal pulling in
      * z-direction.
-     * @param settings
+     * @param config
      */
-    void add_gravity(const Settings &settings);
+    void add_gravity(const GravityConfig &config);
 
     /**
      * Adds damping force that is proportional to the velocity and numerical damping factor:
      * F = - a * v * m / rho
-     * @param settings
+     * @param settings_new
      */
-    void add_damping(const Settings &settings);
+    void add_damping(const SettingsNew &settings_new);
 
     /** Perturbing 'prod' force, to prompt the sheet to buckle in the upward
     *  direction, and ensure evolution actually begins. The particular shape

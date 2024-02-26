@@ -29,6 +29,7 @@ left in the header file for clarity there.*/
 
 #include "Settings.hpp"
 #include "Node.hpp"
+#include "configuration/gravity_config.h"
 
 //This is a debugging tool to display the node's data
 void Node::display() {
@@ -48,14 +49,19 @@ void Node::display() {
     nodeLogStream.close();
 }
 
-void Node::add_gravity(const Settings &settings) {
-    // 10e3 Factor comes from the fact that the natural dimension in the simulations are millimetres.
-    force(2) -= settings.gravity_sign * mass * 9.80665 * 10e3;
+void Node::add_gravity(const GravityConfig &config) {
+    if (config.isGravityEnabled()) {
+        force(0) -= config.getXGravityComponent() * mass * 9.80665;
+        force(1) -= config.getYGravityComponent() * mass * 9.80665;
+        force(2) -= config.getZGravityComponent() * mass * 9.80665;
+    }
 }
 
 
-void Node::add_damping(const Settings &settings) {
-    force += -settings.num_damp_factor * mass * vel / settings.init_density;
+void Node::add_damping(const SettingsNew &settings_new) {
+    if (settings_new.getCore().isGradientDescentDynamics()) { return; }
+    force += -settings_new.getDampingFactor() * mass * vel /
+             settings_new.getCore().getDensity();
 }
 
 
@@ -82,8 +88,9 @@ void Node::add_slide_force(const Settings &settings, double height, bool is_bott
     bool is_interacting = is_bottom_slide && pos(2) < height || !is_bottom_slide && pos(2) > height;
 
     if (is_interacting) {
-        double slice_vert_force = settings.slide_stiffness_prefactor * settings.shear_modulus * settings.sheet_thickness *
-                                  (height - pos(2));
+        double slice_vert_force =
+                settings.slide_stiffness_prefactor * settings.shear_modulus * settings.sheet_thickness *
+                (height - pos(2));
         force(2) += slice_vert_force;
         total_slide_force += slice_vert_force;
 

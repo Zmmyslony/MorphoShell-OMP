@@ -44,7 +44,7 @@ double *Settings::getParameterAddressDouble(const std::string &parameterName) {
             {"equilibriation_damping",                       &equilibriation_damping},
             {"gent_factor",                                  &gent_factor},
             {"time_step_prefactor",                          &time_step_prefactor},
-            {"time_step",                                    &time_step},
+            {"time_step_size",                                    &time_step},
             {"char_force",                                   &char_force},
             {"char_speed",                                   &char_speed},
             {"dial_in_resolution",                           &dial_in_resolution},

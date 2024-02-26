@@ -47,9 +47,9 @@ stress stuff.
 
 void updateFirstFundamentalForms(
         std::vector<Triangle> &triangles,
-        const Settings &settings) {
+        const CoreConfig &core_config) {
 
-    double stretchingPreFac = 0.5 * settings.sheet_thickness * settings.shear_modulus;
+    double stretchingPreFac = 0.5 * core_config.getThickness() * core_config.getShearModulus();
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         triangles[i].updateFirstFundamentalForm(stretchingPreFac);
@@ -58,14 +58,14 @@ void updateFirstFundamentalForms(
 
 void updateSecondFundamentalForms(
         std::vector<Triangle> &triangles,
-        const Settings &settings) {
+        const CoreConfig &core_config) {
 
-    double bendingPreFac = 0.5 * pow(settings.sheet_thickness, 3) * settings.shear_modulus / 12;
-    double JPreFactor = settings.gent_factor / (settings.sheet_thickness * settings.sheet_thickness);
+    double bendingPreFac = 0.5 * pow(core_config.getThickness(), 3) * core_config.getShearModulus() / 12;
+    double JPreFactor = core_config.getGentFactor() / pow(core_config.getThickness(), 2);
 
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].updateSecondFundamentalForm(bendingPreFac, JPreFactor, settings.poisson_ratio);
+        triangles[i].updateSecondFundamentalForm(bendingPreFac, JPreFactor, core_config.getPoissonRatio());
     }
 }
 
@@ -81,13 +81,13 @@ void calcEnergiesAndStresses(
         std::vector<double> &strainMeasures,
         std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
         std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
-        const Settings &settings) {
+        const CoreConfig &core_config) {
 
-    updateFirstFundamentalForms(triangles, settings);
-    updateSecondFundamentalForms(triangles, settings);
+    updateFirstFundamentalForms(triangles, core_config);
+    updateSecondFundamentalForms(triangles, core_config);
     // Loop over triangles and calculate potential energies and energy densities.
 #pragma omp parallel for
-    for (int i = 0; i < settings.num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
         stretchEnergyDensities[i] = triangles[i].stretchEnergyDensity;
         bendEnergyDensities[i] = triangles[i].bendEnergyDensity;
 
@@ -124,7 +124,7 @@ void calcEnergiesAndStresses(
     }
 
 #pragma omp parallel for
-    for (int n = 0; n < settings.num_nodes; ++n) {
+    for (int n = 0; n < nodes.size(); ++n) {
         kineticEnergies[n] = 0.5 * nodes[n].mass * nodes[n].vel.dot(nodes[n].vel);
     }
 }

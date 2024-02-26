@@ -34,8 +34,9 @@ Header file for calcEnergiesAndStresses.cpp function
 #include "../Triangle.hpp"
 #include "../Node.hpp"
 #include "../Settings.hpp"
+#include "../settings_new.h"
 
-void updateSecondFundamentalForms(std::vector<Triangle> &, const Settings &);
+void updateSecondFundamentalForms(std::vector<Triangle> &triangles, const CoreConfig &core_config);
 
 void calcEnergiesAndStresses(
         const std::vector<Node> &nodes,
@@ -48,4 +49,4 @@ void calcEnergiesAndStresses(
         std::vector<double> &strainMeasures,
         std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
         std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
-        const Settings &settings);
+        const CoreConfig &core_config);

@@ -42,6 +42,7 @@ form for each triangle are also calculated.*/
 #include "calcTriangleGeometries_and_DialledProgTensors.hpp"
 #include "../Node.hpp"
 #include "../Triangle.hpp"
+#include "../settings_new.h"
 
 
 void updateMetrics(std::vector<Triangle> &triangles, const std::vector<Node> &nodes) {
@@ -165,7 +166,7 @@ void calcTriangleGeometries_and_DialledProgTensors(
         const std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedMetricSequence,
         const std::vector<std::vector<double> > &programmedTausSequence,
         const std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedSecondFundamentalFormSequence,
-        const Settings &settings) {
+        const SettingsNew &settings) {
 
     // Will use some functions of dial-in factor, pre-calculated here.
     const double rootCurrDialInFactor = sqrt(currDialInFactor);
@@ -176,7 +177,7 @@ void calcTriangleGeometries_and_DialledProgTensors(
     for (int i = 0; i < triangles.size(); i++) {
         triangles[i].updateMetric(nodes);
         if (status == Dialling) {
-            if (settings.is_lce_mode_enabled && !settings.is_dialing_from_ansatz_enabled) {
+            if (settings.getCore().isLceModeEnabled() && !settings.getCore().isAnsatzMetricUsed()) {
                 updateDialledInverseProgrammedMetricForATriangleWithoutAnsatz(i, triangles, currDialInFactor,
                                                                               progTensorSequenceCounter,
                                                                               programmedMetricInfoSequence);

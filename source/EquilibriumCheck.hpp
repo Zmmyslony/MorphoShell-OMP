@@ -30,6 +30,9 @@ Header file for equilibriumCheck.cpp function.
 #include "SimulationStatus.hpp"
 #include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
+#include "configuration/core_config.h"
+#include "settings_new.h"
 
-SimulationStatus equilibriumCheck(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const Settings &settings,
-                                  CustomOutStreamClass &logStream);
+SimulationStatus
+equilibriumCheck(const std::vector<Node> &nodes, const SettingsNew &settings, const std::vector<Triangle> &triangles,
+                 CustomOutStreamClass &logStream);

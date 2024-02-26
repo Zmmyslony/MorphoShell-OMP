@@ -233,6 +233,11 @@ public:
 
     void updateFirstFundamentalForm(double stretchingPreFac);
 
+    /**
+     * Returns the linear size of the triangle calculated as the shortest triangle altitude.
+     * @return
+     */
+    double getLinearSize() const;
 };
 
 #endif

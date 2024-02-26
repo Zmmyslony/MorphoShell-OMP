@@ -186,7 +186,7 @@ empirically to avoid `blowing up'. */
     followed potentially by normal dialling in of further progTensors in
     the sequence, if there are anymore in the sequence.
     To use it, you probably want to supply an ansatz file with its
-    currDialInFactor CHANGED TO = 0. See main() for more details, including the
+    dial_in_factor CHANGED TO = 0. See main() for more details, including the
     intended use case. */
     bool for_initial_portion_of_prog_tensors_sequence_dial_prog_tau_but_jump_prog_metric_and_prog_sec_ff;
 

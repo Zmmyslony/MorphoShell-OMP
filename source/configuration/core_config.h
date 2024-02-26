@@ -5,8 +5,10 @@
 #ifndef MORPHOSHELL_CORE_CONFIG_H
 #define MORPHOSHELL_CORE_CONFIG_H
 
-#include <boost/filesystem/path.hpp>
+#define _USE_MATH_DEFINES
 
+#include <boost/filesystem/path.hpp>
+#include <cfloat>
 #include "config_base.h"
 
 namespace fs = boost::filesystem;
@@ -48,17 +50,24 @@ class CoreConfig {
     bool is_lce_mode_enabled = false;
     bool is_simple_sec_ff_used = true;
     bool is_boundary_clamped = false;
+    bool is_initial_positions_perturbed = true;
 
     bool is_energy_printed = true;
     bool is_triangle_area_printed = true;
     bool is_angle_deficit_printed = false;
     bool is_gradient_descent_dynamics = false;
+    bool is_seide_deformations = false;
 
-    // When enabled, current geometry is used as the preferred one in the beginning.
+    // When enabled, current geometry is assumed to be the relaxed one, i.e. uses calculated metric and bend tensors as programmed.
     bool is_ansatz_metric_used = false;
+
+    //
+    bool is_first_tensor_skipped = false;
 
     // Used for finding second fundamental form coefficients. Worse meshes require larger values.
     double patch_matrix_threshold = 10;
+
+    double gentFactor = 1;
 
 public:
     CoreConfig();
@@ -114,6 +123,28 @@ public:
     bool isAnsatzMetricUsed() const;
 
     double getPatchMatrixThreshold() const;
+
+    double getStretchingTimeStep(double size_factor) const;
+
+    double getBendingTimeStep(double size_factor) const;
+
+    double getStretchingTimeStepGradientDescent(double size_factor) const;
+
+    double getBendingTimeStepGradientDescent(double size_factor) const;
+
+    double getStretchingTimeScale(double size_factor) const;
+
+    double getBendingTimeScale(double size_factor) const;
+
+    double getDampingScale(double size_factor) const;
+
+    bool isInitialPositionsPerturbed() const;
+
+    bool isFirstTensorSkipped() const;
+
+    double getGentFactor() const;
+
+    bool isSeideDeformations() const;
 
 };
 

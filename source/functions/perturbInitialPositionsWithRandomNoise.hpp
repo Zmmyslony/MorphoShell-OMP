@@ -28,4 +28,4 @@ Header file for perturbInitialPositionsWithRandomNoise.cpp function.
 #include "../Node.hpp"
 #include "../Settings.hpp"
 
-void perturbInitialPositionsWithRandomNoise(std::vector<Node> &, const Settings &);
+void perturbInitialPositionsWithRandomNoise(std::vector<Node> &, double element_size);

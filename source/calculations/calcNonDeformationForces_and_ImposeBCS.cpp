@@ -40,53 +40,53 @@ accounted for.*/
 #include "calcNonDeformationForces_and_ImposeBCS.hpp"
 #include "../Node.hpp"
 
-std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Node> &nodes, const double &time,
-                                                                 const Settings &settings) {
-
-    double totUpperSlideForce = 0;
-    double totLowerSlideForce = 0;
-
-#pragma omp parallel for reduction (+: totUpperSlideForce, totLowerSlideForce)
-    for (int i = 0; i < nodes.size(); i++) {
-        if (!settings.is_gradient_descent_dynamics_enabled) {
-            nodes[i].add_damping(settings);
-        }
-        nodes[i].add_gravity(settings);
-
-        if (time < settings.prod_force_time) {
-            nodes[i].add_prod_force(settings);
-        }
-
-        // Simple load force.
-        if (time < settings.load_force_time) {
-            nodes[i].add_load_force(settings, time, totUpperSlideForce, totLowerSlideForce);
-        }
-
-        // If slide stiffness is positive, apply forces from the slides.
-        if (settings.slide_stiffness_prefactor > 0) {
-            if (!settings.glass_cones) {
-                nodes[i].add_slide_force(settings, settings.init_slide_z_coord_lower, true, totLowerSlideForce);
-                nodes[i].add_slide_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
-            }
-                // GLASS CONES
-            else {
-                nodes[i].add_cone_force(settings, settings.curr_slide_z_coord_upper, true, totLowerSlideForce);
-                nodes[i].add_cone_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
-
-                if (nodes[i].isOnBoundary) {
-                    double polar_angle = atan2(nodes[i].pos(1), nodes[i].pos(0));
-                    Eigen::Vector3d theoryNormalVec;
-                    theoryNormalVec << cos(settings.cone_angle) * cos(polar_angle),
-                            cos(settings.cone_angle) * sin(polar_angle), sin(settings.cone_angle);
-                    nodes[i].force -= (nodes[i].force.dot(theoryNormalVec)) * theoryNormalVec;
-                }
-            }
-        }
-
-        // BOUNDARY CONDITIONS
-        nodes[i].apply_boundary_conditions();
-    }
-    return {totUpperSlideForce, totLowerSlideForce};
-}
+//std::pair<double, double> calcNonDeformationForces_and_ImposeBCS(std::vector<Node> &nodes, const double &time,
+//                                                                 const Settings &settings) {
+//
+//    double totUpperSlideForce = 0;
+//    double totLowerSlideForce = 0;
+//
+//#pragma omp parallel for reduction (+: totUpperSlideForce, totLowerSlideForce)
+//    for (int i = 0; i < nodes.size(); i++) {
+//        if (!settings.is_gradient_descent_dynamics_enabled) {
+//            nodes[i].add_damping(settings);
+//        }
+//        nodes[i].add_gravity(settings);
+//
+//        if (time < settings.prod_force_time) {
+//            nodes[i].add_prod_force(settings);
+//        }
+//
+//        // Simple load force.
+//        if (time < settings.load_force_time) {
+//            nodes[i].add_load_force(settings, time, totUpperSlideForce, totLowerSlideForce);
+//        }
+//
+//        // If slide stiffness is positive, apply forces from the slides.
+//        if (settings.slide_stiffness_prefactor > 0) {
+//            if (!settings.glass_cones) {
+//                nodes[i].add_slide_force(settings, settings.init_slide_z_coord_lower, true, totLowerSlideForce);
+//                nodes[i].add_slide_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
+//            }
+//                // GLASS CONES
+//            else {
+//                nodes[i].add_cone_force(settings, settings.curr_slide_z_coord_upper, true, totLowerSlideForce);
+//                nodes[i].add_cone_force(settings, settings.init_slide_z_coord_upper, false, totUpperSlideForce);
+//
+//                if (nodes[i].isOnBoundary) {
+//                    double polar_angle = atan2(nodes[i].pos(1), nodes[i].pos(0));
+//                    Eigen::Vector3d theoryNormalVec;
+//                    theoryNormalVec << cos(settings.cone_angle) * cos(polar_angle),
+//                            cos(settings.cone_angle) * sin(polar_angle), sin(settings.cone_angle);
+//                    nodes[i].force -= (nodes[i].force.dot(theoryNormalVec)) * theoryNormalVec;
+//                }
+//            }
+//        }
+//
+//        // BOUNDARY CONDITIONS
+//        nodes[i].apply_boundary_conditions();
+//    }
+//    return {totUpperSlideForce, totLowerSlideForce};
+//}
 
 

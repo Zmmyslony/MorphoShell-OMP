@@ -186,3 +186,14 @@ void Triangle::updateAngleDeficits(std::vector<double> &angleDeficits) const {
     angleDeficits[vertexLabels(1)] -= acos(sides[0].dot(sides[2]) / (sidesLength[0] * sidesLength[2]));
     angleDeficits[vertexLabels(0)] -= acos(sides[1].dot(sides[2]) / (sidesLength[1] * sidesLength[2]));
 }
+
+double Triangle::getLinearSize() const {
+    double first_side_length = currSides.col(0).norm();
+    double second_side_length = currSides.col(1).norm();
+    double third_side_length = (currSides.col(0) - currSides.col(1)).norm();
+
+    double longest_side = std::max({first_side_length, second_side_length, third_side_length});
+
+    double shortest_altitude = 2 * initArea / longest_side;
+    return shortest_altitude;
+}

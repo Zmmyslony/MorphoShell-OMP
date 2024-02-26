@@ -4,6 +4,8 @@
 
 #include "gravity_config.h"
 
+#include <cmath>
+
 
 GravityConfig::GravityConfig() = default;
 

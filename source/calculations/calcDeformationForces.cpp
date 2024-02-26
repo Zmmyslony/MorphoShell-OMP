@@ -39,6 +39,7 @@ Function to calculate the current force due to strain and bending on each
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 #include "../functions/zeroForces.hpp"
+#include "../configuration/core_config.h"
 
 std::vector<std::vector<std::pair<int, int>>>
 getCorrespondingTrianglesForNodes(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes) {
@@ -52,13 +53,13 @@ getCorrespondingTrianglesForNodes(const std::vector<Triangle> &triangles, const 
     return correspondingTrianglesForNodes;
 }
 
-void calcDeformationForces(
+void update_elastic_forces(
         std::vector<Node> &nodes,
         std::vector<Triangle> &triangles,
-        const Settings &settings,
+        const CoreConfig &core_config,
         const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
 
-    double stretchingPreFac = 0.5 * settings.sheet_thickness * settings.shear_modulus;
+    double stretchingPreFac = 0.5 * core_config.getThickness() * core_config.getShearModulus();
     std::vector<Eigen::Vector3d> forcesForEachTriangle(6 * triangles.size());
 #pragma omp parallel
     {

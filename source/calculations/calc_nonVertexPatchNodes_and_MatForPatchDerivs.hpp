@@ -29,4 +29,4 @@ Header file for calc_nonVertexPatchNodes_and_MatForPatchDerivs.cpp function
 #include "../CustomOutStreamClass.hpp"
 
 void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &, std::vector<Triangle> &,
-                                                    const Settings &, CustomOutStreamClass &);
+                                                    CustomOutStreamClass &, double patch_threshold);

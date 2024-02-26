@@ -29,4 +29,4 @@ Header file for advanceDynamics.cpp
 #include "Settings.hpp"
 #include "CustomOutStreamClass.hpp"
 
-void advanceDynamics(std::vector<Node> &, std::vector<Triangle> &, Settings &, CustomOutStreamClass &);
+void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, SettingsNew &settings, CustomOutStreamClass &logStream);

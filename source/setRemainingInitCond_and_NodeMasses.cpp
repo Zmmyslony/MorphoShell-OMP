@@ -40,6 +40,7 @@ having each triangle contribute 1/3 of its initial mass to each of its vertcies.
 #include "Triangle.hpp"
 #include "Edge.hpp"
 #include "Settings.hpp"
+#include "settings_new.h"
 
 void setRemainingInitCond_and_NodeMasses(
         std::vector<Node> &nodes,
@@ -49,7 +50,7 @@ void setRemainingInitCond_and_NodeMasses(
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedInvertedMetrics,
         std::vector<std::vector<double> > &programmedTaus,
         std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedSecondFundamentalForms,
-        const Settings &settings) {
+        const SettingsNew &settings) {
 
     // Temp matrix used to hold initial triangle sides.
     Eigen::Matrix<double, 2, 2> initSidesMat;
@@ -57,7 +58,7 @@ void setRemainingInitCond_and_NodeMasses(
     Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > tempinitSidesMatDecomp;
 
 
-    for (int i = 0; i < settings.num_nodes; ++i) {
+    for (int i = 0; i < nodes.size(); ++i) {
         //Set all initial node velocities to zero
         nodes[i].vel.fill(0.0);
         //Set all nodes masses to zero before calculating them next
@@ -66,12 +67,12 @@ void setRemainingInitCond_and_NodeMasses(
 
     //Resize the vector to hold the first ('trivial') programmed tensors, that
     //is populated in the next loop.
-    programmedMetricInfos[0].resize(settings.num_triangles);
-    programmedInvertedMetrics[0].resize(settings.num_triangles);
-    programmedTaus[0].resize(settings.num_triangles);
-    programmedSecondFundamentalForms[0].resize(settings.num_triangles);
+    programmedMetricInfos[0].resize(triangles.size());
+    programmedInvertedMetrics[0].resize(triangles.size());
+    programmedTaus[0].resize(triangles.size());
+    programmedSecondFundamentalForms[0].resize(triangles.size());
 
-    for (int i = 0; i < settings.num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
         /*set triangle sides' initial in-plane x-y basis components.*/
 //        initSidesMat(0, 0) = triangles[i].currSides(0, 0);
 //        initSidesMat(1, 0) = triangles[i].currSides(1, 0);
@@ -119,13 +120,13 @@ void setRemainingInitCond_and_NodeMasses(
         /* Add 1/3 of the mass of each triangle to each of its vertices.*/
         for (int v = 0; v < 3; ++v) {
             nodes[triangles[i].vertexLabels(v)].mass +=
-                    settings.init_density * triangles[i].initArea * settings.sheet_thickness / 3.0;
+                    settings.getCore().getDensity() * triangles[i].initArea * settings.getCore().getThickness() / 3.0;
         }
 
         /* Set first set of programmed tensors to be the trivial ones for the
         flat plane. This may be overridden later if
         settings.isDialingFromAnsatzEnabled == true. See main().*/
-        if (settings.is_lce_mode_enabled) {
+        if (settings.getCore().isLceModeEnabled()) {
             programmedMetricInfos[0][i] << programmedMetricInfos[1][i](0), 1.0, programmedMetricInfos[1][i](
                     2);
             programmedTaus[0][i] = 1.0;

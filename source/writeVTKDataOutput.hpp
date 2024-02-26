@@ -37,25 +37,15 @@ Header file for writeVTKDataOutput.cpp function.
 #include "Triangle.hpp"
 #include "Settings.hpp"
 
-void writeVTKDataOutput(
-        const std::vector<Node> &,
-        const std::vector<Triangle> &,
-        const int &,
-        const double &,
-        const double &,
-        const size_t &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<double> &,
-        const std::vector<Eigen::Vector2d> &,
-        const std::vector<Eigen::Matrix<double, 3, 2> > &,
-        const Settings &,
-        const std::string &);
+void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const int &stepcount,
+                        const double &time, const double &currDialInFactor, const size_t &progTensorSequenceCounter,
+                        const std::vector<double> &gaussCurvatures, const std::vector<double> &meanCurvatures,
+                        const std::vector<double> &angleDeficits, const std::vector<double> &interiorNodeAngleDeficits,
+                        const std::vector<double> &boundaryNodeAngleDeficits,
+                        const std::vector<double> &stretchEnergyDensities,
+                        const std::vector<double> &bendEnergyDensities, const std::vector<double> &stretchEnergies,
+                        const std::vector<double> &bendEnergies, const std::vector<double> &kineticEnergies,
+                        const std::vector<double> &strainMeasures,
+                        const std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
+                        const std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
+                        const SettingsNew &settings, const std::string &outputDirName);
