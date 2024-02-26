@@ -34,5 +34,5 @@ Header file for calcTriangleGeometries_and_DialledProgTensors.cpp function.
 #include "../settings_new.h"
 
 void
-updateTriangleValues(const std::vector<Node> &nodes, std::vector<Triangle> &triangles, const SimulationStatus &status,
-                     const double &dial_in_factor, const size_t &stage_counter, const SettingsNew &settings);
+updateTriangleProperties(const std::vector<Node> &nodes, std::vector<Triangle> &triangles, const SimulationStatus &status,
+                         const double &dial_in_factor, const size_t &stage_counter, const SettingsNew &settings);

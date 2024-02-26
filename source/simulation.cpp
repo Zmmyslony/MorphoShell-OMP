@@ -291,7 +291,7 @@ void Simulation::set_node_patches() {
 
 
 void Simulation::orient_node_labels() {
-    updateTriangleValues(nodes, triangles, simulation_status, -12345, 98765, settings_new);
+    updateTriangleProperties(nodes, triangles, simulation_status, -12345, 98765, settings_new);
     Eigen::Vector3d tempZAxisVec;
     tempZAxisVec << 0.0, 0.0, 1.0;
     for (int i = 0; i < num_triangles; ++i) {
@@ -302,7 +302,7 @@ void Simulation::orient_node_labels() {
         }
     }
     std::cout << "CHECK THIS - should shuffle normals before patch matrix calc I think?" << std::endl;
-    updateTriangleValues(nodes, triangles, simulation_status, -12345, 98765, settings_new);
+    updateTriangleProperties(nodes, triangles, simulation_status, -12345, 98765, settings_new);
 }
 
 
@@ -434,8 +434,8 @@ void Simulation::run_ansatz(int counter) {
         time_phase = 0.0;
 
         // Calculate all necessary geometry for the ansatz state.
-        updateTriangleValues(nodes, triangles, WaitingForEquilibrium, dial_in_factor,
-                             counter, settings_new);
+        updateTriangleProperties(nodes, triangles, WaitingForEquilibrium, dial_in_factor,
+                                 counter, settings_new);
         updateSecondFundamentalForms(triangles, settings_new.getCore());
 
 
@@ -658,8 +658,8 @@ void Simulation::first_step_configuration(double &seide_quotient,
 
 void Simulation::begin_equilibrium_search(int counter) {
     dial_in_factor = dial_in_phases[phase_counter + 1];
-    updateTriangleValues(nodes, triangles, simulation_status, dial_in_factor,
-                         counter, settings_new);
+    updateTriangleProperties(nodes, triangles, simulation_status, dial_in_factor,
+                             counter, settings_new);
     simulation_status = WaitingForEquilibrium;
     // NB an EquilCheck has not actually just occurred, but this has the
     //desired effect of ensuring that each DialInFactor value is held
@@ -743,24 +743,11 @@ void Simulation::add_non_elastic_forces() {
 void Simulation::progress_single_step(int counter,
                                       const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
 
-    updateTriangleValues(nodes, triangles, simulation_status, dial_in_factor,
-                         counter, settings_new);
-
-
-
-    /* Calculate secFF estimates for triangles, and related quantities such
-    as the derivative of the bending energy wrt the secFF components.*/
-//    updateSecondFundamentalForms(triangles, settings_new.getCore());
-
-    // Calculate current strain and bending force on each node.
-//    update_elastic_forces(nodes, triangles, settings_new.getCore(), correspondingTrianglesForNodes);
+    updateTriangleProperties(nodes, triangles, simulation_status, dial_in_factor,
+                             counter, settings_new);
 
     add_elastic_forces(correspondingTrianglesForNodes);
-    /* Add force contributions from e.g. damping, loads, 'prod' perturbation, and
-     account for BCs e.g. clamping. */
-
     add_non_elastic_forces();
-
 }
 
 void Simulation::update_dial_in_factor() {
