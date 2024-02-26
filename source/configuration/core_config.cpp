@@ -24,12 +24,14 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
 
     config_base.get("core_number", core_number);
     if (core_number == 0) {
-        int processor_count = (int) std::thread::hardware_concurrency();
+        int processor_count = (int) omp_get_num_procs();
         if (processor_count == 0) {
-            std::cerr << "Core number set to zero and unable to detect number of physical cores. Defaulting to 1."
+            core_number = 1;
+            std::cerr << "Core number set to zero and unable to detect number of threads. Defaulting to 1."
                       << std::endl;
         } else {
-            std::cerr << "Core number set to zero. Defaulting to physical core count: " << processor_count << "."
+            core_number = processor_count;
+            std::cerr << "Core number set to zero. Defaulting to threads count: " << processor_count << "."
                       << std::endl;
         }
     }

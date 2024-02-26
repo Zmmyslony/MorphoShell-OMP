@@ -75,15 +75,17 @@ public:
      * @param shear_modulus
      * @param thickness
      */
-    void
+    double
     addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &node_force, double shear_modulus,
-                        double thickness);
+                        double thickness) const;
 
     const Eigen::Vector3d &getPosition() const;
 
     const Eigen::Vector3d &getVelocity() const;
 
     double getLoad() const;
+
+    void setInteractionLoad(double interaction_load);
 };
 
 

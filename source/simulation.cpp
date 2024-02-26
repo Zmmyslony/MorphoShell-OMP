@@ -709,6 +709,7 @@ Simulation::add_elastic_forces(const std::vector<std::vector<std::pair<int, int>
             }
         }
 
+#pragma barrier
 #pragma omp for
         // Applies forces to each node.
         for (int i = 0; i < nodes.size(); i++) {
@@ -728,14 +729,22 @@ void Simulation::add_non_elastic_forces() {
         nodes[i].add_gravity(settings_new.getGravity());
 //        nodes[i].add_prod_force(settings_new);
 //        nodes[i].add_load_force();
+    }
 
-        for (auto &slide: slides) {
-            slide.addInteractionForce(nodes[i].pos,
-                                      nodes[i].force,
-                                      settings_new.getCore().getShearModulus(),
-                                      settings_new.getCore().getThickness());
+    for (auto &slide: slides) {
+        double interaction_force = 0;
+#pragma omp parallel for reduction (+ : interaction_force)
+        for (int i = 0; i < nodes.size(); i++) {
+            interaction_force += slide.addInteractionForce(nodes[i].pos,
+                                                           nodes[i].force,
+                                                           settings_new.getCore().getShearModulus(),
+                                                           settings_new.getCore().getThickness());
         }
+        slide.setInteractionLoad(interaction_force);
+    }
 
+#pragma omp parallel for
+    for (int i = 0; i < nodes.size(); i++) {
         nodes[i].apply_boundary_conditions();
     }
 }

@@ -15,6 +15,7 @@ void Slide::loadNormals(const ConfigBase &config) {
                                config.get("y_normal", normal[1]) &&
                                config.get("z_normal", normal[2]);
     if (!is_normals_provided) { throw std::runtime_error("Slide normals are missing from config file."); }
+    if (normal.norm() == 0) {throw std::runtime_error("Norm of slide normals is equal to zero.");}
     normal.normalize();
 }
 
@@ -111,11 +112,11 @@ void Slide::update(double time_step_size, bool is_dialling_in) {
     load = 0;
 }
 
-void Slide::addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &node_force,
-                                double shear_modulus, double thickness) {
+double Slide::addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &node_force, double shear_modulus,
+                                  double thickness) const {
     Eigen::Vector3d interaction = {0, 0, 0};
     double distance_v = distance(pos);
-    if (distance_v >= 0) { return; }
+    if (distance_v >= 0) { return 0; }
     double normal_force = distance_v * force_prefactor * shear_modulus * thickness;
     double friction_force = normal_force * friction_coefficient;
 
@@ -127,7 +128,7 @@ void Slide::addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &nod
         node_force -=  tangent_force.normalized() * friction_force;
     }
     node_force -= normal_force * normal;
-    interaction_load += normal_force;
+    return normal_force;
 }
 
 const Eigen::Vector3d &Slide::getPosition() const {
@@ -140,5 +141,9 @@ const Eigen::Vector3d &Slide::getVelocity() const {
 
 double Slide::getLoad() const {
     return load;
+}
+
+void Slide::setInteractionLoad(double interaction_load) {
+    Slide::interaction_load = interaction_load;
 }
 
