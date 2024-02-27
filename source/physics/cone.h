@@ -1,33 +1,46 @@
 //
-// Created by Michał Zmyślony on 20/02/2024.
+// Created by Michał Zmyślony on 26/02/2024.
 //
 
-#ifndef MORPHOSHELL_SLIDE_H
-#define MORPHOSHELL_SLIDE_H
+#ifndef MORPHOSHELL_CONE_H
+#define MORPHOSHELL_CONE_H
+
+#define _USE_MATH_DEFINES
 
 #include <Eigen/Dense>
 
 #include "../configuration/config_base.h"
 #include "rigid_body.h"
+#include <cmath>
+// For M_PI_2
+#include <math.h>
 
 #define FIXED 0
 #define LOAD_CONTROLLED 1
 #define DISPLACEMENT_CONTROLLED 2
 
-
-class Slide : public RigidBody {
-
-public:
-    explicit Slide(const ConfigBase &config);
-
-    explicit Slide(const fs::path &config_path);
+class Cone : public RigidBody {
+    double cone_angle = M_PI_2;
 
     /**
-     * Calculates distance from the slide.
+     * Calculates distance from the cone surface.
      * @param pos
      * @return
      */
     [[nodiscard]] double distance(const Eigen::Vector3d &pos) const;
+
+    /**
+     * Calculated distance vector from the cone_surface.
+     * @param pos
+     * @return
+     */
+    Eigen::Vector3d coneNormal(const Eigen::Vector3d &pos) const;
+
+public:
+
+    explicit Cone(const ConfigBase &config);
+
+    explicit Cone(const fs::path &config_path);
 
     /**
      * If position is unspecified, sets them depending on the nodes and sets the velocity for displacement controlled.
@@ -46,8 +59,7 @@ public:
      */
     double addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &node_force, double shear_modulus,
                                double thickness) const;
-
 };
 
 
-#endif //MORPHOSHELL_SLIDE_H
+#endif //MORPHOSHELL_CONE_H

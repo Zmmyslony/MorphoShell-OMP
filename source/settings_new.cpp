@@ -14,9 +14,10 @@
 
 std::map<std::string, int> config_map{
         {"NULL_PLACEHOLDER", -1},
-        { "core", 0 },
-        { "gravity", 1 },
-        { "slide", 2 },
+        {"core",             0},
+        {"gravity",          1},
+        {"slide",            2},
+        {"cone",             3}
 
 };
 
@@ -34,7 +35,7 @@ SettingsNew::SettingsNew(const std::vector<fs::path> &config_paths) {
 
         switch (config_map[type]) {
             case 0:
-                if (is_core_read) { throw std::runtime_error("Repetition of gravity config."); }
+                if (is_core_read) { throw std::runtime_error("Repetition of core config."); }
                 core = CoreConfig(config);
                 is_core_read = true;
                 break;
@@ -45,6 +46,9 @@ SettingsNew::SettingsNew(const std::vector<fs::path> &config_paths) {
                 break;
             case 2:
                 slides.emplace_back(config);
+                break;
+            case 3:
+                cones.emplace_back(config);
                 break;
             default:
                 throw std::runtime_error("Unknown configuration file provided.");
@@ -226,6 +230,10 @@ double SettingsNew::getStretchEnergyScale() const {
 
 double SettingsNew::getTimeBetweenEquilibriumChecks() const {
     return interval_equilibrium_check;
+}
+
+const std::vector<Cone> &SettingsNew::getCones() const {
+    return cones;
 }
 
 SettingsNew::SettingsNew() = default;

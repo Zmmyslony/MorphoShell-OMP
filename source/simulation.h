@@ -23,6 +23,7 @@ class Simulation {
 //    Settings settings;
     SettingsNew settings_new;
     std::vector <Slide> slides;
+    std::vector <Cone> cones;
 
     int num_nodes = 0;
     int num_triangles = 0;
@@ -206,7 +207,7 @@ class Simulation {
 
     void update_dial_in_factor();
 
-    void save_and_print_details(int counter, double duration_us);
+    void save_and_print_details(int counter, long long int duration_us);
 
     void begin_equilibrium_search(int counter);
 

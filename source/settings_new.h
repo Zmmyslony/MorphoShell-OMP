@@ -10,6 +10,7 @@
 #include "configuration/core_config.h"
 #include "configuration/gravity_config.h"
 #include "physics/slide.h"
+#include "physics/cone.h"
 
 namespace fs = boost::filesystem;
 
@@ -17,6 +18,7 @@ class SettingsNew {
     CoreConfig core;
     GravityConfig gravity;
     std::vector<Slide> slides;
+    std::vector<Cone> cones;
 
     double time_step_size = 0;
     double duration_phase = 0;
@@ -40,6 +42,8 @@ public:
     [[nodiscard]] const GravityConfig &getGravity() const;
 
     [[nodiscard]] const std::vector<Slide> &getSlides() const;
+
+    const std::vector<Cone> &getCones() const;
 
     std::string SetupPrintFrequency();
 

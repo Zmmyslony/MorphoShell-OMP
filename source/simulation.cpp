@@ -160,7 +160,7 @@ void Simulation::read_vtk_data() {
                 initial_stage,
                 dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename, log_stream);
 
-    stage_count = inverted_programmed_metrics.size();
+    stage_count = (int)inverted_programmed_metrics.size();
 
     // The first set of tensors are populated separately
     for (int i = 1; i < inverted_programmed_metrics.size(); i++) {
@@ -172,8 +172,8 @@ void Simulation::read_vtk_data() {
         }
     }
 
-    num_nodes = nodes.size();
-    num_triangles = triangles.size();
+    num_nodes = (int)nodes.size();
+    num_triangles = (int)triangles.size();
 }
 
 
@@ -320,8 +320,8 @@ void Simulation::find_smallest_element() {
     // smallest ratio of size to tau, though it is just erring on the side of caution.
     std::vector<double> largest_tau_vector(stage_count);
     double largest_tau = DBL_MIN;
-    for (int i = 0; i < triangles.size(); i++) {
-        for (auto &tau: triangles[i].programmed_taus) {
+    for (auto & triangle : triangles) {
+        for (auto &tau: triangle.programmed_taus) {
             if (tau < largest_tau) { largest_tau = tau; }
         }
     }
@@ -646,6 +646,7 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
 void Simulation::first_step_configuration(double &seide_quotient,
                                           std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
     slides = settings_new.getSlides();
+    cones = settings_new.getCones();
     std::vector<Eigen::Vector3d> node_positions(nodes.size());
     for (int i = 0; i < nodes.size(); i++) {
         node_positions[i] = nodes[i].pos;
@@ -653,6 +654,9 @@ void Simulation::first_step_configuration(double &seide_quotient,
 
     for (auto &slide: slides) {
         slide.initialise(node_positions, settings_new.getDurationPhase());
+    }
+    for (auto &cone: cones) {
+        cone.initialise(node_positions, settings_new.getDurationPhase());
     }
 }
 
@@ -743,6 +747,18 @@ void Simulation::add_non_elastic_forces() {
         slide.setInteractionLoad(interaction_force);
     }
 
+    for (auto &cone: cones) {
+        double interaction_force = 0;
+#pragma omp parallel for reduction (+ : interaction_force)
+        for (int i = 0; i < nodes.size(); i++) {
+            interaction_force += cone.addInteractionForce(nodes[i].pos,
+                                                           nodes[i].force,
+                                                           settings_new.getCore().getShearModulus(),
+                                                           settings_new.getCore().getThickness());
+        }
+        cone.setInteractionLoad(interaction_force);
+    }
+
 #pragma omp parallel for
     for (int i = 0; i < nodes.size(); i++) {
         nodes[i].apply_boundary_conditions();
@@ -767,7 +783,7 @@ void Simulation::update_dial_in_factor() {
 }
 
 
-void Simulation::save_and_print_details(int counter, double duration_us) {
+void Simulation::save_and_print_details(int counter, long long int duration_us) {
     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings_new.getCore());
     if (settings_new.getCore().isEnergyPrinted()) {
@@ -902,6 +918,9 @@ void Simulation::run_tensor_increment(int stage_counter) {
         for (auto &slide: slides) {
             slide.update(settings_new.getTimeStepSize(), simulation_status == Dialling);
         }
+        for (auto &cone: cones) {
+            cone.update(settings_new.getTimeStepSize(), simulation_status == Dialling);
+        }
 //        update_slide_properties();
 
 //        if (settings_new.getCore().isSeideDeformations()) {
@@ -925,7 +944,7 @@ void Simulation::run_tensor_increment(int stage_counter) {
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         progress_single_step(stage_counter, correspondingTrianglesForNodes);
         auto duration = std::chrono::steady_clock::now() - begin;
-        double duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+        long long duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
 
 
         /* Write output data regularly.
