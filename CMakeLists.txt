@@ -46,6 +46,9 @@ set(SOURCE_FILES
         source/physics/slide.h
         source/configuration/derived_configuration.cpp
         source/configuration/derived_configuration.h)
+        source/configuration/derived_configuration.h
+        source/physics/rigid_body.cpp
+        source/physics/rigid_body.h)
 
 add_executable(Morphoshell ${SOURCE_FILES})
 

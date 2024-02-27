@@ -6,39 +6,16 @@
 #define MORPHOSHELL_SLIDE_H
 
 #include <Eigen/Dense>
-#include <map>
 
 #include "../configuration/config_base.h"
+#include "rigid_body.h"
 
 #define FIXED 0
 #define LOAD_CONTROLLED 1
 #define DISPLACEMENT_CONTROLLED 2
 
 
-class Slide {
-    int slide_type = FIXED;
-    // If it is not provided, the position will be found as the position of the last node in direction opposite to normal.
-    bool is_origin_provided = false;
-    Eigen::Vector3d normal = {0, 0, 1};
-    Eigen::Vector3d position = {0, 0, 0};
-    Eigen::Vector3d velocity = {0, 0, 0};
-    Eigen::Vector3d displacement = {0, 0, 0};
-
-    double interaction_load = 0;
-    double load = 0;
-    double weight = 1;
-    double force_prefactor = 1;
-    double friction_coefficient = 0;
-
-    void loadNormals(const ConfigBase &config);
-
-    void loadPositions(const ConfigBase &config);
-
-    void loadType(const ConfigBase &config);
-
-    void loadInteractionScales(const ConfigBase &config);
-
-    void validate() const;
+class Slide : RigidBody {
 
 public:
     explicit Slide(const ConfigBase &config);
@@ -61,31 +38,15 @@ public:
     void initialise(const std::vector<Eigen::Vector3d> &node_pos, double dial_in_time);
 
     /**
-     * Updates position and velocity of the slide depending on operation mode.
-     * @param time_step_size
-     * @param is_dialling_in
-     */
-    void update(double time_step_size, bool is_dialling_in);
-
-
-    /**
      * Applies interaction force to a given node.
      * @param pos position of the node.
      * @param node_force forces corresponding to a given node that will be modified.
      * @param shear_modulus
      * @param thickness
      */
-    double
-    addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &node_force, double shear_modulus,
-                        double thickness) const;
+    double addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &node_force, double shear_modulus,
+                               double thickness) const;
 
-    const Eigen::Vector3d &getPosition() const;
-
-    const Eigen::Vector3d &getVelocity() const;
-
-    double getLoad() const;
-
-    void setInteractionLoad(double interaction_load);
 };
 
 
