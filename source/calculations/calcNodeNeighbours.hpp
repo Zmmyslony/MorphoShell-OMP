@@ -27,7 +27,6 @@ Header file for confiugure_node_adjacencies.cpp function
 
 #include "../Node.hpp"
 #include "../Edge.hpp"
-#include "../Settings.hpp"
 
 /**
  * Determine and store labels of the node neighbours to each node (those that

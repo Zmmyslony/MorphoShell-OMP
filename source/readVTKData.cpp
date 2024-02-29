@@ -56,32 +56,24 @@ std::cout << teststring << std::endl;
 #include <limits>
 #include <Eigen/Dense>
 #include <stdexcept>
-//#include <vtk>
+#include <fstream>
 
 #include "readVTKData.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "Settings.hpp"
-#include "CustomOutStreamClass.hpp"
 
 void readVTKDataNew() {
 
 }
 
-void readVTKData(
-        std::vector<Node> &nodes,
-        std::vector<Triangle> &triangles,
-        std::vector<std::vector<Eigen::Vector3d> > &sequenceOf_ProgMetricInfo,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_InvProgMetrics,
-        std::vector<std::vector<double> > &sequenceOf_ProgTaus,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
-        bool is_lce_mode_enabled,
-        const std::string &init_data_file_name_str,
-        std::size_t &progTensorSequenceCounterToStartFrom,
-        double &dialInFactorToStartFrom,
-        std::vector<Eigen::Vector3d> &nodeAnsatzPositions,
-        const std::string &ansatz_data_file_name_str,
-        CustomOutStreamClass &logStream) {
+void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+                 std::vector<std::vector<Eigen::Vector3d> > &sequenceOf_ProgMetricInfo,
+                 std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_InvProgMetrics,
+                 std::vector<std::vector<double> > &sequenceOf_ProgTaus,
+                 std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
+                 bool is_lce_mode_enabled, const std::string &init_data_file_name_str,
+                 std::size_t &progTensorSequenceCounterToStartFrom, double &dialInFactorToStartFrom,
+                 std::vector<Eigen::Vector3d> &nodeAnsatzPositions, const std::string &ansatz_data_file_name_str) {
 
     /* Variable to hold number of different sets of programmed tensors are
     present in the input file. These are all stored and then activated in
@@ -92,9 +84,7 @@ void readVTKData(
     correct format. */
     std::string tempString;
 
-    logStream.open();
-    logStream << "Beginning reading of input non-ansatz data file." << std::endl;
-    logStream.close();
+    std::cout << "Beginning reading of input non-ansatz data file." << std::endl;
 
 
     std::ifstream init_DataFile(init_data_file_name_str);
@@ -350,11 +340,11 @@ void readVTKData(
     }
     init_DataFile.close();
 
-    logStream.open();
-    logStream
+//    logStream.open();
+    std::cout
             << "Completed reading of non-ansatz data file. Note; it is still possible that something went wrong in the process.\n"
             << std::endl;
-    logStream.close();
+//    logStream.close();
 
     //////////////////////////////////////////////////////////////////////
     /* Now read the file with anzatz node positions if given as third command
@@ -367,9 +357,7 @@ void readVTKData(
         while assigning it to a std::size_t which is unsigned.*/
         int tempProgTensorSequenceCounter;
 
-        logStream.open();
-        logStream << "Beginning reading of ansatz data file." << std::endl;
-        logStream.close();
+        std::cout << "Beginning reading of ansatz data file." << std::endl;
 
         std::ifstream ansatz_DataFile(ansatz_data_file_name_str);
         if (!ansatz_DataFile) {
@@ -437,10 +425,10 @@ void readVTKData(
         }
         ansatz_DataFile.close();
 
-        logStream.open();
-        logStream
+//        logStream.open();
+        std::cout
                 << "Completed reading of ansatz data file. Note, it is still possible that something went wrong in the process.\n"
                 << std::endl;
-        logStream.close();
+//        logStream.close();
     }
 }

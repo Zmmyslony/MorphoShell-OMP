@@ -49,7 +49,7 @@ The directory the files are put in is created in main().
 #include "writeVTKDataOutput.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "Settings.hpp"
+// #include "Settings.hpp"
 #include "functions/kahanSum.hpp"
 
 void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const int &stepcount,

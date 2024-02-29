@@ -33,7 +33,6 @@ Header file for calcEnergiesAndStresses.cpp function
 
 #include "../Triangle.hpp"
 #include "../Node.hpp"
-#include "../Settings.hpp"
 #include "../settings_new.h"
 
 void updateSecondFundamentalForms(std::vector<Triangle> &triangles, const CoreConfig &core_config);

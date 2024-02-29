@@ -30,7 +30,6 @@ Header file for calcTriangleGeometries_and_DialledProgTensors.cpp function.
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 #include "../SimulationStatus.hpp"
-#include "../Settings.hpp"
 #include "../settings_new.h"
 
 void

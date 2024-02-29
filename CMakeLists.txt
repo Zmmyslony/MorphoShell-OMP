@@ -20,16 +20,16 @@ set(SOURCE_FILES
         source/main.cpp source/advanceDynamics.cpp source/advanceDynamics.hpp source/calculations/calc_nonVertexPatchNodes_and_MatForPatchDerivs.cpp
         source/calculations/calc_nonVertexPatchNodes_and_MatForPatchDerivs.hpp source/calculations/calcCurvatures.cpp source/calculations/calcCurvatures.hpp source/calculations/calcDeformationForces.cpp
         source/calculations/calcDeformationForces.hpp source/calculations/calcEnergiesAndStresses.cpp source/calculations/calcEnergiesAndStresses.hpp source/calculations/calcNodeNeighbours.cpp
-        source/calculations/calcNodeNeighbours.hpp source/calculations/calcNonDeformationForces_and_ImposeBCS.cpp source/calculations/calcNonDeformationForces_and_ImposeBCS.hpp
+        source/calculations/calcNodeNeighbours.hpp
         source/calculations/calcTriangleAdjacencies_And_Edges.cpp
         source/calculations/calcTriangleAdjacencies_And_Edges.hpp source/calculations/calcTriangleGeometries_and_DialledProgTensors.cpp source/calculations/calcTriangleGeometries_and_DialledProgTensors.hpp
-        source/calculations/calcTrianglesIncidentOnNodes.cpp source/calculations/calcTrianglesIncidentOnNodes.hpp source/CustomOutStreamClass.cpp source/CustomOutStreamClass.hpp source/Edge.cpp
+        source/calculations/calcTrianglesIncidentOnNodes.cpp source/calculations/calcTrianglesIncidentOnNodes.hpp source/Edge.cpp
         source/Edge.hpp source/EquilibriumCheck.cpp source/EquilibriumCheck.hpp source/functions/extract_Just_Filename.cpp source/functions/extract_Just_Filename.hpp source/functions/getRealTime.cpp
         source/functions/getRealTime.hpp source/initialDirAndFileHandling.cpp source/initialDirAndFileHandling.hpp source/functions/kahanSum.cpp source/functions/kahanSum.hpp source/Node.cpp
-        source/Node.hpp source/functions/perturbInitialPositionsWithRandomNoise.cpp source/functions/perturbInitialPositionsWithRandomNoise.hpp source/readSettingsFile.cpp
-        source/readSettingsFile.hpp source/readVTKData.cpp source/readVTKData.hpp source/setRemainingInitCond_and_NodeMasses.cpp source/setRemainingInitCond_and_NodeMasses.hpp
-        source/Settings.hpp source/SimulationStatus.hpp source/Triangle.cpp source/Triangle.hpp source/writeVTKDataOutput.cpp source/writeVTKDataOutput.hpp source/functions/zeroForces.cpp
-        source/functions/zeroForces.hpp source/Settings.cpp source/InitialisationFunctions.h source/InitialisationFunctions.cpp
+        source/Node.hpp source/functions/perturbInitialPositionsWithRandomNoise.cpp source/functions/perturbInitialPositionsWithRandomNoise.hpp
+        source/readVTKData.cpp source/readVTKData.hpp source/setRemainingInitCond_and_NodeMasses.cpp source/setRemainingInitCond_and_NodeMasses.hpp
+        source/SimulationStatus.hpp source/Triangle.cpp source/Triangle.hpp source/writeVTKDataOutput.cpp source/writeVTKDataOutput.hpp source/functions/zeroForces.cpp
+        source/functions/zeroForces.hpp
         source/simulation.cpp
         source/simulation.h
         source/configuration/gravity_config.cpp

@@ -28,7 +28,6 @@ Header file for calcTriangleAdjacencies_And_Edges.cpp function.
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 #include "../Edge.hpp"
-#include "../Settings.hpp"
 
 /* Calculate triangle edge-sharing adjacencies (triangle member data), and
 set up an 'edges' data structure to store further edge information. */

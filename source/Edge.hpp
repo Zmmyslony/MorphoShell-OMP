@@ -34,14 +34,14 @@ two triangles sharing the edge, and the labels of those triangles.*/
 
 #include <Eigen/Dense>
 
-#include "CustomOutStreamClass.hpp"
+//#include "CustomOutStreamClass.hpp"
 
 class Edge {
 public:
 
     /* Custom output stream allowing the debugging display function to print to
     a particular file in addition to std::cout.*/
-    CustomOutStreamClass edgeLogStream;
+//    CustomOutStreamClass edgeLogStream;
 
     // Label so this edge 'knows' which it is
     int label;

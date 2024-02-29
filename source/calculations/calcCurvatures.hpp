@@ -27,7 +27,6 @@ Header file for calcCurvatures.cpp function
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../Settings.hpp"
 #include "../configuration/core_config.h"
 
 void calcCurvatures(

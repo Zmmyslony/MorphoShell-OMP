@@ -28,7 +28,7 @@ Header file for setRemainingInitCond_and_NodeMasses.cpp Function.
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
-#include "Settings.hpp"
+// #include "Settings.hpp"
 #include "settings_new.h"
 
 void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<Triangle> &triangles,

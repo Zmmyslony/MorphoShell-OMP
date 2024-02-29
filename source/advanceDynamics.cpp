@@ -35,8 +35,6 @@ The forces are also checked, to catch code crashed in which the forces usually
 #include "advanceDynamics.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "Settings.hpp"
-#include "CustomOutStreamClass.hpp"
 
 
 bool isForceThresholdExceeded(const Node &node, const SettingsNew &settings) {
@@ -44,13 +42,12 @@ bool isForceThresholdExceeded(const Node &node, const SettingsNew &settings) {
 }
 
 
-void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, CustomOutStreamClass &logStream) {
-    logStream.open();
-    logStream << " ----------------------------------------" << std::endl;
-    logStream << " ------------CRASH REPORT----------------" << std::endl;
-    logStream << " ----------------------------------------" << std::endl;
-    logStream << "Offending node and its incident triangles: " << std::endl;
-    logStream.close();
+void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles) {
+    std::cout << " ----------------------------------------" << std::endl;
+    std::cout << " ------------CRASH REPORT----------------" << std::endl;
+    std::cout << " ----------------------------------------" << std::endl;
+    std::cout << "Offending node and its incident triangles: " << std::endl;
+
     node.display();
     for (int t = 0; t < node.incidentTriLabels.size(); ++t) {
         triangles[node.incidentTriLabels(t)].display();
@@ -59,12 +56,11 @@ void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, Cus
 }
 
 
-void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, SettingsNew &settings,
-                     CustomOutStreamClass &logStream) {
+void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, SettingsNew &settings) {
 
     for (int i = 0; i < nodes.size(); ++i) {
         if (isForceThresholdExceeded(nodes[i], settings)) {
-            logForceThresholdExceeded(nodes[i], triangles, logStream);
+            logForceThresholdExceeded(nodes[i], triangles);
         }
         /*  Check the force is well-behaved. If not, throw error, and
             display offending nodes and its incident triangles.
@@ -86,27 +82,4 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         // Advance position.
         nodes[i].pos += settings.getTimeStepSize() * nodes[i].vel;
     }
-
-//    if (settings.is_controlled_force_enabled) {
-//        /*
-//        double gravAccel = settings.ApproxMinInitElemSize / (settings.TimeStep * settings.TimeStep);// Set g to be related to a characteristic acceleration in simulation.
-//        double upperSlideMass = settings.upperSlideWeight / gravAccel;
-//        // Advance upper slide too, displacement and velocity taken downwards.
-//        settings.upperSlideVel += (settings.TimeStep/upperSlideMass) * (settings.upperTotSlideForce + settings.upperSlideWeight);
-//        settings.upperSlideDisplacement += settings.TimeStep * settings.upperSlideVel;
-//        */
-//
-//
-//        // Advance upper slide too, displacement and velocity taken downwards.
-//        settings.upper_slide_vel = (settings.upper_tot_slide_force + settings.upper_slide_weight) / settings.slide_damping_param;
-//
-//        // If doing constant weight experiment, need spacer to avoid squashing completely flat.
-//        if (settings.const_slide_weight_fac > 0 && settings.upper_slide_vel > 0 &&
-//                (settings.curr_slide_z_coord_upper - settings.init_slide_z_coord_lower) <
-//                settings.spacer_height * settings.sample_char_length) {
-//            settings.upper_slide_vel = 0.0;
-//        }
-//
-//        settings.upper_slide_displacement += settings.time_step * settings.upper_slide_vel;
-//    }
 }

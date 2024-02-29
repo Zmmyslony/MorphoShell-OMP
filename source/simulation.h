@@ -6,24 +6,58 @@
 #define SHELLOMORPH_SIMULATION_H
 
 #include <iostream>
+#include <fstream>
 
-#include "CustomOutStreamClass.hpp"
-#include "Settings.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
 #include "SimulationStatus.hpp"
 #include "settings_new.h"
-#include "configuration/derived_configuration.h"
+
+template<class CharT, class Traits = std::char_traits<CharT> >
+struct teestream : std::basic_streambuf<CharT, Traits> {
+
+private:
+    std::basic_streambuf<CharT, Traits> *m_rdbuf1;
+    std::basic_streambuf<CharT, Traits> *m_rdbuf2;
+
+public:
+    teestream(std::basic_streambuf<CharT, Traits> *rdbuf1, std::basic_streambuf<CharT, Traits> *rdbuf2)
+            : m_rdbuf1(rdbuf1), m_rdbuf2(rdbuf2) {}
+
+    ~teestream() {
+        m_rdbuf1->pubsync();
+        m_rdbuf2->pubsync();
+    }
+
+protected:
+    int_type overflow(int_type ch = Traits::eof()) override {
+        int_type result = m_rdbuf1->sputc(ch);
+        if (result != Traits::eof()) {
+            result = m_rdbuf2->sputc(ch);
+        }
+        return result;
+    }
+
+    virtual int sync() override {
+        int result = m_rdbuf1->pubsync();
+        if (result == 0) {
+            result = m_rdbuf2->pubsync();
+        }
+        return result;
+    }
+
+};
 
 class Simulation {
-    CustomOutStreamClass log_stream;
+    std::ofstream out;
+
     std::string init_string;
     std::string output_dir_name;
 //    Settings settings;
     SettingsNew settings_new;
-    std::vector <Slide> slides;
-    std::vector <Cone> cones;
+    std::vector<Slide> slides;
+    std::vector<Cone> cones;
 
     int num_nodes = 0;
     int num_triangles = 0;
@@ -31,9 +65,9 @@ class Simulation {
     int step_count = 0;
 
     double time_global = 0;
-    // Reset to zero every time equil is checked, or every time a new DialInFactor value is reached.
+    // Reset to zero every time equilibrium is checked, or every time a new DialInFactor value is reached.
     double time_equilibriation = 0;
-    // Reset to zero every time equil is reached and a new `dialling in' phase starts.
+    // Reset to zero every time equilibrium is reached and a new "dialling in" phase starts.
     double time_phase = 0;
     // Keeps track of which DialInFactor value in dial_in_phases was last dialled *from* (not held at, which is the next value along in the list)
     std::size_t phase_counter = 0;
@@ -68,23 +102,8 @@ class Simulation {
     std::vector<Eigen::Vector3d> nodeAnsatzPositions;
     bool is_equilibrium_seeked = true;
 
-    /* Variables used to control the programmed properties' time variation.
-    This is not necessarily directly physical, especially for a fast optical
-    activation instead of slow heating; the idea here is to gradually `dial in'
-    the programmed (energetically favoured) metric and second fundamental form.
-    This prevents anything too explosive happening the code, and can be used to
-    make the simulation quasistatic (which can help avoid undesired isometries
-    for example), though it may not be necessary.
-    The range between 0, and 1 is split into a sequence of discrete values based
-    on the chosen settings.DialInResolution. The dial-in factor will then
-    evolve linearly from one such value to the next, over a chosen
-    settings.DialInStepTime. After each such step, the value is held constant
-    until equilibrium is reached (to within the chosen tolerance). In the
-    'waiting' stage, the check for equilibrium occurs at a rate determined by
-    the settings. TimeBetweenEquilChecks. The dialling in process occurs
-    between each pair of the sequence of programmed tensors, if more than one is
-    given in the input file.
-    */
+    // Vector holding which triangles correspond with which nodes.
+    std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes;
 
     // Dial-in factors which divide the simulation into phases between which the equilibrium is reached.
     std::vector<double> dial_in_phases;
@@ -105,7 +124,7 @@ class Simulation {
     std::vector<double> boundaryNodeAngleDeficits;
 
 
-    void setup_logstream();
+    void setupLogging();
 
     void setup_filenames(int argc, char *argv[]);
 
@@ -202,8 +221,7 @@ class Simulation {
 
     void first_step_configuration(double &seide_quotient, std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
 
-    void progress_single_step(int counter,
-                              const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes);
+    long long int progress_single_step(int counter);
 
     void update_dial_in_factor();
 
@@ -223,17 +241,31 @@ class Simulation {
 
     void read_settings_new(int argc, char **argv);
 
+    void updateTriangleProperties(int counter);
+
+    void advance_time();
+
+    // Adds damping, additional physics e.g. slides, cones, and applies boundary condition.
+    void add_non_elastic_forces();
+
+    // Calculates and adds elastic forces to each
+    void add_elastic_forces();
+
+    void advance_physics();
+
+    void Simulation::setup_tensor_increment(int stage_counter);
+
+    void check_if_equilibrium_search_begun(int stage_counter);
+
+    bool isDataPrinted();
+
 public :
 
     Simulation(int argc, char *argv[]);
 
     void run_simulation();
 
-    void advance_time();
-
-    void add_non_elastic_forces();
-
-    void add_elastic_forces(const std::vector<std::vector<std::pair<int, int>>> &vector);
+    void equilibriumTest(int stage_counter, long long int duration_us);
 };
 
 

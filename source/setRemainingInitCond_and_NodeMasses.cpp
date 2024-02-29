@@ -39,7 +39,7 @@ having each triangle contribute 1/3 of its initial mass to each of its vertcies.
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
-#include "Settings.hpp"
+// #include "Settings.hpp"
 #include "settings_new.h"
 
 void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<Triangle> &triangles,

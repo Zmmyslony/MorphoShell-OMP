@@ -34,15 +34,13 @@ triangular element, such as vertices, area etc.*/
 #include <vector>
 #include <Eigen/Dense>
 #include "Node.hpp"
-#include "Settings.hpp"
+// #include "Settings.hpp"
 
-#include "CustomOutStreamClass.hpp"
 
 class Triangle {
 public:
     /* Custom output stream allowing the debugging display function to print to
     a particular file in addition to std::cout.*/
-    CustomOutStreamClass triLogStream;
 
     /// Label so this triangle 'knows' which it is.
     int label;

@@ -80,16 +80,14 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include <Eigen/Dense> // Used for matrices of numbers
 
 
-#include "CustomOutStreamClass.hpp"
+//#include "CustomOutStreamClass.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
-#include "Settings.hpp"
 
 #include "functions/getRealTime.hpp"
 #include "functions/extract_Just_Filename.hpp"
 #include "initialDirAndFileHandling.hpp"
-#include "readSettingsFile.hpp"
 #include "readVTKData.hpp"
 #include "calculations/calcTriangleGeometries_and_DialledProgTensors.hpp"
 #include "calculations/calcTrianglesIncidentOnNodes.hpp"
@@ -101,7 +99,6 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "functions/perturbInitialPositionsWithRandomNoise.hpp"
 #include "functions/zeroForces.hpp"
 #include "calculations/calcDeformationForces.hpp"
-#include "calculations/calcNonDeformationForces_and_ImposeBCS.hpp"
 #include "advanceDynamics.hpp"
 #include "writeVTKDataOutput.hpp"
 #include "EquilibriumCheck.hpp"

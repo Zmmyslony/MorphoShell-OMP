@@ -52,7 +52,7 @@ later.
 
 
 void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
-                                                    CustomOutStreamClass &logStream, double patch_threshold) {
+                                                    double patch_threshold) {
 
     //Some temporary variables
     int numNonBoundaryTrisThatTriedMultiplePatchChoices = 0;
@@ -196,10 +196,10 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &nod
     that suggests something suspicious. One explanation might be that
     settings.PatchMatrixDimensionlessConditioningThreshold has been set to too
     low a value*/
-    logStream.open();
-    logStream << "Number of non-boundary triangles that had to search through \n" <<
+//    logStream.open();
+    std::cout << "Number of non-boundary triangles that had to search through \n" <<
               "multiple possible patch options to find one \nsatisfying the condition number " <<
               "criterion was " << numNonBoundaryTrisThatTriedMultiplePatchChoices <<
               ", \nwhich should not be a large proportion of the mesh's triangles." << std::endl;
-    logStream.close();
+//    logStream.close();
 }

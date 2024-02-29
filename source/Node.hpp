@@ -34,8 +34,8 @@ containing the node's position, velocity etc.*/
 #include <Eigen/Dense>
 #include <cfloat>
 
-#include "Settings.hpp"
-#include "CustomOutStreamClass.hpp"
+// #include "Settings.hpp"
+//#include "CustomOutStreamClass.hpp"
 #include "configuration/gravity_config.h"
 #include "settings_new.h"
 
@@ -44,7 +44,7 @@ public:
 
     /* Custom output stream allowing the debugging display function to print to
     a particular file in addition to std::cout.*/
-    CustomOutStreamClass nodeLogStream;
+//    CustomOutStreamClass nodeLogStream;
 
     // Label of this node, (also its index in the nodes' container vector).
     int label;
@@ -134,12 +134,12 @@ public:
     *  ansatz is probably a better way to choose a buckling direction than a
     *  prod.
     */
-    void add_prod_force(const Settings &settings);
+//    void add_prod_force(const Settings &settings);
 
     /**
     * Adds load force to the nodes that have isLoadForceEnabled = True.
     */
-    void add_load_force(const Settings &settings, double time, double &upper_slide_force, double &lower_slide_force);
+//    void add_load_force(const Settings &settings, double time, double &upper_slide_force, double &lower_slide_force);
 
     void apply_boundary_conditions();
 
@@ -147,7 +147,7 @@ public:
      * Adds force coming from interaction with the "glass" slides. The slides can either approach from the top or the
      * bottom.
      */
-    void add_slide_force(const Settings &settings, double height, bool is_bottom_slide, double &total_slide_force);
+//    void add_slide_force(const Settings &settings, double height, bool is_bottom_slide, double &total_slide_force);
 
     /**
      * Adds force coming from the interaction with the "glass" cone. The cones can either approach from the top or the
@@ -157,7 +157,7 @@ public:
      * @param is_bottom_cone
      * @param total_cone_force
      */
-    void add_cone_force(const Settings &settings, double tip_height, bool is_bottom_cone, double &total_cone_force);
+//    void add_cone_force(const Settings &settings, double tip_height, bool is_bottom_cone, double &total_cone_force);
 };
 
 #endif

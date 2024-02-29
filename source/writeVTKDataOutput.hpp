@@ -35,7 +35,7 @@ Header file for writeVTKDataOutput.cpp function.
 
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "Settings.hpp"
+// #include "Settings.hpp"
 
 void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const int &stepcount,
                         const double &time, const double &currDialInFactor, const size_t &progTensorSequenceCounter,

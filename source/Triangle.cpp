@@ -33,42 +33,40 @@ they are left in the header file for clarity there.*/
 
 //This is a debugging tool to display the node's data
 void Triangle::display() {
-    triLogStream.open();
-    triLogStream << "-----------------------------" << std::setprecision(15) << std::boolalpha << std::endl;
-    triLogStream << "Triangle " << label << ":" << std::endl;
-    triLogStream << "Boundary indicator = " << isOnBoundary << std::endl;
-    triLogStream << "Initial (reference) area = " << initArea << std::endl;
-    triLogStream << "invCurrArea = " << currAreaInv << std::endl;
-    triLogStream << "Labels of vertices: " << vertexLabels.transpose() << std::endl;
-    triLogStream << "Labels of edges: " << edgeLabels.transpose() << std::endl;
-    triLogStream << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
+    std::cout << "-----------------------------" << std::setprecision(15) << std::boolalpha << std::endl;
+    std::cout << "Triangle " << label << ":" << std::endl;
+    std::cout << "Boundary indicator = " << isOnBoundary << std::endl;
+    std::cout << "Initial (reference) area = " << initArea << std::endl;
+    std::cout << "invCurrArea = " << currAreaInv << std::endl;
+    std::cout << "Labels of vertices: " << vertexLabels.transpose() << std::endl;
+    std::cout << "Labels of edges: " << edgeLabels.transpose() << std::endl;
+    std::cout << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
                  << std::endl;
-    triLogStream << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
-    triLogStream << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
-    triLogStream << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
+    std::cout << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
+    std::cout << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
+    std::cout << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
                  << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
-    triLogStream << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
+    std::cout << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
                  << std::endl;
-    triLogStream << "Current sides = " << "\n" << currSides << std::endl;
-    triLogStream << "faceNormal = " << "\n" << faceNormal << std::endl;
-    triLogStream << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
-    triLogStream << "invInitInPlaneSidesMat = " << "\n" << invInitSidesMat << std::endl;
-    triLogStream << "Dialled in inverse of programmed metric = " << "\n" << programmedMetInv << std::endl;
-    triLogStream << "detDialledInvProgMetric = " << "\n" << programmedMetInvDet << std::endl;
-    triLogStream << "Dialled in prog tau factor = " << dialledProgTau << std::endl;
-    triLogStream << "Dialled in programmed second fundamental form = " << "\n" << programmedSecFF << std::endl;
-    triLogStream << "Deformation gradient = " << "\n" << defGradient << std::endl;
-    triLogStream << "metric = " << "\n" << met << std::endl;
-    triLogStream << "Inverse of Metric = " << "\n" << metInv << std::endl;
-    triLogStream << "Det of inverse of Metric = " << "\n" << metInvDet << std::endl;
-    triLogStream << "matForPatchSecDerivs = " << "\n" << matForPatchSecDerivs << std::endl;
-    triLogStream << "patchSecDerivs = " << "\n" << patchSecDerivs << std::endl;
-    triLogStream << "Second fundamental form = " << "\n" << secFF << std::endl;
-    triLogStream << "Bending energy density deriv wrt secFF = " << "\n" << energyDensityDerivWRTSecFF << std::endl;
-    triLogStream << "bendEnergyDensityDerivWRTMetric = " << "\n" << bendEnergyDensityDerivWRTMetric << std::endl;
-    triLogStream << "halfPK1Stress = " << "\n" << halfPK1Stress << std::endl;
-    triLogStream << "-----------------------------" << std::endl;
-    triLogStream.close();
+    std::cout << "Current sides = " << "\n" << currSides << std::endl;
+    std::cout << "faceNormal = " << "\n" << faceNormal << std::endl;
+    std::cout << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
+    std::cout << "invInitInPlaneSidesMat = " << "\n" << invInitSidesMat << std::endl;
+    std::cout << "Dialled in inverse of programmed metric = " << "\n" << programmedMetInv << std::endl;
+    std::cout << "detDialledInvProgMetric = " << "\n" << programmedMetInvDet << std::endl;
+    std::cout << "Dialled in prog tau factor = " << dialledProgTau << std::endl;
+    std::cout << "Dialled in programmed second fundamental form = " << "\n" << programmedSecFF << std::endl;
+    std::cout << "Deformation gradient = " << "\n" << defGradient << std::endl;
+    std::cout << "metric = " << "\n" << met << std::endl;
+    std::cout << "Inverse of Metric = " << "\n" << metInv << std::endl;
+    std::cout << "Det of inverse of Metric = " << "\n" << metInvDet << std::endl;
+    std::cout << "matForPatchSecDerivs = " << "\n" << matForPatchSecDerivs << std::endl;
+    std::cout << "patchSecDerivs = " << "\n" << patchSecDerivs << std::endl;
+    std::cout << "Second fundamental form = " << "\n" << secFF << std::endl;
+    std::cout << "Bending energy density deriv wrt secFF = " << "\n" << energyDensityDerivWRTSecFF << std::endl;
+    std::cout << "bendEnergyDensityDerivWRTMetric = " << "\n" << bendEnergyDensityDerivWRTMetric << std::endl;
+    std::cout << "halfPK1Stress = " << "\n" << halfPK1Stress << std::endl;
+    std::cout << "-----------------------------" << std::endl;
 }
 
 Eigen::Matrix<double, 3, 2> Triangle::updateHalfPK1Stress(double stretchingPrefactor) {

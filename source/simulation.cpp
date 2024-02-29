@@ -1,3 +1,5 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "modernize-loop-convert"
 //
 // Created by Michał Zmyślony on 12/02/2024.
 //
@@ -11,12 +13,10 @@
 #include <iomanip>
 #include <libconfig.h++>
 #include <chrono>
-//#include <vtk/PolyData>
 
 #include "functions/getRealTime.hpp"
 #include "functions/extract_Just_Filename.hpp"
 #include "initialDirAndFileHandling.hpp"
-#include "readSettingsFile.hpp"
 #include "readVTKData.hpp"
 #include "calculations/calcTrianglesIncidentOnNodes.hpp"
 #include "calculations/calcTriangleAdjacencies_And_Edges.hpp"
@@ -32,23 +32,23 @@
 #include "advanceDynamics.hpp"
 #include "writeVTKDataOutput.hpp"
 #include "calculations/calcDeformationForces.hpp"
-#include "calculations/calcNonDeformationForces_and_ImposeBCS.hpp"
 #include "functions/zeroForces.hpp"
 
 
-void Simulation::setup_logstream() {
-    log_stream.setOutputFileName(output_dir_name + "/log.txt");
-// Check we can create a log file with the chosen name.
-    try {
-        log_stream.open();
-    }
-    catch (const std::runtime_error &error) {
-        std::cerr << error.what() << std::endl;
-        throw std::runtime_error("Unable to create logfile.");
-    }
-    log_stream << std::defaultfloat << std::setprecision(6);
-    log_stream.close();
-    log_filename = log_stream.getOutputFileName();
+typedef teestream<char, std::char_traits<char>> basic_teestream;
+
+//   Redirection of std::cout to both console and file following
+//   https://stackoverflow.com/a/41834129/9204102
+void Simulation::setupLogging() {
+    log_filename = output_dir_name + "/log.txt";
+    out = std::ofstream(log_filename);
+    std::streambuf *out_buf = out.rdbuf();         //Get streambuf for output stream
+    std::streambuf *cout_buf = std::cout.rdbuf();    //Get streambuf for cout
+
+    std::streambuf *tee_buf = new basic_teestream(out_buf, cout_buf); //create new teebuf
+
+    std::cout.rdbuf(tee_buf);//Redirect cout
+    std::cout << std::defaultfloat << std::setprecision(6);
 }
 
 
@@ -124,11 +124,8 @@ void Simulation::setup_filenames(int argc, char *argv[]) {
 
     output_dir_name = directory_setup(init_string, config_paths, vtk_paths).string();
 
-    setup_logstream();
-
-    log_stream.open();
-    log_stream << init_string << std::endl;
-    log_stream.close();
+    setupLogging();
+    std::cout << init_string << std::endl;
 }
 
 
@@ -142,13 +139,11 @@ void Simulation::read_settings_new(int argc, char *argv[]) {
 
 
 void Simulation::read_vtk_data() {
-    log_stream.open();
-    log_stream << "Now attempting to read data files. An error here likely \n"
-                  "implies a problem with a data file, for example a mismatch between the \n"
-                  "number of nodes or triangles stated and the number actually present; \n"
-                  "or other similar mismatches in numbers of data values; or a format problem. \n"
-                  "Remember the input files must have exactly the correct format." << std::endl;
-    log_stream.close();
+    std::cout << "Now attempting to read data files. An error here likely \n"
+                 "implies a problem with a data file, for example a mismatch between the \n"
+                 "number of nodes or triangles stated and the number actually present; \n"
+                 "or other similar mismatches in numbers of data values; or a format problem. \n"
+                 "Remember the input files must have exactly the correct format." << std::endl;
     std::vector<std::vector<Eigen::Vector3d>> programmed_metric_infos;
     std::vector<std::vector<Eigen::Matrix<double, 2, 2> >> inverted_programmed_metrics;
     std::vector<std::vector<double>> programmed_taus;
@@ -158,9 +153,9 @@ void Simulation::read_vtk_data() {
                 programmed_second_fundamental_forms, settings_new.getCore().isLceModeEnabled(),
                 initialisation_filename,
                 initial_stage,
-                dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename, log_stream);
+                dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename);
 
-    stage_count = (int)inverted_programmed_metrics.size();
+    stage_count = (int) inverted_programmed_metrics.size();
 
     // The first set of tensors are populated separately
     for (int i = 1; i < inverted_programmed_metrics.size(); i++) {
@@ -172,26 +167,19 @@ void Simulation::read_vtk_data() {
         }
     }
 
-    num_nodes = (int)nodes.size();
-    num_triangles = (int)triangles.size();
+    num_nodes = (int) nodes.size();
+    num_triangles = (int) triangles.size();
 }
 
 
 void Simulation::configure_nodes() {
-    log_stream.open();
-    log_stream << "Number of nodes = " << num_nodes << std::endl;
-    log_stream << "Number of triangles = " << num_triangles << std::endl;
+    std::cout << "Number of nodes = " << num_nodes << std::endl;
+    std::cout << "Number of triangles = " << num_triangles << std::endl;
 
     if (num_triangles < 50) {
         std::cerr << "Your mesh has a small number of triangles. \nBeware that the code "
                      "is likely to be less accurate in this case, \nand unforeseen bugs are more "
                      "likely in extreme cases." << std::endl;
-    }
-    log_stream.close();
-
-
-    for (int i = 0; i < num_nodes; ++i) {
-        nodes[i].nodeLogStream.setOutputFileName(log_filename);
     }
 }
 
@@ -199,10 +187,6 @@ void Simulation::configure_nodes() {
 void Simulation::configure_topological_properties() {
     calcTrianglesIncidentOnNodes(nodes, triangles);
     num_edges = calcTriangleAdjacencies_And_Edges(nodes, triangles, edges);
-
-    for (int i = 0; i < num_edges; ++i) {
-        edges[i].edgeLogStream.setOutputFileName(log_filename);
-    }
 
     /* Calculate and print the number of boundary and non-boundary edges.
     Also label the nodes connected by boundary edges as boundary nodes.
@@ -234,29 +218,20 @@ void Simulation::configure_topological_properties() {
 
     double initPerimeter = kahanSum(initBoundaryEdgeLengths);
     characteristic_long_length = initPerimeter;
-    log_stream.open();
-    log_stream << "Initial perimeter = " << initPerimeter << std::endl;
-    log_stream.close();
-
+    std::cout << "Initial perimeter = " << initPerimeter << std::endl;
 
     if (3 * num_triangles != 2 * num_edges - numBoundaryEdges) {
         throw std::runtime_error(
                 "Something has gone wrong in calculating triangle adjacencies and/or edges: the current edge and triangle counts violate a topological identity.");
     }
 
-    log_stream.open();
-    log_stream << "Number of edges = " << num_edges << std::endl;
-    log_stream << "Number of boundary edges = " << numBoundaryEdges << std::endl;
-    log_stream << "Number of non-boundary edges = " << num_edges - numBoundaryEdges << std::endl;
-    log_stream.close();
+    std::cout << "Number of edges = " << num_edges << std::endl;
+    std::cout << "Number of boundary edges = " << numBoundaryEdges << std::endl;
+    std::cout << "Number of non-boundary edges = " << num_edges - numBoundaryEdges << std::endl;
 }
 
 
 void Simulation::configure_triangles() {
-    for (int i = 0; i < num_triangles; ++i) {
-        triangles[i].triLogStream.setOutputFileName(log_filename);
-    }
-
     int numBoundaryTriangles = 0;
     for (int i = 0; i < num_triangles; ++i) {
         if (triangles[i].isOnBoundary) {
@@ -264,11 +239,9 @@ void Simulation::configure_triangles() {
         }
     }
 
-    log_stream.open();
-    log_stream << "Number of boundary triangles = " << numBoundaryTriangles << std::endl;
-    log_stream << "Number of holes in mesh = " << 1 + num_edges - num_nodes - num_triangles
-               << std::endl; // From Euler's formula for a planar graph.
-    log_stream.close();
+    std::cout << "Number of boundary triangles = " << numBoundaryTriangles << std::endl;
+    std::cout << "Number of holes in mesh = " << 1 + num_edges - num_nodes - num_triangles
+              << std::endl; // From Euler's formula for a planar graph.
 
     if (1 + num_edges - num_nodes - num_triangles < 0) {
         throw std::runtime_error(
@@ -277,21 +250,17 @@ void Simulation::configure_triangles() {
 }
 
 void Simulation::set_node_patches() {
-    log_stream.open();
-    log_stream << "\n" << "Beginning patch selection and related pre-calculations." << std::endl;
-    log_stream.close();
+    std::cout << "\n" << "Beginning patch selection and related pre-calculations." << std::endl;
 
-    calc_nonVertexPatchNodes_and_MatForPatchDerivs(nodes, triangles, log_stream,
+    calc_nonVertexPatchNodes_and_MatForPatchDerivs(nodes, triangles,
                                                    settings_new.getCore().getPatchMatrixThreshold());
 
-    log_stream.open();
-    log_stream << "Successfully completed patch setup." << "\n" << std::endl;
-    log_stream.close();
+    std::cout << "Successfully completed patch setup." << "\n" << std::endl;
 }
 
 
 void Simulation::orient_node_labels() {
-    updateTriangleProperties(nodes, triangles, simulation_status, -12345, 98765, settings_new);
+    updateTriangleProperties(-10);
     Eigen::Vector3d tempZAxisVec;
     tempZAxisVec << 0.0, 0.0, 1.0;
     for (int i = 0; i < num_triangles; ++i) {
@@ -301,8 +270,7 @@ void Simulation::orient_node_labels() {
             triangles[i].vertexLabels(1) = tempLabel;
         }
     }
-    std::cout << "CHECK THIS - should shuffle normals before patch matrix calc I think?" << std::endl;
-    updateTriangleProperties(nodes, triangles, simulation_status, -12345, 98765, settings_new);
+    updateTriangleProperties(-10);
 }
 
 
@@ -320,18 +288,15 @@ void Simulation::find_smallest_element() {
     // smallest ratio of size to tau, though it is just erring on the side of caution.
     std::vector<double> largest_tau_vector(stage_count);
     double largest_tau = DBL_MIN;
-    for (auto & triangle : triangles) {
+    for (auto &triangle: triangles) {
         for (auto &tau: triangle.programmed_taus) {
             if (tau < largest_tau) { largest_tau = tau; }
         }
     }
     characteristic_length_over_tau = characteristic_short_length / sqrt(largest_tau);
 
-    log_stream.open();
-    log_stream << "Sheet thickness = " << settings_new.getCore().getThickness() << std::endl;
-    log_stream << "Approx smallest element linear size = " << characteristic_short_length << std::endl;
-    log_stream.close();
-
+    std::cout << "Sheet thickness = " << settings_new.getCore().getThickness() << std::endl;
+    std::cout << "Approx smallest element linear size = " << characteristic_short_length << std::endl;
 }
 
 
@@ -354,11 +319,9 @@ void Simulation::setup_equilibrium_dial_in_factors() {
         }
         dial_in_phases.push_back(1);
     } else {
-        log_stream.open();
-        log_stream << "settings.DialInResolution and settings.DialInStepTime must "
-                      "both be >0 and >=0 respectively, and they aren't currently. Aborting."
-                   << std::endl;
-        log_stream.close();
+        std::cout << "settings.DialInResolution and settings.DialInStepTime must "
+                     "both be >0 and >=0 respectively, and they aren't currently. Aborting."
+                  << std::endl;
         throw std::runtime_error("settings.DialInResolution and settings.DialInStepTime must "
                                  "both be >0 and >=0 respectively, and they aren't currently. Aborting.");
     }
@@ -396,12 +359,11 @@ void Simulation::init(int argc, char *argv[]) {
 
     set_initial_conditions();
     find_smallest_element();
+    correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(triangles, nodes);
 
-    log_stream.open();
-    log_stream << settings_new.SetupDialInTime(characteristic_long_length);
-    log_stream << settings_new.SetupStepTime(characteristic_short_length);
-    log_stream << settings_new.SetupPrintFrequency();
-    log_stream.close();
+    std::cout << settings_new.SetupDialInTime(characteristic_long_length);
+    std::cout << settings_new.SetupStepTime(characteristic_short_length);
+    std::cout << settings_new.SetupPrintFrequency();
 
     setup_characteristic_scales();
     setup_equilibrium_dial_in_factors();
@@ -424,18 +386,14 @@ void Simulation::run_ansatz(int counter) {
     phase_counter = 0;
 
     if (settings_new.getCore().isAnsatzMetricUsed()) {
-        log_stream.open();
-        log_stream
-                << "\nINFO Assuming ansatz state to be relaxed (initial programmed tensors calculated from geometry)."
-                << std::endl;
-        log_stream.close();
+        std::cout << "\nINFO Assuming ansatz state to be relaxed (initial programmed tensors calculated from geometry)."
+                  << std::endl;
 
         dial_in_factor = 0.0;
         time_phase = 0.0;
 
         // Calculate all necessary geometry for the ansatz state.
-        updateTriangleProperties(nodes, triangles, WaitingForEquilibrium, dial_in_factor,
-                                 counter, settings_new);
+        updateTriangleProperties(counter);
         updateSecondFundamentalForms(triangles, settings_new.getCore());
 
 
@@ -504,9 +462,7 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
                                                   std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
     lambda = 0.9;
     double cone_angle = asin(pow(lambda, 1.5));
-    log_stream.open();
-    log_stream << "IMPOSING SEIDE DEFORMATIONS." << std::endl;
-    log_stream.close();
+    std::cout << "IMPOSING SEIDE DEFORMATIONS." << std::endl;
 
     // Use nodes[i].isSeideDisplacementEnabled to label nodes whose
     // positions we will force to be those of Seide's setup (found
@@ -514,11 +470,11 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
     // integrating the strains etc).
     double intermLengthScaleUpper = 3.0 * sqrt(settings_new.getCore().getThickness() * 0.18);
     double intermLengthScaleLower = 3.0 * sqrt(settings_new.getCore().getThickness() * 1.8);
-    log_stream.open();
-    log_stream
+
+    std::cout
             << "Imposing Seide displacements within the following (initial) vertical distances of the top and bottom: "
             << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
-    log_stream.close();
+
     for (int n = 0; n < num_nodes; ++n) {
         if (((nodes[highest_node].pos(2) - nodes[n].pos(2)) < intermLengthScaleUpper) ||
             ((nodes[n].pos(2) - nodes[lowest_node].pos(2)) < intermLengthScaleLower)) {
@@ -550,9 +506,9 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
 //    settings.init_slide_z_coord_lower += -tan(cone_angle) *
 //                                         sqrt(nodes[lowest_node].pos(0) * nodes[lowest_node].pos(0) +
 //                                              nodes[lowest_node].pos(1) * nodes[lowest_node].pos(1));
-//    log_stream.open();
-//    log_stream << "USING TWO GLASS CONES FOR SQUASHING." << std::endl;
-//    log_stream.close();
+//    // log_stream.open();
+//    std::cout <<"USING TWO GLASS CONES FOR SQUASHING." << std::endl;
+//    // log_stream.close();
 //
 //    // Hijack nodes[i].isOnBoundary to instead label nodes whose
 //    // forces we will modify to kill any components not tangential to
@@ -560,10 +516,10 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
 //    // distance vertically from the ends of the cone.
 //    double intermLengthScaleUpper = 2.0 * sqrt(settings_new.getCore().getThickness() * 0.18);
 //    double intermLengthScaleLower = 2.0 * sqrt(settings_new.getCore().getThickness() * 1.8);
-//    log_stream.open();
-//    log_stream << "Apply normal-force-killer within the following vertical distances of the top and bottom: "
+//    // log_stream.open();
+//    std::cout <<"Apply normal-force-killer within the following vertical distances of the top and bottom: "
 //               << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
-//    log_stream.close();
+//    // log_stream.close();
 //    for (int n = 0; n < num_nodes; ++n) {
 //        if (((nodes[highest_node].pos(2) - nodes[n].pos(2)) < intermLengthScaleUpper) ||
 //            ((nodes[n].pos(2) - nodes[lowest_node].pos(2)) < intermLengthScaleLower)) {
@@ -662,8 +618,7 @@ void Simulation::first_step_configuration(double &seide_quotient,
 
 void Simulation::begin_equilibrium_search(int counter) {
     dial_in_factor = dial_in_phases[phase_counter + 1];
-    updateTriangleProperties(nodes, triangles, simulation_status, dial_in_factor,
-                             counter, settings_new);
+    updateTriangleProperties(counter);
     simulation_status = WaitingForEquilibrium;
     // NB an EquilCheck has not actually just occurred, but this has the
     //desired effect of ensuring that each DialInFactor value is held
@@ -672,10 +627,8 @@ void Simulation::begin_equilibrium_search(int counter) {
 
     settings_new.useEquilibriumDamping();
 
-    log_stream.open();
-    log_stream << "\tReached dial-in factor of " << dial_in_phases[phase_counter + 1]
-               << ". Waiting for equilibrium." << std::endl;
-    log_stream.close();
+    std::cout << "\tReached dial-in factor of " << dial_in_phases[phase_counter + 1]
+              << ". Waiting for equilibrium." << std::endl;
 }
 
 //void Simulation::update_second_fundamental_form() {
@@ -683,7 +636,7 @@ void Simulation::begin_equilibrium_search(int counter) {
 //}
 
 void
-Simulation::add_elastic_forces(const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
+Simulation::add_elastic_forces() {
     double stretchingPreFac = 0.5 * settings_new.getCore().getThickness() * settings_new.getCore().getShearModulus();
     double bendingPreFac =
             0.5 * pow(settings_new.getCore().getThickness(), 3) * settings_new.getCore().getShearModulus() / 12;
@@ -752,9 +705,9 @@ void Simulation::add_non_elastic_forces() {
 #pragma omp parallel for reduction (+ : interaction_force)
         for (int i = 0; i < nodes.size(); i++) {
             interaction_force += cone.addInteractionForce(nodes[i].pos,
-                                                           nodes[i].force,
-                                                           settings_new.getCore().getShearModulus(),
-                                                           settings_new.getCore().getThickness());
+                                                          nodes[i].force,
+                                                          settings_new.getCore().getShearModulus(),
+                                                          settings_new.getCore().getThickness());
         }
         cone.setInteractionLoad(interaction_force);
     }
@@ -765,14 +718,29 @@ void Simulation::add_non_elastic_forces() {
     }
 }
 
-void Simulation::progress_single_step(int counter,
-                                      const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
+void Simulation::updateTriangleProperties(int counter) {
+    const double dial_in_factor_root = sqrt(dial_in_factor);
+    bool is_LCE_metric_used = settings_new.getCore().isLceModeEnabled() && !settings_new.getCore().isAnsatzMetricUsed();
 
-    updateTriangleProperties(nodes, triangles, simulation_status, dial_in_factor,
-                             counter, settings_new);
 
-    add_elastic_forces(correspondingTrianglesForNodes);
+#pragma omp parallel for
+    for (int i = 0; i < triangles.size(); i++) {
+        if (simulation_status == Dialling) {
+            triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used);
+        }
+        triangles[i].updateGeometricProperties(nodes);
+    }
+}
+
+long long int Simulation::progress_single_step(int counter) {
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    zeroForces(nodes);
+    updateTriangleProperties(counter);
+    add_elastic_forces();
     add_non_elastic_forces();
+    auto duration = std::chrono::steady_clock::now() - begin;
+    long long duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+    return duration_us;
 }
 
 void Simulation::update_dial_in_factor() {
@@ -806,12 +774,10 @@ void Simulation::save_and_print_details(int counter, long long int duration_us) 
                        stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                        cauchyStressEigenvals, cauchyStressEigenvecs, settings_new, output_dir_name);
 
-    log_stream.open();
-    log_stream << log_prefix()
-               << "Last step's execution time " << duration_us << " us."
-               << std::endl;
+    std::cout << log_prefix()
+              << "Last step's execution time " << duration_us << " us."
+              << std::endl;
 
-    log_stream.close();
 }
 
 std::string Simulation::log_prefix() const {
@@ -823,12 +789,10 @@ std::string Simulation::log_prefix() const {
 }
 
 void Simulation::error_large_force(int counter) {
-    log_stream.open();
-    log_stream << "At " << getRealTime() << ", stepCount = " << step_count << ", time = " << time_global
-               << ", dial-in factor = " << dial_in_factor
-               << " a force was suspiciously large, there is probably a problem. Writing VTK output and then aborting."
-               << std::endl;
-    log_stream.close();
+    std::cout << "At " << getRealTime() << ", stepCount = " << step_count << ", time = " << time_global
+              << ", dial-in factor = " << dial_in_factor
+              << " a force was suspiciously large, there is probably a problem. Writing VTK output and then aborting."
+              << std::endl;
 
     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings_new.getCore());
@@ -846,12 +810,10 @@ void Simulation::error_large_force(int counter) {
 }
 
 void Simulation::check_for_equilibrium() {
-    log_stream.open();
-    log_stream << log_prefix() << "Checking for equilibrium. "
-               << std::endl;
-    log_stream.close();
+    std::cout << log_prefix() << "Checking for equilibrium. "
+              << std::endl;
 
-    simulation_status = equilibriumCheck(nodes, settings_new, triangles, log_stream);
+    simulation_status = equilibriumCheck(nodes, settings_new, triangles);
     time_equilibriation = 0.0;
 
     calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
@@ -865,22 +827,39 @@ void Simulation::setup_reached_equilibrium() {
     phase_counter += 1;
     settings_new.useDiallingDamping();
     if (phase_counter <= dial_in_phases.size() - 2) {
-        log_stream.open();
-        log_stream << "New dialling in phase beginning, from value "
-                   << dial_in_phases[phase_counter] << ", to "
-                   << dial_in_phases[phase_counter + 1] << std::endl;
-        log_stream.close();
+        std::cout << "New dialling in phase beginning, from value "
+                  << dial_in_phases[phase_counter] << ", to "
+                  << dial_in_phases[phase_counter + 1] << std::endl;
     }
 }
 
-void Simulation::run_tensor_increment(int stage_counter) {
-    /* A third input file specifying an ansatz for the node positions may have
-        been read in if it was given as a command line argument. This could for
-        example correspond to an output file from this code, to carry on where some
-        previous simulation left off. In this case, the nodes are moved to their
-        ansatz positions here, and other relevant variables are set up. */
-    if (ansatz_filename != "no_ansatz_file" &&
-        stage_counter == initial_stage) {
+void Simulation::advance_physics() {
+    for (auto &slide: slides) {
+        slide.update(settings_new.getTimeStepSize(), simulation_status == Dialling);
+    }
+    for (auto &cone: cones) {
+        cone.update(settings_new.getTimeStepSize(), simulation_status == Dialling);
+    }
+}
+
+void Simulation::check_if_equilibrium_search_begun(int stage_counter) {
+    // Check if still in dialling in phase or whether it is time to wait for
+    // equilibrium.
+    if (time_phase >= settings_new.getDurationPhase() &&
+        simulation_status == Dialling) {
+        begin_equilibrium_search(stage_counter);
+    }
+}
+
+bool Simulation::isDataPrinted() {
+    return (step_count % settings_new.getStepPrintInterval() == 0 &&
+            settings_new.getStepPrintInterval() > 0);
+}
+
+void Simulation::setup_tensor_increment(int stage_counter) {
+
+    if (stage_counter == initial_stage &&
+        ansatz_filename != "no_ansatz_file") {
         run_ansatz(stage_counter);
     } else {
         // Reset the variables that control each dialling/waiting process.
@@ -891,7 +870,6 @@ void Simulation::run_tensor_increment(int stage_counter) {
         phase_counter = 0;
     }
 
-
     /* Handle cases where settings.DialInStepTime is zero or very small. This is
     a slightly hacky way to ensure that no dialling actually occurs, and the
     simulation jumps to a status = waitingForEquilibrium state. The magic number is
@@ -900,84 +878,53 @@ void Simulation::run_tensor_increment(int stage_counter) {
         time_global = 0;
         time_phase = 0;
     }
+}
 
+/**
+ * Does equilibrium check if it should be done in this step.
+ * @param stage_counter
+ * @param duration_us
+ */
+void Simulation::equilibriumTest(int stage_counter, long long duration_us) {
+    /* If last check for equilibrium or last reaching of a new DialInFactor
+ value was more than TimeBetweenEquilChecks ago, check for equilibrium.
+ Also print total stretching and bending energies.*/
+    if (simulation_status == WaitingForEquilibrium &&
+        time_equilibriation > settings_new.getTimeBetweenEquilibriumChecks()) {
+        check_for_equilibrium();
+    }
 
-    // Begin dynamical evolution of node positions and velocities.
-    log_stream.open();
-    log_stream << "\nBeginning dynamical evolution.\n" << std::endl;
-//    log_stream << "\nCREATING VECTOR TO STORE UNSTRESSED CONE NODE POSITIONS.\n" << std::endl;
-    log_stream.close();
+    /* If equilibrium reached, write output data to file, and move to next
+    'dialling in' phase. */
+    if (simulation_status == EquilibriumReached) {
+        save_and_print_details(stage_counter, duration_us);
+        setup_reached_equilibrium();
+    }
+}
+
+/**
+ * Runs a single tensor increment based on tensors provided in the input file.
+ * @param stage_counter
+ */
+void Simulation::run_tensor_increment(int stage_counter) {
+    setup_tensor_increment(stage_counter);
+
+    std::cout << "\nBeginning dynamical evolution.\n" << std::endl;
+
     std::vector<Eigen::Vector3d> nodeUnstressedConePosits(num_nodes);
     double seide_quotient = DBL_MAX;
 
-    std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(
-            triangles, nodes);
-
     while (phase_counter < dial_in_phases.size() - 1) {
         if (step_count == 0) { first_step_configuration(seide_quotient, nodeUnstressedConePosits); }
-        for (auto &slide: slides) {
-            slide.update(settings_new.getTimeStepSize(), simulation_status == Dialling);
-        }
-        for (auto &cone: cones) {
-            cone.update(settings_new.getTimeStepSize(), simulation_status == Dialling);
-        }
-//        update_slide_properties();
-
-//        if (settings_new.getCore().isSeideDeformations()) {
-//            impose_seide_deformation(seide_quotient, nodeUnstressedConePosits);
-//        }
-
-        zeroForces(nodes);
-
-        // Check if still in dialling in phase or whether it is time to wait for
-        // equilibrium.
-        if (time_phase >= settings_new.getDurationPhase() &&
-            simulation_status == Dialling) {
-            begin_equilibrium_search(stage_counter);
-        }
-
-        /* If not waiting for equilibrium, set the current value of the Dial-In
-        Factor, based on linear dialling in between the previously calculated
-        'checkpoint' values. */
+        advance_physics();
+        check_if_equilibrium_search_begun(stage_counter);
         if (simulation_status == Dialling) { update_dial_in_factor(); }
 
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        progress_single_step(stage_counter, correspondingTrianglesForNodes);
-        auto duration = std::chrono::steady_clock::now() - begin;
-        long long duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+        long long duration_us = progress_single_step(stage_counter);
+        if (isDataPrinted()) { save_and_print_details(stage_counter, duration_us); }
+        if (is_equilibrium_seeked) { equilibriumTest(stage_counter, duration_us); }
 
-
-        /* Write output data regularly.
-        Can be switched off with settings.PrintFrequency < 0.0.
-        Doing the write-out at this point in the loop means the node positions
-        and the triangle geometry data match in the output, which is desirable!*/
-        if ((step_count % settings_new.getStepPrintInterval() == 0 &&
-             settings_new.getStepPrintInterval() > 0)) {
-            save_and_print_details(stage_counter, duration_us);
-        }
-
-
-        if (is_equilibrium_seeked) {
-            /* If last check for equilibrium or last reaching of a new DialInFactor
-             value was more than TimeBetweenEquilChecks ago, check for equilibrium.
-             Also print total stretching and bending energies.*/
-            if (time_equilibriation > settings_new.getTimeBetweenEquilibriumChecks() &&
-                simulation_status == WaitingForEquilibrium) {
-                check_for_equilibrium();
-            }
-
-            /* If equilibrium reached, write output data to file, and move to next
-            'dialling in' phase. */
-            if (simulation_status == EquilibriumReached) {
-                save_and_print_details(stage_counter, duration_us);
-                setup_reached_equilibrium();
-            }
-        }
-
-        /* Advance node positions and velocities using dynamical solver. Error
-        caught here if any node force is suspiciously high, indicating probable
-        'blowing, up', and the code aborts in that case. */
-        try { advanceDynamics(nodes, triangles, settings_new, log_stream); }
+        try { advanceDynamics(nodes, triangles, settings_new); }
         catch (const std::runtime_error &error) {
             error_large_force(stage_counter);
         }
@@ -995,7 +942,7 @@ void Simulation::advance_time() {
 
 
 void Simulation::run_simulation() {
-    log_stream << std::scientific << std::setprecision(8);
+    std::cout << std::scientific << std::setprecision(8);
     std::ofstream forceDistFile;
 
     /* Loop over the sequence of programmed tensors, dialling-in and waiting for
@@ -1005,19 +952,17 @@ void Simulation::run_simulation() {
         run_tensor_increment(stage_counter);
 
         if (stage_count > 2 && stage_counter < stage_count - 2) {
-            log_stream.open();
-            log_stream << "Moving on to next set of programmed tensors in sequence." << std::endl;
-            log_stream.close();
+            std::cout << "Moving on to next set of programmed tensors in sequence." << std::endl;
         }
     }
 
 // Print some helpful final things.
-    log_stream.open();
-    log_stream << "Reached simulation time = " << time_global << " using " << step_count << " time steps" << std::endl;
-    log_stream.close();
+    std::cout << "Reached simulation time = " << time_global << " using " << step_count << " time steps" << std::endl;
 }
 
 Simulation::Simulation(int argc, char **argv) {
     init(argc, argv);
 }
 
+
+#pragma clang diagnostic pop

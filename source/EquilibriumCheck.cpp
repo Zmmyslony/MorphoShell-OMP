@@ -41,13 +41,10 @@ scale - the (stretching) sound speed.*/
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "SimulationStatus.hpp"
-#include "Settings.hpp"
-#include "CustomOutStreamClass.hpp"
 #include "configuration/core_config.h"
 
 SimulationStatus
-equilibriumCheck(const std::vector<Node> &nodes, const SettingsNew &settings, const std::vector<Triangle> &triangles,
-                 CustomOutStreamClass &logStream) {
+equilibriumCheck(const std::vector<Node> &nodes, const SettingsNew &settings, const std::vector<Triangle> &triangles) {
 
     std::vector<double> nodeNonDampingForce(nodes.size());
     std::vector<double> incidentProgTau(nodes.size());
@@ -99,24 +96,23 @@ equilibriumCheck(const std::vector<Node> &nodes, const SettingsNew &settings, co
     `equilibrium' thresholds.*/
 
     double max_relative_force = max_non_damp_force / settings.getForceScale();
-    logStream.open();
 
     SimulationStatus status;
     if (max_relative_force < settings.getForceScale()
         && max_relative_speed < settings.getCore().getEquilibriumSpeedScale()) {
 
-        logStream << "\tEquilibrium reached." << std::endl;
+        std::cout << "\tEquilibrium reached." << std::endl;
         status = EquilibriumReached;
     } else {
-        logStream << "\tEquilibrium not reached." << std::endl;
+        std::cout << "\tEquilibrium not reached." << std::endl;
         status = WaitingForEquilibrium;
     }
-    logStream << "\tRatio of max non-damping force to characteristic force = "
+    std::cout << "\tRatio of max non-damping force to characteristic force = "
               << max_relative_force / settings.getForceScale()
               << " (node " << max_non_damp_force_node << ")." << std::endl
               << "\tRatio of max node speed to local stretching wave speed = "
               << max_relative_speed / settings.getCore().getEquilibriumSpeedScale()
               << " (node " << max_relative_speed_node << ")." << std::endl;
-    logStream.close();
+
     return status;
 }

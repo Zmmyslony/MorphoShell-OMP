@@ -27,7 +27,6 @@ Header file for update_elastic_forces.cpp
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../Settings.hpp"
 #include "../configuration/core_config.h"
 
 std::vector<std::vector<std::pair<int, int>>>
