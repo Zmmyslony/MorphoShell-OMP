@@ -15,6 +15,7 @@
 #include "settings_new.h"
 
 template<class CharT, class Traits = std::char_traits<CharT> >
+
 struct teestream : std::basic_streambuf<CharT, Traits> {
 
 private:
@@ -31,8 +32,8 @@ public:
     }
 
 protected:
-    int_type overflow(int_type ch = Traits::eof()) override {
-        int_type result = m_rdbuf1->sputc(ch);
+    typename std::basic_streambuf<CharT, Traits>::int_type overflow(typename std::basic_streambuf<CharT, Traits>::int_type ch = Traits::eof()) override {
+        typename std::basic_streambuf<CharT, Traits>::int_type result = m_rdbuf1->sputc(ch);
         if (result != Traits::eof()) {
             result = m_rdbuf2->sputc(ch);
         }
@@ -253,7 +254,7 @@ class Simulation {
 
     void advance_physics();
 
-    void Simulation::setup_tensor_increment(int stage_counter);
+    void setup_tensor_increment(int stage_counter);
 
     void check_if_equilibrium_search_begun(int stage_counter);
 

@@ -340,11 +340,9 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
     }
     init_DataFile.close();
 
-//    logStream.open();
     std::cout
             << "Completed reading of non-ansatz data file. Note; it is still possible that something went wrong in the process.\n"
             << std::endl;
-//    logStream.close();
 
     //////////////////////////////////////////////////////////////////////
     /* Now read the file with anzatz node positions if given as third command
@@ -382,11 +380,11 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         // Check a few things that could have gone wrong.
-        if (dialInFactorToStartFrom < 0 || dialInFactorToStartFrom > 1 ||
-            tempProgTensorSequenceCounter <= 0 || tempProgTensorSequenceCounter > numProgTensorsInSequence) {
-            throw std::runtime_error(
-                    "Error: Problem reading ansatz data file. Remember it must have exactly the correct format.");
-        }
+        if (dialInFactorToStartFrom < 0) {throw std::runtime_error("Ansatz reading: dialInFactorToStartFrom < 0:" + std::to_string(dialInFactorToStartFrom));}
+        if (dialInFactorToStartFrom > 1) {throw std::runtime_error("Ansatz reading: dialInFactorToStartFrom > 1:" + std::to_string(dialInFactorToStartFrom));}
+        if (tempProgTensorSequenceCounter <= 0) {throw std::runtime_error("Ansatz reading: tempProgTensorSequenceCounter <= 0:" + std::to_string(tempProgTensorSequenceCounter));}
+        if (tempProgTensorSequenceCounter > numProgTensorsInSequence) {throw std::runtime_error("Ansatz reading: tempProgTensorSequenceCounter > numProgTensorsInSequence:" + std::to_string(tempProgTensorSequenceCounter));}
+
 
         // Ignore two lines of preamble.
         ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');

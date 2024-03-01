@@ -1,8 +1,11 @@
 //
 // Created by Michał Zmyślony on 26/02/2024.
 //
+#define _USE_MATH_DEFINES
 
 #include "cone.h"
+#include <cfloat>
+#include <math.h>
 
 Cone::Cone(const ConfigBase &config) : RigidBody(config) {
     config.get("cone_angle", cone_angle);

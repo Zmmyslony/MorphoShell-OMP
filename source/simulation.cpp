@@ -33,6 +33,7 @@
 #include "writeVTKDataOutput.hpp"
 #include "calculations/calcDeformationForces.hpp"
 #include "functions/zeroForces.hpp"
+#include "physics/cone.h"
 
 
 typedef teestream<char, std::char_traits<char>> basic_teestream;
@@ -109,18 +110,6 @@ void Simulation::setup_filenames(int argc, char *argv[]) {
         ansatz_filename = vtk_paths.back().string();
     }
     if (config_paths.empty()) { throw std::runtime_error("Missing configuration .cfg file."); }
-
-    settings_filename = argv[1];
-
-    std::string settings_file_name_str_final_piece = extract_Just_Filename(settings_filename);
-    std::string initial_data_file_name_str_final_piece = extract_Just_Filename(initialisation_filename);
-    std::string ansatz_data_file_name_str_final_piece("no_ansatz_file");
-
-    if (argc == 4) {
-        ansatz_filename = argv[3];
-        ansatz_data_file_name_str_final_piece = extract_Just_Filename(ansatz_filename);
-        init_string += "Using ansatz data file " + ansatz_data_file_name_str_final_piece + "\n";
-    }
 
     output_dir_name = directory_setup(init_string, config_paths, vtk_paths).string();
 
@@ -876,7 +865,7 @@ void Simulation::setup_tensor_increment(int stage_counter) {
     just chosen to be recognisable for debugging.*/
     if (time_global < settings_new.getTimeStepSize()) {
         time_global = 0;
-        time_phase = 0;
+//        time_phase = 0;
     }
 }
 
@@ -915,8 +904,7 @@ void Simulation::run_tensor_increment(int stage_counter) {
     double seide_quotient = DBL_MAX;
 
     while (phase_counter < dial_in_phases.size() - 1) {
-        if (step_count == 0) { first_step_configuration(seide_quotient, nodeUnstressedConePosits); }
-        advance_physics();
+        if (step_count == 0) { first_step_configuration(seide_quotient, nodeUnstressedConePosits);}
         check_if_equilibrium_search_begun(stage_counter);
         if (simulation_status == Dialling) { update_dial_in_factor(); }
 
@@ -928,7 +916,7 @@ void Simulation::run_tensor_increment(int stage_counter) {
         catch (const std::runtime_error &error) {
             error_large_force(stage_counter);
         }
-
+        advance_physics();
         advance_time();
     }
 }
@@ -956,7 +944,6 @@ void Simulation::run_simulation() {
         }
     }
 
-// Print some helpful final things.
     std::cout << "Reached simulation time = " << time_global << " using " << step_count << " time steps" << std::endl;
 }
 

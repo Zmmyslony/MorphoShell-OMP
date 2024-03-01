@@ -49,7 +49,6 @@ The directory the files are put in is created in main().
 #include "writeVTKDataOutput.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
-// #include "Settings.hpp"
 #include "functions/kahanSum.hpp"
 
 void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const int &stepcount,
@@ -139,7 +138,7 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
                 << "LOOKUP_TABLE default" << "\n";
 
         for (int i = 0; i < triangles.size(); ++i) {
-            outFile << stretchEnergyDensities[i] / settings.getStretchEnergyDensityScale()  << "\n";
+            outFile << stretchEnergyDensities[i] / settings.getStretchEnergyDensityScale() << "\n";
         }
 
         outFile << "SCALARS nonDimBendEnergyDensity double 1" << "\n"
@@ -161,7 +160,8 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
 
         outFile << "dimlessCauchyStressEigenval1 1 " << triangles.size() << "double" << "\n";
         for (int i = 0; i < triangles.size(); ++i) {
-            outFile << cauchyStressEigenvals[i](0) / (settings.getCore().getShearModulus() * settings.getCore().getThickness()) << "\n";
+            outFile << cauchyStressEigenvals[i](0) /
+                       (settings.getCore().getShearModulus() * settings.getCore().getThickness()) << "\n";
         }
         outFile << "cauchyStressEigenvec1 3 " << triangles.size() << "double" << "\n";
         for (int i = 0; i < triangles.size(); ++i) {
@@ -170,7 +170,8 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
         }
         outFile << "dimlessCauchyStressEigenval2 1 " << triangles.size() << "double" << "\n";
         for (int i = 0; i < triangles.size(); ++i) {
-            outFile << cauchyStressEigenvals[i](1) / (settings.getCore().getShearModulus() * settings.getCore().getThickness()) << "\n";
+            outFile << cauchyStressEigenvals[i](1) /
+                       (settings.getCore().getShearModulus() * settings.getCore().getThickness()) << "\n";
         }
         outFile << "cauchyStressEigenvec2 3 " << triangles.size() << "double" << "\n";
         for (int i = 0; i < triangles.size(); ++i) {
