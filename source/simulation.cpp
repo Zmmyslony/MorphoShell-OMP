@@ -486,72 +486,6 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
 
 }
 
-// TODO Add cone squashing -> like slide but using a cone.
-//void Simulation::setup_glass_cones(int highest_node, int lowest_node) {
-//    double cone_angle = 1.02327019;
-//    settings.init_slide_z_coord_upper += -tan(cone_angle) *
-//                                         sqrt(nodes[highest_node].pos(0) * nodes[highest_node].pos(0) +
-//                                              nodes[highest_node].pos(1) * nodes[highest_node].pos(1));
-//    settings.init_slide_z_coord_lower += -tan(cone_angle) *
-//                                         sqrt(nodes[lowest_node].pos(0) * nodes[lowest_node].pos(0) +
-//                                              nodes[lowest_node].pos(1) * nodes[lowest_node].pos(1));
-//    // log_stream.open();
-//    std::cout <<"USING TWO GLASS CONES FOR SQUASHING." << std::endl;
-//    // log_stream.close();
-//
-//    // Hijack nodes[i].isOnBoundary to instead label nodes whose
-//    // forces we will modify to kill any components not tangential to
-//    // a perfect cone base state. We do this to nodes within an intermediate
-//    // distance vertically from the ends of the cone.
-//    double intermLengthScaleUpper = 2.0 * sqrt(settings_new.getCore().getThickness() * 0.18);
-//    double intermLengthScaleLower = 2.0 * sqrt(settings_new.getCore().getThickness() * 1.8);
-//    // log_stream.open();
-//    std::cout <<"Apply normal-force-killer within the following vertical distances of the top and bottom: "
-//               << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
-//    // log_stream.close();
-//    for (int n = 0; n < num_nodes; ++n) {
-//        if (((nodes[highest_node].pos(2) - nodes[n].pos(2)) < intermLengthScaleUpper) ||
-//            ((nodes[n].pos(2) - nodes[lowest_node].pos(2)) < intermLengthScaleLower)) {
-//            nodes[n].isOnBoundary = true;
-//        }
-//    }
-//}
-
-//void Simulation::update_slide_properties() {
-//    if (!settings.is_controlled_force_enabled) {
-//        settings.upper_slide_displacement =
-//                time * settings.slide_speed_prefactor * settings.sample_char_length / settings.bending_long_time;
-//    } else { // settings.isControlledForceEnabled == true instead
-//        //settings.upperSlideWeight = (settings.ShearModulus * settings.SheetThickness * settings.SheetThickness) * (time * settings.slideSpeedPrefactor / bending_long_time);
-//        settings.slide_damping_param =
-//                0.4 * settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness /
-//                (settings.slide_speed_prefactor * settings.sample_char_length / settings.bending_long_time);
-//        if (fabs(settings.upper_tot_slide_force + settings.upper_slide_weight) /
-//            (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness) <
-//            settings.total_slide_force_to_mu_t_sq_ratio_equil_threshold
-//            && settings.const_slide_weight_fac < 0) {
-//            if (time_equilibriation > settings.time_between_equil_checks) {
-//                if (equilibriumCheck(nodes, triangles, settings, log_stream) == EquilibriumReached) {
-//                    settings.is_slide_just_equilibrated = 1;
-//                    settings.upper_slide_weight +=
-//                            settings.slide_weight_dial_speed_fac *
-//                            (settings.time_step_size / settings.bending_long_time) *
-//                            (settings.shear_modulus * settings.sheet_thickness * settings.sheet_thickness);
-//                }
-//                time_equilibriation = 0.0;
-//            }
-//        }
-//
-//        // To do constant-weight slide instead
-//        if (settings.const_slide_weight_fac > 0) {
-//            settings.upper_slide_weight =
-//                    settings.const_slide_weight_fac * settings.shear_modulus * settings.sheet_thickness *
-//                    settings.sheet_thickness;
-//        }
-//    }
-//    settings.curr_slide_z_coord_upper = settings.init_slide_z_coord_upper - settings.upper_slide_displacement;
-//}
-
 
 //void Simulation::impose_seide_deformation(double s1, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
 //    if (settings.is_seide_deformations_enabled) {
@@ -619,10 +553,6 @@ void Simulation::begin_equilibrium_search(int counter) {
     std::cout << "\tReached dial-in factor of " << dial_in_phases[phase_counter + 1]
               << ". Waiting for equilibrium." << std::endl;
 }
-
-//void Simulation::update_second_fundamental_form() {
-//
-//}
 
 void
 Simulation::add_elastic_forces() {

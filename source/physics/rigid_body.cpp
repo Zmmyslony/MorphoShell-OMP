@@ -76,13 +76,13 @@ RigidBody::RigidBody(const fs::path &config_path) : RigidBody(ConfigBase(config_
 
 void RigidBody::update(double time_step_size, bool is_dialling_in) {
     switch (type) {
-        case 0:
+        case FIXED:
             return;
-        case 1:
+        case LOAD_CONTROLLED:
             velocity += time_step_size * (load - interaction_load) * normal / weight;
             position += time_step_size * velocity;
             break;
-        case 2:
+        case DISPLACEMENT_CONTROLLED:
             if (is_dialling_in) {
                 position += time_step_size * velocity;
             }
