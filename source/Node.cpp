@@ -49,9 +49,9 @@ void Node::display() {
 
 void Node::add_gravity(const GravityConfig &config) {
     if (config.isGravityEnabled()) {
-        force(0) -= config.getXGravityComponent() * mass * 9.80665;
-        force(1) -= config.getYGravityComponent() * mass * 9.80665;
-        force(2) -= config.getZGravityComponent() * mass * 9.80665;
+        force(0) += config.getXGravityComponent() * mass * 9.80665;
+        force(1) += config.getYGravityComponent() * mass * 9.80665;
+        force(2) += config.getZGravityComponent() * mass * 9.80665;
     }
 }
 
@@ -131,6 +131,6 @@ void Node::apply_boundary_conditions() {
     if (isClamped) {
         force(0) = 0;
         force(1) = 0;
-//        force(2) = 0;
+        force(2) = 0;
     }
 }
