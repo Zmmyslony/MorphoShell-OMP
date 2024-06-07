@@ -14,9 +14,11 @@
  */
 class GravityConfig {
     bool is_gravity_enabled = false;
-    double x_gravity_component = 0;
-    double y_gravity_component = 0;
-    double z_gravity_component = -1;
+    double x_normal = 0;
+    double y_normal = 0;
+    double z_normal = -1;
+
+    double gravity_magnitude = 9.80665;
 public:
     GravityConfig();
 

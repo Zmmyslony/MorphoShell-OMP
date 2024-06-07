@@ -17,18 +17,18 @@ GravityConfig::GravityConfig(const fs::path &config_path) :
 GravityConfig::GravityConfig(const ConfigBase &config_base) {
     config_base.get("is_gravity_enabled", is_gravity_enabled);
     if (is_gravity_enabled) {
-        config_base.get("x_gravity_component", x_gravity_component);
-        config_base.get("y_gravity_component", y_gravity_component);
-        config_base.get("z_gravity_component", z_gravity_component);
+        config_base.get("x_normal", x_normal);
+        config_base.get("y_normal", y_normal);
+        config_base.get("z_normal", z_normal);
     }
-    double norm = sqrt(pow(x_gravity_component, 2) +
-                       pow(y_gravity_component, 2) +
-                       pow(z_gravity_component, 2));
-
+    double norm = sqrt(pow(x_normal, 2) +
+                       pow(y_normal, 2) +
+                       pow(z_normal, 2));
+    config_base.get("gravity_magnitude", gravity_magnitude);
     if (norm != 0) {
-        x_gravity_component /= norm;
-        y_gravity_component /= norm;
-        z_gravity_component /= norm;
+        x_normal /= norm;
+        y_normal /= norm;
+        z_normal /= norm;
     } else {
         is_gravity_enabled = false;
         throw std::runtime_error("When gravity is enabled, at least one of the components need to non-zero.");
@@ -41,15 +41,15 @@ bool GravityConfig::isGravityEnabled() const {
 }
 
 double GravityConfig::getXGravityComponent() const {
-    return x_gravity_component;
+    return x_normal;
 }
 
 double GravityConfig::getYGravityComponent() const {
-    return y_gravity_component;
+    return y_normal;
 }
 
 double GravityConfig::getZGravityComponent() const {
-    return z_gravity_component;
+    return z_normal;
 }
 
 
