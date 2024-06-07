@@ -31,6 +31,8 @@ left in the header file for clarity there.*/
 #include "Node.hpp"
 #include "configuration/gravity_config.h"
 
+#define GRAVITY_MAGNITUDE (9.80665 * 1e3)
+
 //This is a debugging tool to display the node's data
 void Node::display() {
     std::cout << "-----------------------------" << std::setprecision(15) << std::boolalpha << std::endl;
@@ -42,16 +44,16 @@ void Node::display() {
     std::cout << "Force = " << "\n" << force << std::endl;
     std::cout << "Mass = " << mass << std::endl;
     std::cout << "Boundary indicator: " << isOnBoundary << std::endl;
-    std::cout << "Clamp indicator: " << isClamped << std::endl;
+    std::cout << "Clamp indicator: " << (is_x_clamped || is_y_clamped || is_z_clamped) << std::endl;
     std::cout << "Load indicator: " << isLoadForceEnabled << std::endl;
     std::cout << "-----------------------------" << std::endl;
 }
 
 void Node::add_gravity(const GravityConfig &config) {
     if (config.isGravityEnabled()) {
-        force(0) += config.getXGravityComponent() * mass * 9.80665;
-        force(1) += config.getYGravityComponent() * mass * 9.80665;
-        force(2) += config.getZGravityComponent() * mass * 9.80665;
+        force(0) += config.getXGravityComponent() * mass * GRAVITY_MAGNITUDE;
+        force(1) += config.getYGravityComponent() * mass * GRAVITY_MAGNITUDE;
+        force(2) += config.getZGravityComponent() * mass * GRAVITY_MAGNITUDE;
     }
 }
 
@@ -128,9 +130,13 @@ void Node::add_damping(const SettingsNew &settings_new) {
 //}
 
 void Node::apply_boundary_conditions() {
-    if (isClamped) {
-        force(0) = 0;
-        force(1) = 0;
-        force(2) = 0;
-    }
+    if (is_x_clamped) { force(0) = 0; }
+    if (is_y_clamped) { force(1) = 0; }
+    if (is_z_clamped) { force(2) = 0; }
+}
+
+void Node::clamp(const CoreConfig &config) {
+    is_x_clamped = config.isXFixedBc();
+    is_y_clamped = config.isYFixedBc();
+    is_z_clamped = config.isZFixedBc();
 }

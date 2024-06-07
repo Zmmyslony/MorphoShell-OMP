@@ -10,7 +10,6 @@
 #include <math.h>
 #include <omp.h>
 
-
 CoreConfig::CoreConfig() = default;
 
 CoreConfig::CoreConfig(const ConfigBase &config_base) {
@@ -20,6 +19,9 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
     }
     if (!config_base.get("shear_modulus", shear_modulus)) {
         throw std::runtime_error("Undefined \"shear_modulus\" in core config.");
+    } else {
+        // Correction from SI to a system where mm are natural units.
+        shear_modulus *= 1e-3;
     }
 
     config_base.get("core_number", core_number);
@@ -42,6 +44,9 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
     config_base.get("equilibrium_speed_scale", equilibrium_speed_scale);
     config_base.get("poisson_ratio", poisson_ratio);
     config_base.get("density", density);
+    // SI correction
+    density *= 1e-9;
+
     config_base.get("damping_prefactor", damping_prefactor);
     config_base.get("dial_in_damping", dial_in_damping);
     config_base.get("equilibriation_damping", equilibriation_damping);
@@ -59,7 +64,9 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
     config_base.get("is_gradient_descent_dynamics", is_gradient_descent_dynamics);
     config_base.get("is_ansatz_metric_used", is_ansatz_metric_used);
     config_base.get("patch_matrix_threshold", patch_matrix_threshold);
-
+    config_base.get("is_x_fixed_bc", is_x_fixed_bc);
+    config_base.get("is_y_fixed_bc", is_y_fixed_bc);
+    config_base.get("is_z_fixed_bc", is_z_fixed_bc);
 }
 
 CoreConfig::CoreConfig(const fs::path &path) :
@@ -221,5 +228,21 @@ double CoreConfig::getGentFactor() const {
 
 bool CoreConfig::isSeideDeformations() const {
     return is_seide_deformations;
+}
+
+bool CoreConfig::isXFixedBc() const {
+    return is_x_fixed_bc;
+}
+
+bool CoreConfig::isYFixedBc() const {
+    return is_y_fixed_bc;
+}
+
+bool CoreConfig::isZFixedBc() const {
+    return is_z_fixed_bc;
+}
+
+double CoreConfig::getUnits() const {
+    return units;
 }
 

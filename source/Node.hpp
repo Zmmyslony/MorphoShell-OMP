@@ -47,7 +47,7 @@ public:
 //    CustomOutStreamClass nodeLogStream;
 
     // Label of this node, (also its index in the nodes' container vector).
-    int label;
+    int label = INT_MAX;
 
     /* Labels of the triangles with this node as a vertex ('incident triangles').
     Ordering is arbitrary.*/
@@ -59,21 +59,23 @@ public:
 
     /* Boolean representing whether the node is on a boundary of the sample
     (true) or not (false).*/
-    bool isOnBoundary;
+    bool isOnBoundary = false;
 
     /* Boolean representing whether the node's position is to be held clamped
     (true) or not (false).*/
-    bool isClamped;
+    bool is_x_clamped = false;
+    bool is_y_clamped = false;
+    bool is_z_clamped = false;
 
     // Bool indicating whether to impose a Seide displacement to this node or not.
-    bool isSeideDisplacementEnabled;
+    bool isSeideDisplacementEnabled = false;
 
     /* Bool representing whether the load force should be applied to this node
     (true) or not (false). For more general loading (multiple, spatially varying,
     non-trivial directions etc.) this will need generalising a lot.
     It would  require a major think about how to even mathematically represent
     general loading, and then how to put it in data format, code etc.*/
-    bool isLoadForceEnabled;
+    bool isLoadForceEnabled = false;
 
     // Position vector (x, y and z coordinates).
     Eigen::Vector3d pos;
@@ -85,7 +87,7 @@ public:
     Eigen::Vector3d force;
 
     // Mass assigned to node.
-    double mass;
+    double mass = DBL_MAX;
 
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
@@ -95,15 +97,9 @@ public:
     incidentTriLabels and neighbourNodeLabels are left with zero size at
     initialisation. */
     Node() {
-        label = INT_MAX;
-        isSeideDisplacementEnabled = false;
-        isOnBoundary = false;
-        isClamped = false;
-        isLoadForceEnabled = false;
         pos.fill(DBL_MAX);
         vel.fill(DBL_MAX);
         force.fill(DBL_MAX);
-        mass = DBL_MAX;
     }
 
     // Declare other member functions.
@@ -158,6 +154,8 @@ public:
      * @param total_cone_force
      */
 //    void add_cone_force(const Settings &settings, double tip_height, bool is_bottom_cone, double &total_cone_force);
+
+    void clamp(const CoreConfig &config);
 };
 
 #endif

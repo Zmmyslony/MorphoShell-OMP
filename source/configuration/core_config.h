@@ -69,6 +69,14 @@ class CoreConfig {
 
     double gentFactor = 1;
 
+    // Boundary conditions - which force should remain zero throughout the simulation
+    bool is_x_fixed_bc = true;
+    bool is_y_fixed_bc = true;
+    bool is_z_fixed_bc = true;
+
+    // Natural units in the simulation (usually mm) - this setting allows you to use other physics in SI units.
+    double units = 1e-3;
+
 public:
     CoreConfig();
 
@@ -145,6 +153,14 @@ public:
     double getGentFactor() const;
 
     bool isSeideDeformations() const;
+
+    bool isXFixedBc() const;
+
+    bool isYFixedBc() const;
+
+    bool isZFixedBc() const;
+
+    double getUnits() const;
 
 };
 
