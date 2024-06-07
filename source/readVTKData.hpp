@@ -38,4 +38,5 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                  std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
                  bool is_lce_mode_enabled, const std::string &init_data_file_name_str,
                  std::size_t &progTensorSequenceCounterToStartFrom, double &dialInFactorToStartFrom,
-                 std::vector<Eigen::Vector3d> &nodeAnsatzPositions, const std::string &ansatz_data_file_name_str);
+                 std::vector<Eigen::Vector3d> &nodeAnsatzPositions, const std::string &ansatz_data_file_name_str,
+                 const CoreConfig &config);

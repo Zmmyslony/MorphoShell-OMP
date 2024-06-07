@@ -127,7 +127,7 @@ void Simulation::read_settings_new(int argc, char *argv[]) {
 }
 
 
-void Simulation::read_vtk_data() {
+void Simulation::read_vtk_data(const CoreConfig &config) {
     std::cout << "Now attempting to read data files. An error here likely \n"
                  "implies a problem with a data file, for example a mismatch between the \n"
                  "number of nodes or triangles stated and the number actually present; \n"
@@ -142,7 +142,7 @@ void Simulation::read_vtk_data() {
                 programmed_second_fundamental_forms, settings_new.getCore().isLceModeEnabled(),
                 initialisation_filename,
                 initial_stage,
-                dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename);
+                dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename, config);
 
     stage_count = (int) inverted_programmed_metrics.size();
 
@@ -196,8 +196,8 @@ void Simulation::configure_topological_properties() {
             //If chosen in settings, clamp whole boundary in addition to clamp
             //indicators from data file.
             if (settings_new.getCore().isBoundaryClamped()) {
-                nodes[edges[i].nodeLabels(0)].isClamped = true;
-                nodes[edges[i].nodeLabels(1)].isClamped = true;
+                nodes[edges[i].nodeLabels(0)].clamp(settings_new.getCore());
+                nodes[edges[i].nodeLabels(1)].clamp(settings_new.getCore());
             }
 
             // Store initial length of this boundary edge
@@ -337,7 +337,7 @@ void Simulation::initialise_simulation_vectors() {
 void Simulation::init(int argc, char *argv[]) {
     setup_filenames(argc, argv);
     read_settings_new(argc, argv);
-    read_vtk_data();
+    read_vtk_data(settings_new.getCore());
 
     configure_nodes();
     configure_topological_properties();

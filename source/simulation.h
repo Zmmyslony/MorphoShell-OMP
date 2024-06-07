@@ -131,7 +131,7 @@ class Simulation {
 
 //    void read_settings();
 
-    void read_vtk_data();
+    void read_vtk_data(const CoreConfig &config);
 
     void configure_nodes();
 

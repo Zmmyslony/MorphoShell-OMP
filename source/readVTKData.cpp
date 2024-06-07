@@ -73,7 +73,8 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                  std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
                  bool is_lce_mode_enabled, const std::string &init_data_file_name_str,
                  std::size_t &progTensorSequenceCounterToStartFrom, double &dialInFactorToStartFrom,
-                 std::vector<Eigen::Vector3d> &nodeAnsatzPositions, const std::string &ansatz_data_file_name_str) {
+                 std::vector<Eigen::Vector3d> &nodeAnsatzPositions, const std::string &ansatz_data_file_name_str,
+                 const CoreConfig &config) {
 
     /* Variable to hold number of different sets of programmed tensors are
     present in the input file. These are all stored and then activated in
@@ -320,7 +321,9 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
     // std::ios_base::boolalpha ensures that '0's and '1's  will be interpreted as bools.
     init_DataFile.unsetf(std::ios_base::boolalpha);
     for (int nodeLabel = 0; nodeLabel < num_nodes; ++nodeLabel) {
-        init_DataFile >> nodes.at(nodeLabel).isClamped;
+        bool is_node_clamped;
+        init_DataFile >> is_node_clamped;
+        if (is_node_clamped) { nodes[nodeLabel].clamp(config); }
         init_DataFile >> nodes.at(nodeLabel).isLoadForceEnabled;
         init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
