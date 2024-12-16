@@ -326,77 +326,60 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
                   return p1.second < p2.second;
               });
 
-    nonVertexPatchNodesLabels(0) = indexDistancePairs[0].first;
-    nonVertexPatchNodesLabels(1) = indexDistancePairs[1].first;
-
     int invalid_non_boundary_triangle_count = 0;
-
+    Eigen::Matrix<double, 6, 6> patchNodeDataMatrix;
     double raw_path_size_factor = (nodes[vertexLabels(0)].pos - refCentroid).squaredNorm() +
                                   (nodes[vertexLabels(1)].pos - refCentroid).squaredNorm() +
-                                  (nodes[vertexLabels(2)].pos - refCentroid).squaredNorm() +
-                                  (nodes[nonVertexPatchNodesLabels(0)].pos - refCentroid).squaredNorm() +
-                                  (nodes[nonVertexPatchNodesLabels(1)].pos - refCentroid).squaredNorm();
-    Eigen::Matrix<double, 6, 6> patchNodeDataMatrix;
-    for (int n = 0; n < 5; ++n) {
-        Eigen::Vector3d candidatePatchNode;
-        candidatePatchNode = n < 3 ? nodes[vertexLabels(n)].pos : nodes[nonVertexPatchNodesLabels(n - 3)].pos;
+                                  (nodes[vertexLabels(2)].pos - refCentroid).squaredNorm();
 
-        patchNodeDataMatrix(0, n) = 1;
-        patchNodeDataMatrix(1, n) = (candidatePatchNode(0) - refCentroid(0));
-        patchNodeDataMatrix(2, n) = (candidatePatchNode(1) - refCentroid(1));
-        patchNodeDataMatrix(3, n) = 0.5 * patchNodeDataMatrix(1, n) * patchNodeDataMatrix(1, n);
-        patchNodeDataMatrix(4, n) = patchNodeDataMatrix(1, n) * patchNodeDataMatrix(2, n);
-        patchNodeDataMatrix(5, n) = 0.5 * patchNodeDataMatrix(2, n) * patchNodeDataMatrix(2, n);
+    for (int n = 0; n < 3; ++n) {
+        Eigen::Vector3d candidatePatchNode;
+        candidatePatchNode = nodes[vertexLabels(n)].pos;
+        patchNodeDataMatrix.col(n) = patchColumn(candidatePatchNode, refCentroid);
     }
 
-    // We probe patch candidates as last patch coordinates to see which one give us a good patch, while the first two are fixed via
-    // proximity threshold.
+    std::set<std::vector<unsigned int>> candidate_trios;
+    for (unsigned int p: possiblePatchNodeLabels) {
+        for (unsigned int q: possiblePatchNodeLabels) {
+            for (unsigned int r : possiblePatchNodeLabels) {
+                candidate_trios.insert({p, q, r});
+            }
+        }
+    }
+
     double lowestConditionNumber = patch_threshold;
-    Eigen::Matrix<double, 6, 3> bestPatchDivs;
-
-    for (size_t q = 2; q < possiblePatchNodeLabels.size(); ++q) {
-        unsigned int test_nodes_index = indexDistancePairs[q].first;
-        double patch_size =
-                sqrt((raw_path_size_factor + (nodes[test_nodes_index].pos - refCentroid).squaredNorm()) /
-                     6);
-
-        Eigen::Vector3d candidatePatchNode = nodes[test_nodes_index].pos;
-        patchNodeDataMatrix(0, 5) = 1;
-        patchNodeDataMatrix(1, 5) = (candidatePatchNode(0) - refCentroid(0));
-        patchNodeDataMatrix(2, 5) = (candidatePatchNode(1) - refCentroid(1));
-        patchNodeDataMatrix(3, 5) = 0.5 * patchNodeDataMatrix(1, 5) * patchNodeDataMatrix(1, 5);
-        patchNodeDataMatrix(4, 5) = patchNodeDataMatrix(1, 5) * patchNodeDataMatrix(2, 5);
-        patchNodeDataMatrix(5, 5) = 0.5 * patchNodeDataMatrix(2, 5) * patchNodeDataMatrix(2, 5);
+    for (auto &candidateIndices: candidate_trios) {
+        patchNodeDataMatrix.col(3) = patchColumn(nodes[candidateIndices[0]].pos, refCentroid);
+        patchNodeDataMatrix.col(4) = patchColumn(nodes[candidateIndices[1]].pos, refCentroid);
+        patchNodeDataMatrix.col(5) = patchColumn(nodes[candidateIndices[2]].pos, refCentroid);
+        double patch_size = sqrt(
+                (raw_path_size_factor +
+                 (nodes[candidateIndices[0]].pos - refCentroid).squaredNorm() +
+                 (nodes[candidateIndices[1]].pos - refCentroid).squaredNorm() +
+                 (nodes[candidateIndices[2]].pos - refCentroid).squaredNorm()) / 6);
 
         Eigen::FullPivLU<Eigen::Matrix<double, 6, 6>> tempPatchNodeDataMatrixDecomp;
         tempPatchNodeDataMatrixDecomp.compute(patchNodeDataMatrix);
         bool isMatReversible = tempPatchNodeDataMatrixDecomp.isInvertible();
 
-
         if (isMatReversible) {
-            Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
-            Eigen::Matrix<double, 6, 3> candidatePatchDiv;
-            candidatePatchDiv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
+        Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
+        Eigen::Matrix<double, 6, 3> candidatePatchDiv;
+        candidatePatchDiv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
 
-            Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
-            secDerivMatTempSVD.compute(candidatePatchDiv);
+        Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
+        secDerivMatTempSVD.compute(candidatePatchDiv);
 
-            double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
-            double conditionNumber = singular_values * pow(patch_size, 2);
+        double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
+        double conditionNumber = singular_values * pow(patch_size, 2);
 
             if (conditionNumber < lowestConditionNumber) {
-                lowestConditionNumber = conditionNumber;
-                nonVertexPatchNodesLabels(2) = test_nodes_index;
-                matForPatchSecDerivs = candidatePatchDiv;
+            lowestConditionNumber = conditionNumber;
+            nonVertexPatchNodesLabels = {candidateIndices[0], candidateIndices[1], candidateIndices[2]};
+            matForPatchSecDerivs = candidatePatchDiv;
             }
-
-        }
-
-        if (lowestConditionNumber >= patch_threshold && q == 2 && !isOnBoundary) {
-            invalid_non_boundary_triangle_count++;
         }
     }
-
 
     if (lowestConditionNumber < patch_threshold) {
         return invalid_non_boundary_triangle_count;
