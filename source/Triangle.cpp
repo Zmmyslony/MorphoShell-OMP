@@ -351,9 +351,11 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
 
     // We probe patch candidates as last patch coordinates to see which one give us a good patch, while the first two are fixed via
     // proximity threshold.
+    double lowestConditionNumber = patch_threshold;
+    Eigen::Matrix<double, 6, 3> bestPatchDivs;
+
     for (size_t q = 2; q < possiblePatchNodeLabels.size(); ++q) {
         unsigned int test_nodes_index = indexDistancePairs[q].first;
-        nonVertexPatchNodesLabels(2) = test_nodes_index;
         double patch_size =
                 sqrt((raw_path_size_factor + (nodes[test_nodes_index].pos - refCentroid).squaredNorm()) /
                      6);
@@ -370,27 +372,34 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
         tempPatchNodeDataMatrixDecomp.compute(patchNodeDataMatrix);
         bool isMatReversible = tempPatchNodeDataMatrixDecomp.isInvertible();
 
-        Eigen::Matrix<double, 6, 3> patchSecDeriv;
-        double conditionNumber = 0;
 
         if (isMatReversible) {
             Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
-            patchSecDeriv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
+            Eigen::Matrix<double, 6, 3> candidatePatchDiv;
+            candidatePatchDiv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
 
             Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
-            secDerivMatTempSVD.compute(patchSecDeriv);
+            secDerivMatTempSVD.compute(candidatePatchDiv);
 
             double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
-            conditionNumber = singular_values * pow(patch_size, 2);
+            double conditionNumber = singular_values * pow(patch_size, 2);
+
+            if (conditionNumber < lowestConditionNumber) {
+                lowestConditionNumber = conditionNumber;
+                nonVertexPatchNodesLabels(2) = test_nodes_index;
+                matForPatchSecDerivs = candidatePatchDiv;
+            }
+
         }
 
-        if (isMatReversible && conditionNumber < patch_threshold) {
-            matForPatchSecDerivs = patchSecDeriv;
-            return invalid_non_boundary_triangle_count;
-        } else {
-            if (q == 2 && !isOnBoundary) { invalid_non_boundary_triangle_count++; }
-
+        if (lowestConditionNumber >= patch_threshold && q == 2 && !isOnBoundary) {
+            invalid_non_boundary_triangle_count++;
         }
+    }
+
+
+    if (lowestConditionNumber < patch_threshold) {
+        return invalid_non_boundary_triangle_count;
     }
 
     throw std::runtime_error(
