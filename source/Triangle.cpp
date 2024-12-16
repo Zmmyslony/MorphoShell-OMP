@@ -26,6 +26,8 @@ they are left in the header file for clarity there.*/
 
 #include <iostream>
 #include <iomanip>
+#include <set>
+#include <unordered_set>
 #include <Eigen/Dense>
 
 #include "Triangle.hpp"
@@ -41,13 +43,13 @@ void Triangle::display() {
     std::cout << "Labels of vertices: " << vertexLabels.transpose() << std::endl;
     std::cout << "Labels of edges: " << edgeLabels.transpose() << std::endl;
     std::cout << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
-                 << std::endl;
+              << std::endl;
     std::cout << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
     std::cout << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
     std::cout << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
-                 << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
+              << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
     std::cout << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
-                 << std::endl;
+              << std::endl;
     std::cout << "Current sides = " << "\n" << currSides << std::endl;
     std::cout << "faceNormal = " << "\n" << faceNormal << std::endl;
     std::cout << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
@@ -69,10 +71,9 @@ void Triangle::display() {
     std::cout << "-----------------------------" << std::endl;
 }
 
-Eigen::Matrix<double, 3, 2> Triangle::updateHalfPK1Stress(double stretchingPrefactor) {
+void Triangle::updateHalfPK1Stress(double stretchingPrefactor) {
     halfPK1Stress = defGradient * (stretchingPrefactor * dialledProgTau *
                                    (programmedMetInv - (metInvDet / programmedMetInvDet) * metInv));
-    return halfPK1Stress;
 }
 
 Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces() {
@@ -110,13 +111,13 @@ Eigen::Matrix<double, 3, 1> Triangle::getBendingForce(const Eigen::Matrix<double
 }
 
 void Triangle::updateMetric(const std::vector<Node> &nodes) {
-    currSides.col(0) = nodes[vertexLabels(1)].pos - nodes[vertexLabels(0)].pos;
-    currSides.col(1) = nodes[vertexLabels(2)].pos - nodes[vertexLabels(0)].pos;
-    defGradient = currSides * invInitSidesMat;
+    currSides.col(0).noalias() = nodes[vertexLabels(1)].pos - nodes[vertexLabels(0)].pos;
+    currSides.col(1).noalias() = nodes[vertexLabels(2)].pos - nodes[vertexLabels(0)].pos;
+    defGradient.noalias() = currSides * invInitSidesMat;
 
-    met = defGradient.transpose() * defGradient;
-    metInvDet = 1 / met.determinant();
-    metInv = met.inverse();
+    met.noalias() = defGradient.transpose() * defGradient;
+    metInv.noalias() = met.inverse();
+    metInvDet = metInv.determinant();
 }
 
 void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
@@ -124,16 +125,16 @@ void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
     Eigen::Matrix<double, 3, 6> matrixOfPatchNodeCoords;
     for (int n = 0; n < 6; ++n) {
         if (n < 3) {
-            matrixOfPatchNodeCoords.col(n) = nodes[vertexLabels(n)].pos;
+            matrixOfPatchNodeCoords.col(n).noalias() = nodes[vertexLabels(n)].pos;
         } else {
-            matrixOfPatchNodeCoords.col(n) = nodes[nonVertexPatchNodesLabels(n - 3)].pos;
+            matrixOfPatchNodeCoords.col(n).noalias() = nodes[nonVertexPatchNodesLabels(n - 3)].pos;
         }
     }
-    patchSecDerivs = matrixOfPatchNodeCoords * matForPatchSecDerivs;
+    patchSecDerivs.noalias() = matrixOfPatchNodeCoords * matForPatchSecDerivs;
 
-    faceNormal = currSides.col(0).cross(currSides.col(1));
+    faceNormal.noalias() = currSides.col(0).cross(currSides.col(1));
     currAreaInv = 2 / faceNormal.norm();
-    faceNormal = 0.5 * faceNormal * currAreaInv; // Normalising
+    faceNormal.noalias() = 0.5 * faceNormal * currAreaInv; // Normalising
 }
 
 
@@ -144,6 +145,8 @@ void Triangle::updateSecondFundamentalForm(double bendingPreFac, double JPreFact
     secFF(0, 1) = vectorOfSecFFComps(1);
     secFF(1, 0) = vectorOfSecFFComps(1);
     secFF(1, 1) = vectorOfSecFFComps(2);
+
+    Eigen::Matrix<double, 2, 2> scaledSecFF = programmedSecFF;
 
     Eigen::Matrix<double, 2, 2> relativeSecFF = programmedMetInv * (secFF - programmedSecFF);
     double areaMultiplier = bendingPreFac * programmedMetInvDet;
@@ -238,7 +241,8 @@ void Triangle::updateProgrammedTaus(int stage_counter, double dial_in_factor) {
     dialledProgTau = (1.0 - dial_in_factor) * tau_previous + dial_in_factor * tau_next;
 }
 
-void Triangle::updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root, bool is_LCE_metric_used) {
+void Triangle::updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
+                                          bool is_LCE_metric_used) {
     if (is_LCE_metric_used) {
         updateProgrammedMetricFromLCEInfo(stage_counter, dial_in_factor);
     } else {
@@ -246,4 +250,154 @@ void Triangle::updateProgrammedQuantities(int stage_counter, double dial_in_fact
     }
     updateProgrammedSecondFundamentalForm(stage_counter, dial_in_factor_root);
     updateProgrammedTaus(stage_counter, dial_in_factor);
+}
+
+
+std::vector<unsigned int> getNeighbouringNodes(const Triangle &current_triangle, const std::vector<Triangle> &triangles,
+                                               const std::vector<Node> &nodes) {
+    // Provides nodes, which contain edges that neighbour the nodes of the current triangle, exclusive of those of
+    // considered triangle
+    std::unordered_set<unsigned int> neighbouring_triangle_indices;
+    std::unordered_set<unsigned int> neighbouring_node_indices;
+
+    for (unsigned int i = 0; i < 3; i++) {
+        unsigned int i_node = current_triangle.vertexLabels(i);
+        const Node &node = nodes[i_node];
+        for (unsigned int j_triangles: node.incidentTriLabels) {
+            neighbouring_triangle_indices.insert(j_triangles);
+        }
+    }
+
+    for (unsigned int j_triangles: neighbouring_triangle_indices) {
+        const Triangle &triangle = triangles[j_triangles];
+        for (unsigned int j: triangle.vertexLabels) {
+            neighbouring_node_indices.insert(j);
+        }
+    }
+
+    // We want to exclude the labels of the original nodes
+    for (unsigned int i: current_triangle.vertexLabels) {
+        neighbouring_node_indices.erase(i);
+    }
+
+    std::vector<unsigned int> v_node_indices;
+    for (unsigned int index: neighbouring_node_indices) {
+        v_node_indices.emplace_back(index);
+    }
+    return v_node_indices;
+}
+
+std::vector<std::pair<unsigned int, double>>
+assignDistanceFromCentroid(const std::vector<unsigned int> &node_indices, const std::vector<Node> &nodes,
+                           const Eigen::Vector3d &position) {
+    std::vector<std::pair<unsigned int, double>> index_distance_pair;
+    for (unsigned int index: node_indices) {
+        double distance = (nodes[index].pos - position).norm();
+        index_distance_pair.emplace_back(index, distance);
+    }
+    return index_distance_pair;
+}
+
+Eigen::Matrix<double, 6, 1> patchColumn(const Eigen::Vector3d &position, const Eigen::Vector3d &centroid) {
+    Eigen::Matrix<double, 6, 1> patchColumn;
+    patchColumn(0, 1) = 1;
+    patchColumn(1, 1) = (position(0) - centroid(0));
+    patchColumn(2, 1) = (position(1) - centroid(1));
+    patchColumn(3, 1) = 0.5 * patchColumn(1, 1) * patchColumn(1, 1);
+    patchColumn(4, 1) = patchColumn(1, 1) * patchColumn(2, 1);
+    patchColumn(5, 1) = 0.5 * patchColumn(2, 1) * patchColumn(2, 1);
+    return patchColumn;
+}
+
+
+int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes,
+                                      double patch_threshold) {
+    refCentroid = (nodes[vertexLabels(0)].pos +
+                   nodes[vertexLabels(1)].pos +
+                   nodes[vertexLabels(2)].pos) / 3;
+
+    std::vector<unsigned int> possiblePatchNodeLabels = getNeighbouringNodes(*this, triangles, nodes);
+    std::vector<std::pair<unsigned int, double>> indexDistancePairs = assignDistanceFromCentroid(
+            possiblePatchNodeLabels, nodes, refCentroid);
+
+    std::sort(std::begin(indexDistancePairs), std::end(indexDistancePairs),
+              [](const std::pair<unsigned int, double> &p1,
+                 const std::pair<unsigned int, double> &p2) -> bool {
+                  return p1.second < p2.second;
+              });
+
+    nonVertexPatchNodesLabels(0) = indexDistancePairs[0].first;
+    nonVertexPatchNodesLabels(1) = indexDistancePairs[1].first;
+
+    int invalid_non_boundary_triangle_count = 0;
+
+    double raw_path_size_factor = (nodes[vertexLabels(0)].pos - refCentroid).squaredNorm() +
+                                  (nodes[vertexLabels(1)].pos - refCentroid).squaredNorm() +
+                                  (nodes[vertexLabels(2)].pos - refCentroid).squaredNorm() +
+                                  (nodes[nonVertexPatchNodesLabels(0)].pos - refCentroid).squaredNorm() +
+                                  (nodes[nonVertexPatchNodesLabels(1)].pos - refCentroid).squaredNorm();
+    Eigen::Matrix<double, 6, 6> patchNodeDataMatrix;
+    for (int n = 0; n < 5; ++n) {
+        Eigen::Vector3d candidatePatchNode;
+        candidatePatchNode = n < 3 ? nodes[vertexLabels(n)].pos : nodes[nonVertexPatchNodesLabels(n - 3)].pos;
+
+        patchNodeDataMatrix(0, n) = 1;
+        patchNodeDataMatrix(1, n) = (candidatePatchNode(0) - refCentroid(0));
+        patchNodeDataMatrix(2, n) = (candidatePatchNode(1) - refCentroid(1));
+        patchNodeDataMatrix(3, n) = 0.5 * patchNodeDataMatrix(1, n) * patchNodeDataMatrix(1, n);
+        patchNodeDataMatrix(4, n) = patchNodeDataMatrix(1, n) * patchNodeDataMatrix(2, n);
+        patchNodeDataMatrix(5, n) = 0.5 * patchNodeDataMatrix(2, n) * patchNodeDataMatrix(2, n);
+    }
+
+    // We probe patch candidates as last patch coordinates to see which one give us a good patch, while the first two are fixed via
+    // proximity threshold.
+    for (size_t q = 2; q < possiblePatchNodeLabels.size(); ++q) {
+        unsigned int test_nodes_index = indexDistancePairs[q].first;
+        nonVertexPatchNodesLabels(2) = test_nodes_index;
+        double patch_size =
+                sqrt((raw_path_size_factor + (nodes[test_nodes_index].pos - refCentroid).squaredNorm()) /
+                     6);
+
+        Eigen::Vector3d candidatePatchNode = nodes[test_nodes_index].pos;
+        patchNodeDataMatrix(0, 5) = 1;
+        patchNodeDataMatrix(1, 5) = (candidatePatchNode(0) - refCentroid(0));
+        patchNodeDataMatrix(2, 5) = (candidatePatchNode(1) - refCentroid(1));
+        patchNodeDataMatrix(3, 5) = 0.5 * patchNodeDataMatrix(1, 5) * patchNodeDataMatrix(1, 5);
+        patchNodeDataMatrix(4, 5) = patchNodeDataMatrix(1, 5) * patchNodeDataMatrix(2, 5);
+        patchNodeDataMatrix(5, 5) = 0.5 * patchNodeDataMatrix(2, 5) * patchNodeDataMatrix(2, 5);
+
+        Eigen::FullPivLU<Eigen::Matrix<double, 6, 6>> tempPatchNodeDataMatrixDecomp;
+        tempPatchNodeDataMatrixDecomp.compute(patchNodeDataMatrix);
+        bool isMatReversible = tempPatchNodeDataMatrixDecomp.isInvertible();
+
+        Eigen::Matrix<double, 6, 3> patchSecDeriv;
+        double conditionNumber = 0;
+
+        if (isMatReversible) {
+            Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
+            patchSecDeriv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
+
+            Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
+            secDerivMatTempSVD.compute(patchSecDeriv);
+
+            double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
+            conditionNumber = singular_values * pow(patch_size, 2);
+        }
+
+        if (isMatReversible && conditionNumber < patch_threshold) {
+            matForPatchSecDerivs = patchSecDeriv;
+            return invalid_non_boundary_triangle_count;
+        } else {
+            if (q == 2 && !isOnBoundary) { invalid_non_boundary_triangle_count++; }
+
+        }
+    }
+
+    throw std::runtime_error(
+            "T" + std::to_string(label) +
+            ": Search for patch nodes was exhausted without success; "
+            "all possible patch matrices in the search had a condition number above the acceptance "
+            "threshold. Try increasing this threshold. If that does not solve the issue, or causes "
+            "other issues, the patch node search will probably need to be extended. Please report this "
+            "issue in that case. Aborting.");
 }

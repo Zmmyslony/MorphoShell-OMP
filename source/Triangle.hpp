@@ -92,6 +92,7 @@ public:
 
     /* Position of triangle's centroid in initial (reference) x-y plane.*/
     Eigen::Vector3d refCentroid;
+    Eigen::Vector3d centroid;
 
     /* Matrix (of doubles) where each *column* is a vector describing a side of
     the triangle. We only need two sides per triangle for the algorithm
@@ -228,7 +229,7 @@ public:
     // Debugging function to display all member data.
     void display();
 
-    Eigen::Matrix<double, 3, 2> updateHalfPK1Stress(double stretchingPrefactor);
+    void updateHalfPK1Stress(double stretchingPrefactor);
 
     Eigen::Matrix<double, 3, 3> getStretchingForces();
 
@@ -245,6 +246,8 @@ public:
     void updateAngleDeficits(std::vector<double> &angleDeficits) const;
 
     void updateFirstFundamentalForm(double stretchingPreFac);
+
+    int updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes, double patch_threshold);
 
     /**
      * Returns the linear size of the triangle calculated as the shortest triangle altitude.

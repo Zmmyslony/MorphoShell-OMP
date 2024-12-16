@@ -54,139 +54,13 @@ later.
 void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                                                     double patch_threshold) {
 
-    //Some temporary variables
-    int numNonBoundaryTrisThatTriedMultiplePatchChoices = 0;
+    // Number of boundary triangles that tried multiple candidates for patches
+    int invalid_non_boundary_triangle_count = 0;
 
-#pragma omp parallel for reduction (+ : numNonBoundaryTrisThatTriedMultiplePatchChoices)
+#pragma omp parallel for reduction (+ : invalid_non_boundary_triangle_count)
     for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].refCentroid = (nodes[triangles[i].vertexLabels(0)].pos +
-                                    nodes[triangles[i].vertexLabels(1)].pos +
-                                    nodes[triangles[i].vertexLabels(2)].pos) / 3.0;
+        invalid_non_boundary_triangle_count += triangles[i].updateMatForPatchDerivs(triangles, nodes, patch_threshold);
 
-        std::vector<double> distancesToCentroid;
-        std::vector<int> possiblePatchNodeLabels;
-
-        for (int outerVertex = 0; outerVertex < 3; ++outerVertex) {
-            Eigen::VectorXi incidentTriangleLabels = nodes[triangles[i].vertexLabels(outerVertex)].incidentTriLabels;
-            for (int innerVertex = 0; innerVertex < incidentTriangleLabels.size(); ++innerVertex) {
-                for (int w = 0; w < 3; ++w) {
-                    int thisNodeLabel = triangles[incidentTriangleLabels(innerVertex)].vertexLabels(w);
-                    bool isNodeAlreadyAccountedFor = false;
-
-                    for (int u = 0; u < 3; ++u) {
-                        if (thisNodeLabel == triangles[i].vertexLabels(u)) {
-                            isNodeAlreadyAccountedFor = true;
-                        }
-                    }
-
-                    for (int possiblePatchNodeLabel: possiblePatchNodeLabels) {
-                        if (thisNodeLabel == possiblePatchNodeLabel) {
-                            isNodeAlreadyAccountedFor = true;
-                        }
-                    }
-
-                    if (!isNodeAlreadyAccountedFor) {
-                        double distanceToCentroid = (nodes[thisNodeLabel].pos - triangles[i].refCentroid).norm();
-                        distancesToCentroid.push_back(distanceToCentroid);
-                        possiblePatchNodeLabels.push_back(thisNodeLabel);
-                    }
-                }
-            }
-        }
-
-        std::vector<size_t> idxInDistanceList(distancesToCentroid.size());
-
-        for (size_t q = 0; q < idxInDistanceList.size(); ++q) {
-            idxInDistanceList[q] = q;
-        }
-        std::sort(std::begin(idxInDistanceList), std::end(idxInDistanceList),
-                  [&distancesToCentroid](const size_t &idx1, const size_t &idx2) -> bool {
-                      return distancesToCentroid[idx1] < distancesToCentroid[idx2];
-                  });
-
-        for (int p = 0; p < 2; ++p) {
-            triangles[i].nonVertexPatchNodesLabels(p) = possiblePatchNodeLabels[idxInDistanceList[p]];
-        }
-
-
-        for (size_t q = 2; q < possiblePatchNodeLabels.size(); ++q) {
-            triangles[i].nonVertexPatchNodesLabels(2) = possiblePatchNodeLabels[idxInDistanceList[q]];
-
-            double thisPatchSize = sqrt((
-                                                (nodes[triangles[i].vertexLabels(0)].pos -
-                                                 triangles[i].refCentroid).squaredNorm() +
-                                                (nodes[triangles[i].vertexLabels(1)].pos -
-                                                 triangles[i].refCentroid).squaredNorm() +
-                                                (nodes[triangles[i].vertexLabels(2)].pos -
-                                                 triangles[i].refCentroid).squaredNorm() +
-                                                (nodes[triangles[i].nonVertexPatchNodesLabels(0)].pos -
-                                                 triangles[i].refCentroid).squaredNorm() +
-                                                (nodes[triangles[i].nonVertexPatchNodesLabels(1)].pos -
-                                                 triangles[i].refCentroid).squaredNorm() +
-                                                (nodes[triangles[i].nonVertexPatchNodesLabels(2)].pos -
-                                                 triangles[i].refCentroid).squaredNorm()
-                                        ) / 6.0);
-
-            Eigen::Vector3d patchNodePos;
-            Eigen::Matrix<double, 6, 6> tempPatchNodeDataMatrix;
-            for (int n = 0; n < 6; ++n) {
-                if (n < 3) {
-                    patchNodePos = nodes[triangles[i].vertexLabels(n)].pos;
-                } else {
-                    patchNodePos = nodes[triangles[i].nonVertexPatchNodesLabels(n - 3)].pos;
-                }
-
-                tempPatchNodeDataMatrix(0, n) = 1;
-                tempPatchNodeDataMatrix(1, n) = (patchNodePos(0) - triangles[i].refCentroid(0));
-                tempPatchNodeDataMatrix(2, n) = (patchNodePos(1) - triangles[i].refCentroid(1));
-                tempPatchNodeDataMatrix(3, n) = 0.5 * tempPatchNodeDataMatrix(1, n) * tempPatchNodeDataMatrix(1, n);
-                tempPatchNodeDataMatrix(4, n) = tempPatchNodeDataMatrix(1, n) * tempPatchNodeDataMatrix(2, n);
-                tempPatchNodeDataMatrix(5, n) = 0.5 * tempPatchNodeDataMatrix(2, n) * tempPatchNodeDataMatrix(2, n);
-            }
-
-            Eigen::FullPivLU<Eigen::Matrix<double, 6, 6>> tempPatchNodeDataMatrixDecomp;
-            tempPatchNodeDataMatrixDecomp.compute(tempPatchNodeDataMatrix);
-            bool isMatReversible = true;
-
-            Eigen::Matrix<double, 6, 3> tempMatForPatchSecDerivs;
-            double tempAbsConditionNumberDividedByThresholdValue = 0;
-
-            if (!tempPatchNodeDataMatrixDecomp.isInvertible()) {
-                isMatReversible = false;
-            } else {
-                Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = tempPatchNodeDataMatrix.inverse();
-                tempMatForPatchSecDerivs = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
-
-                Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
-                secDerivMatTempSVD.compute(tempMatForPatchSecDerivs);
-
-                double tempAbsConditionNumber = secDerivMatTempSVD.singularValues()(
-                        0); //This has dimensions 1/Length^2.
-                tempAbsConditionNumberDividedByThresholdValue = tempAbsConditionNumber * thisPatchSize * thisPatchSize /
-                                                                patch_threshold;
-            }
-
-            if (tempAbsConditionNumberDividedByThresholdValue >= 1.0 || !isMatReversible) {
-                if (q == 2 && !triangles[i].isOnBoundary) {
-                    numNonBoundaryTrisThatTriedMultiplePatchChoices += 1;
-                }
-
-                //Throw error to main if whole search has been exhausted unsuccessfully
-                if (q == possiblePatchNodeLabels.size() - 1) {
-                    throw std::runtime_error(
-                            "At least one search for patch nodes was exhausted without success (triangle " +
-                            std::to_string(triangles[i].label) +
-                            "); all possible patch matrices in the search had a condition number above the acceptance "
-                            "threshold. Try increasing this threshold. If that does not solve the issue, or causes "
-                            "other issues, the patch node search will probably need to be extended. Please report this "
-                            "issue in that case. Aborting.");
-                }
-                continue;
-            } else {
-                triangles[i].matForPatchSecDerivs = tempMatForPatchSecDerivs;
-                break;
-            }
-        }
     }
 
     /*Print also the number of non-boundary triangles that had to search through
@@ -199,7 +73,7 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &nod
 //    logStream.open();
     std::cout << "Number of non-boundary triangles that had to search through \n" <<
               "multiple possible patch options to find one \nsatisfying the condition number " <<
-              "criterion was " << numNonBoundaryTrisThatTriedMultiplePatchChoices <<
+              "criterion was " << invalid_non_boundary_triangle_count <<
               ", \nwhich should not be a large proportion of the mesh's triangles." << std::endl;
 //    logStream.close();
 }

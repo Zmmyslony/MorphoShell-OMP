@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(Morphoshell)
 
+set(CMAKE_CXX_FLAGS -ffast-math)
+
 find_package(OpenMP REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -49,7 +51,9 @@ set(SOURCE_FILES
         source/physics/cone.cpp
         source/physics/cone.h
         source/physics/rigid_body.cpp
-        source/physics/rigid_body.h)
+        source/physics/rigid_body.h
+        source/physics/dynamic_curvature_control.cpp
+        source/physics/dynamic_curvature_control.h)
 
 add_executable(Morphoshell ${SOURCE_FILES})
 

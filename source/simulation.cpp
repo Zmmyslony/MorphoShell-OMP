@@ -362,6 +362,7 @@ void Simulation::init(int argc, char *argv[]) {
     if (settings_new.getCore().isInitialPositionsPerturbed()) {
         perturbInitialPositionsWithRandomNoise(nodes, characteristic_short_length);
     }
+    forcesForEachTriangle.reserve(6 * triangles.size());
 }
 
 
@@ -560,7 +561,6 @@ Simulation::add_elastic_forces() {
     double bendingPreFac =
             0.5 * pow(settings_new.getCore().getThickness(), 3) * settings_new.getCore().getShearModulus() / 12;
     double JPreFactor = settings_new.getCore().getGentFactor() / pow(settings_new.getCore().getThickness(), 2);
-    std::vector<Eigen::Vector3d> forcesForEachTriangle(6 * triangles.size());
 
 #pragma omp parallel
     {

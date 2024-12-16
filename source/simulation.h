@@ -64,6 +64,7 @@ class Simulation {
     int num_triangles = 0;
     int num_edges = 0;
     int step_count = 0;
+    std::vector<Eigen::Vector3d> forcesForEachTriangle;
 
     double time_global = 0;
     // Reset to zero every time equilibrium is checked, or every time a new DialInFactor value is reached.

@@ -57,7 +57,7 @@ void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles) {
 
 
 void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, SettingsNew &settings) {
-
+#pragma omp parallel for
     for (int i = 0; i < nodes.size(); ++i) {
         if (isForceThresholdExceeded(nodes[i], settings)) {
             logForceThresholdExceeded(nodes[i], triangles);

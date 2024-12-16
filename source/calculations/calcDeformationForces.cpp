@@ -52,40 +52,40 @@ getCorrespondingTrianglesForNodes(const std::vector<Triangle> &triangles, const 
     }
     return correspondingTrianglesForNodes;
 }
-
-void update_elastic_forces(
-        std::vector<Node> &nodes,
-        std::vector<Triangle> &triangles,
-        const CoreConfig &core_config,
-        const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
-
-    double stretchingPreFac = 0.5 * core_config.getThickness() * core_config.getShearModulus();
-    std::vector<Eigen::Vector3d> forcesForEachTriangle(6 * triangles.size());
-#pragma omp parallel
-    {
-    #pragma omp for
-        for (int i = 0; i < triangles.size(); i++) {
-            triangles[i].updateHalfPK1Stress(stretchingPreFac);
-            Eigen::Matrix<double, 3, 3> stretchForces = triangles[i].getStretchingForces();
-
-            Eigen::Matrix<double, 3, 3> triangleEdgeNormals = triangles[i].getTriangleEdgeNormals();
-            Eigen::Matrix<double, 3, 3> normalDerivPiece =
-                    0.5 * triangles[i].currAreaInv * (triangles[i].patchSecDerivs.transpose() * triangleEdgeNormals);
-
-            for (int n = 0; n < 3; ++n) {
-                forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n) + stretchForces.col(n);
-            }
-            for (int n = 3; n < 6; ++n) {
-                forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n);
-            }
-        }
-
-    #pragma omp for
-        for (int i = 0; i < nodes.size(); i++) {
-            for (auto &trianglesForNode: correspondingTrianglesForNodes[i]) {
-                int index = 6 * trianglesForNode.first + trianglesForNode.second;
-                nodes[i].force += forcesForEachTriangle[index];
-            }
-        }
-    }
-}
+//
+//void update_elastic_forces(
+//        std::vector<Node> &nodes,
+//        std::vector<Triangle> &triangles,
+//        const CoreConfig &core_config,
+//        const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes) {
+//
+//    double stretchingPreFac = 0.5 * core_config.getThickness() * core_config.getShearModulus();
+//    std::vector<Eigen::Vector3d> forcesForEachTriangle(6 * triangles.size());
+//#pragma omp parallel
+//    {
+//    #pragma omp for
+//        for (int i = 0; i < triangles.size(); i++) {
+//            triangles[i].updateHalfPK1Stress(stretchingPreFac);
+//            Eigen::Matrix<double, 3, 3> stretchForces = triangles[i].getStretchingForces();
+//
+//            Eigen::Matrix<double, 3, 3> triangleEdgeNormals = triangles[i].getTriangleEdgeNormals();
+//            Eigen::Matrix<double, 3, 3> normalDerivPiece =
+//                    0.5 * triangles[i].currAreaInv * (triangles[i].patchSecDerivs.transpose() * triangleEdgeNormals);
+//
+//            for (int n = 0; n < 3; ++n) {
+//                forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n) + stretchForces.col(n);
+//            }
+//            for (int n = 3; n < 6; ++n) {
+//                forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n);
+//            }
+//        }
+//
+//    #pragma omp for
+//        for (int i = 0; i < nodes.size(); i++) {
+//            for (auto &trianglesForNode: correspondingTrianglesForNodes[i]) {
+//                int index = 6 * trianglesForNode.first + trianglesForNode.second;
+//                nodes[i].force += forcesForEachTriangle[index];
+//            }
+//        }
+//    }
+//}
