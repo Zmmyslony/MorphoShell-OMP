@@ -109,7 +109,8 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
         /* Add 1/3 of the mass of each triangle to each of its vertices.*/
         for (int v = 0; v < 3; ++v) {
             nodes[triangles[i].vertexLabels(v)].mass +=
-                    settings.getCore().getDensity() * triangles[i].initArea * settings.getCore().getThickness() / 3.0;
+                    settings.getCore().getDensity() * triangles[i].initArea * settings.getCore().getThickness() / 3;
+            nodes[triangles[i].vertexLabels(v)].area += triangles[i].initArea / 3;
         }
 
         /* Set first set of programmed tensors to be the trivial ones for the

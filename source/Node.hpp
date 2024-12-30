@@ -89,6 +89,9 @@ public:
     // Mass assigned to node.
     double mass = DBL_MAX;
 
+    // Area calculated from the mass
+    double area = DBL_MAX;
+
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
     well as to std::out. This should usually be the log file (as for logStream).
