@@ -614,7 +614,8 @@ void Simulation::add_non_elastic_forces() {
             interaction_force += slide.addInteractionForce(nodes[i].pos,
                                                            nodes[i].force,
                                                            settings_new.getCore().getShearModulus(),
-                                                           settings_new.getCore().getThickness());
+                                                           settings_new.getCore().getThickness(),
+                                                           nodes[i].area);
         }
         slide.setInteractionLoad(interaction_force);
     }

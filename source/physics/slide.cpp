@@ -29,21 +29,27 @@ void Slide::initialise(const std::vector<Eigen::Vector3d> &node_pos, double dial
 }
 
 double Slide::addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &node_force, double shear_modulus,
-                                  double thickness) const {
+                                  double thickness, double node_area) const {
     double distance_v = distance(pos);
-    if (distance_v >= 0) { return 0; }
-    double normal_response_force = -distance_v * force_prefactor * shear_modulus * thickness;
+    double normal_force_value = 0;
+    if (distance_v < 0) {
+        normal_force_value -= distance_v * force_prefactor * shear_modulus * thickness;
 
-    Eigen::Vector3d normal_force = node_force.dot(normal) * normal;
-    Eigen::Vector3d tangent_force = node_force - normal_force;
-    double friction_force = normal_force.norm() * friction_coefficient;
-    double tangent_force_v = tangent_force.norm();
-    if (tangent_force_v <= friction_force) {
-        node_force -= tangent_force;
-    } else {
-        node_force -=  tangent_force.normalized() * friction_force;
+        Eigen::Vector3d normal_force = node_force.dot(normal) * normal;
+        Eigen::Vector3d tangent_force = node_force - normal_force;
+        double friction_force = normal_force.norm() * friction_coefficient;
+        double tangent_force_v = tangent_force.norm();
+        if (tangent_force_v <= friction_force) {
+            node_force -= tangent_force;
+        } else {
+            node_force -= tangent_force.normalized() * friction_force;
+        }
     }
-    node_force += normal_response_force * normal;
-    return normal_response_force;
+    if (adhesion_constant > 0) {
+        normal_force_value -= node_area * adhesion_constant * exp(-pow(distance_v / adhesion_distance, 2));
+    }
+
+    node_force += normal_force_value * normal;
+    return normal_force_value;
 }
 

@@ -10,13 +10,10 @@
 #include "../configuration/config_base.h"
 #include "rigid_body.h"
 
-#define FIXED 0
-#define LOAD_CONTROLLED 1
-#define DISPLACEMENT_CONTROLLED 2
-
-
 class Slide : public RigidBody {
-
+    // Pull-off constant divided by the area.
+    double adhesion_constant = 0;
+    double adhesion_distance = 0.01;
 public:
     explicit Slide(const ConfigBase &config);
 
@@ -44,8 +41,9 @@ public:
      * @param shear_modulus
      * @param thickness
      */
-    double addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &node_force, double shear_modulus,
-                               double thickness) const;
+    double
+    addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &node_force, double shear_modulus, double thickness,
+                        double node_area) const;
 
 };
 
