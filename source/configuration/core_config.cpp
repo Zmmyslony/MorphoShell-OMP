@@ -49,16 +49,18 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
 
     config_base.get("damping_prefactor", damping_prefactor);
     config_base.get("dial_in_damping", dial_in_damping);
-    config_base.get("equilibriation_damping", equilibriation_damping);
+    config_base.get("equilibration_damping", equilibration_damping);
     config_base.get("print_frequency", print_frequency);
     config_base.get("dial_in_resolution", dial_in_resolution);
-    config_base.get("interval_equilibrium_check", time_between_equilibrium_checks);
+    config_base.get("time_between_equilibrium_checks", time_between_equilibrium_checks);
     config_base.get("dial_in_time_prefactor", dial_in_time_prefactor);
     config_base.get("time_step_prefactor", time_step_prefactor);
     config_base.get("is_lce_mode_enabled", is_lce_mode_enabled);
     config_base.get("is_simple_sec_ff_used", is_simple_sec_ff_used);
     config_base.get("is_boundary_clamped", is_boundary_clamped);
     config_base.get("is_energy_printed", is_energy_printed);
+    config_base.get("is_stress_printed", is_stress_printed);
+    config_base.get("is_force_printed", is_force_printed);
     config_base.get("is_triangle_area_printed", is_triangle_area_printed);
     config_base.get("is_angle_deficit_printed", is_angle_deficit_printed);
     config_base.get("is_gradient_descent_dynamics", is_gradient_descent_dynamics);
@@ -108,8 +110,8 @@ double CoreConfig::getDialInDamping() const {
     return dial_in_damping;
 }
 
-double CoreConfig::getEquilibriationDamping() const {
-    return equilibriation_damping;
+double CoreConfig::getEquilibrationDamping() const {
+    return equilibration_damping;
 }
 
 double CoreConfig::getPrintFrequency() const {
@@ -188,7 +190,7 @@ double CoreConfig::getStretchingTimeStepGradientDescent(double size_factor) cons
     for already dialled-in states. Note the damping factor cancels out in the
     dynamics and has no effect - but only if you are consistent with which one
     you use!*/
-    double numerical_damping = equilibriation_damping * damping_prefactor;
+    double numerical_damping = equilibration_damping * damping_prefactor;
     return time_step_prefactor * (numerical_damping / shear_modulus) * pow(size_factor / (2 * M_PI), 2);
 
 }
@@ -198,7 +200,7 @@ double CoreConfig::getBendingTimeStepGradientDescent(double size_factor) const {
     for already dialled-in states. Note the damping factor cancels out in the
     dynamics and has no effect - but only if you are consistent with which one
     you use!*/
-    double numerical_damping = equilibriation_damping * damping_prefactor;
+    double numerical_damping = equilibration_damping * damping_prefactor;
     return time_step_prefactor * numerical_damping * (6 * (1 - poisson_ratio) / (pow(thickness, 2) * shear_modulus))
            * pow(size_factor / (2 * M_PI), 4);
 }
@@ -244,5 +246,13 @@ bool CoreConfig::isZFixedBc() const {
 
 double CoreConfig::getUnits() const {
     return units;
+}
+
+bool CoreConfig::isStressPrinted() const {
+    return is_stress_printed;
+}
+
+bool CoreConfig::isForcePrinted() const {
+    return is_force_printed;
 }
 

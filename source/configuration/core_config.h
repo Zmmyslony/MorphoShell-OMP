@@ -31,8 +31,8 @@ class CoreConfig {
     double density = 1000;
 
     double damping_prefactor = 2;
-    double dial_in_damping = 2;
-    double equilibriation_damping = 10;
+    double dial_in_damping = 1;
+    double equilibration_damping = 1;
 
     // Number of vtks saved and details displayed per each dial-in.
     double print_frequency = 5;
@@ -53,10 +53,12 @@ class CoreConfig {
     bool is_initial_positions_perturbed = true;
 
     bool is_energy_printed = true;
+    bool is_stress_printed = false;
     bool is_triangle_area_printed = true;
     bool is_angle_deficit_printed = false;
     bool is_gradient_descent_dynamics = false;
     bool is_seide_deformations = false;
+    bool is_force_printed = false;
 
     // When enabled, current geometry is assumed to be the relaxed one, i.e. uses calculated metric and bend tensors as programmed.
     bool is_ansatz_metric_used = false;
@@ -102,7 +104,7 @@ public:
 
     double getDialInDamping() const;
 
-    double getEquilibriationDamping() const;
+    double getEquilibrationDamping() const;
 
     double getPrintFrequency() const;
 
@@ -121,6 +123,10 @@ public:
     bool isBoundaryClamped() const;
 
     bool isEnergyPrinted() const;
+
+    bool isStressPrinted() const;
+
+    bool isForcePrinted() const;
 
     bool isTriangleAreaPrinted() const;
 
