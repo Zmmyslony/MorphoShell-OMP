@@ -547,7 +547,7 @@ void Simulation::begin_equilibrium_search(int counter) {
     // NB an EquilCheck has not actually just occurred, but this has the
     //desired effect of ensuring that each DialInFactor value is held
     //for at least one TimeBetweenEquilChecks.
-    time_equilibriation = 0.0;
+    time_equilibriation = settings_new.getTimeBetweenEquilibriumChecks();
 
     settings_new.useEquilibriumDamping();
 
@@ -690,7 +690,7 @@ void Simulation::save_and_print_details(int counter, long long int duration_us) 
     }
     writeVTKDataOutput(nodes, triangles, step_count, time_global, dial_in_factor, counter,
                        gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
-                       boundaryNodeAngleDeficits, stretchEnergyDensities, bendEnergyDensities,
+                       boundaryNodeAngleDeficits,
                        stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                        cauchyStressEigenvals, cauchyStressEigenvecs, settings_new, output_dir_name);
 
@@ -723,7 +723,7 @@ void Simulation::error_large_force(int counter) {
     }
     writeVTKDataOutput(nodes, triangles, step_count, time_global, dial_in_factor, counter,
                        gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
-                       boundaryNodeAngleDeficits, stretchEnergyDensities, bendEnergyDensities,
+                       boundaryNodeAngleDeficits,
                        stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                        cauchyStressEigenvals, cauchyStressEigenvecs, settings_new, output_dir_name);
     throw std::runtime_error("Unexpectedly large force at step " + std::to_string(step_count) + ".");
@@ -743,6 +743,7 @@ void Simulation::check_for_equilibrium() {
 
 void Simulation::setup_reached_equilibrium() {
     simulation_status = Dialling;
+    is_equilibrium_seeked = false;
     time_phase = 0;
     phase_counter += 1;
     settings_new.useDiallingDamping();
@@ -767,6 +768,7 @@ void Simulation::check_if_equilibrium_search_begun(int stage_counter) {
     // equilibrium.
     if (time_phase >= settings_new.getDurationPhase() &&
         simulation_status == Dialling) {
+        is_equilibrium_seeked = true;
         begin_equilibrium_search(stage_counter);
     }
 }
@@ -860,7 +862,7 @@ void Simulation::advance_time() {
 }
 
 
-void Simulation::run_simulation() {
+int Simulation::run_simulation() {
     std::cout << std::scientific << std::setprecision(8);
     std::ofstream forceDistFile;
 
@@ -876,6 +878,8 @@ void Simulation::run_simulation() {
     }
 
     std::cout << "Reached simulation time = " << time_global << " using " << step_count << " time steps" << std::endl;
+    std::cout << "Simulation finished successfully." << std::endl;
+    return 0;
 }
 
 Simulation::Simulation(int argc, char **argv) {

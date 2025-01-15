@@ -102,7 +102,7 @@ class Simulation {
     double dialInFactorToStartFrom = 0.0;
     // Create container to store node ansatz positions, if given.
     std::vector<Eigen::Vector3d> nodeAnsatzPositions;
-    bool is_equilibrium_seeked = true;
+    bool is_equilibrium_seeked = false;
 
     // Vector holding which triangles correspond with which nodes.
     std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes;
@@ -265,7 +265,7 @@ public :
 
     Simulation(int argc, char *argv[]);
 
-    void run_simulation();
+    int run_simulation();
 
     void equilibriumTest(int stage_counter, long long int duration_us);
 };
