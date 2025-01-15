@@ -135,6 +135,8 @@ void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
     faceNormal.noalias() = currSides.col(0).cross(currSides.col(1));
     currAreaInv = 2 / faceNormal.norm();
     faceNormal.noalias() = 0.5 * faceNormal * currAreaInv; // Normalising
+
+    centroid = (nodes[vertexLabels(0)].pos + nodes[vertexLabels(1)].pos + nodes[vertexLabels(2)].pos) / 3;
 }
 
 
