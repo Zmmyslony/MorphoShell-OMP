@@ -13,7 +13,7 @@
 class Slide : public RigidBody {
     // Pull-off constant divided by the area.
     double adhesion_constant = 0;
-    double adhesion_distance = 0.01;
+    double adhesion_distance = 0.1;
 public:
     explicit Slide(const ConfigBase &config);
 
