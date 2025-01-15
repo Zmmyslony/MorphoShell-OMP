@@ -193,7 +193,7 @@ void SettingsNew::SetupCharacteristicSizes(double total_area, double size_factor
 }
 
 void SettingsNew::useEquilibriumDamping() {
-    damping_factor = num_damping_prefactor * core.getEquilibriationDamping();
+    damping_factor = num_damping_prefactor * core.getEquilibrationDamping();
 }
 
 void SettingsNew::useDiallingDamping() {
