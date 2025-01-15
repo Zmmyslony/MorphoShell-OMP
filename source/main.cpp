@@ -124,9 +124,7 @@ assert( x > 100 );
 
 int main(int argc, char *argv[]) {
     Simulation simulation(argc, argv);
-    simulation.run_simulation();
-
-    return 0;
+    return simulation.run_simulation();
 }
 
 

@@ -56,10 +56,8 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
                         const std::vector<double> &gaussCurvatures, const std::vector<double> &meanCurvatures,
                         const std::vector<double> &angleDeficits, const std::vector<double> &interiorNodeAngleDeficits,
                         const std::vector<double> &boundaryNodeAngleDeficits,
-                        const std::vector<double> &stretchEnergyDensities,
-                        const std::vector<double> &bendEnergyDensities, const std::vector<double> &stretchEnergies,
-                        const std::vector<double> &bendEnergies, const std::vector<double> &kineticEnergies,
-                        const std::vector<double> &strainMeasures,
+                        const std::vector<double> &stretchEnergies, const std::vector<double> &bendEnergies,
+                        const std::vector<double> &kineticEnergies, const std::vector<double> &strainMeasures,
                         const std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
                         const std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
                         const SettingsNew &settings, const std::string &outputDirName) {
@@ -102,15 +100,18 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
             << "DATASET POLYDATA" << "\n"
             << "POINTS " << nodes.size() << " double" << "\n";
 
-    for (int i = 0; i < nodes.size(); ++i) {
-        outFile << nodes[i].pos(0) << " " << nodes[i].pos(1) << " " << nodes[i].pos(2) << "\n";
+    for (const auto &node: nodes) {
+        outFile << node.pos(0)
+                << " " << node.pos(1)
+                << " " << node.pos(2) << "\n";
     }
 
     outFile << "POLYGONS " << triangles.size() << " " << 4 * triangles.size() << "\n";
 
-    for (int i = 0; i < triangles.size(); ++i) {
-        outFile << "3 " << triangles[i].vertexLabels(0) << " " << triangles[i].vertexLabels(1) << " "
-                << triangles[i].vertexLabels(2) << "\n";
+    for (const auto &triangle: triangles) {
+        outFile << "3 " << triangle.vertexLabels(0)
+                << " " << triangle.vertexLabels(1)
+                << " " << triangle.vertexLabels(2) << "\n";
     }
 
     outFile << "CELL_DATA " << triangles.size() << "\n";
@@ -133,29 +134,27 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
     settings file. Print also our strain measure, which is not completely
     dissimilar to a non-dimensional stretch energy. Also, Cauchy stress info.*/
     if (settings.getCore().isEnergyPrinted()) {
-
         outFile << "SCALARS nonDimStretchEnergyDensity double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < triangles.size(); ++i) {
-            outFile << stretchEnergyDensities[i] / settings.getStretchEnergyDensityScale() << "\n";
+        for (const auto &triangle: triangles) {
+            outFile << triangle.stretchEnergyDensity / settings.getStretchEnergyDensityScale() << "\n";
         }
 
         outFile << "SCALARS nonDimBendEnergyDensity double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < triangles.size(); ++i) {
-            outFile << bendEnergyDensities[i] / settings.getStretchEnergyDensityScale() << "\n";
+        for (const auto &triangle: triangles) {
+            outFile << triangle.bendEnergyDensity / settings.getStretchEnergyDensityScale() << "\n";
         }
 
         outFile << "SCALARS strainMeasure double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < triangles.size(); ++i) {
-            outFile << strainMeasures[i] << "\n";
-        }
+        for (int i = 0; i < triangles.size(); ++i) { outFile << strainMeasures[i] << "\n"; }
+    }
 
-
+    if (settings.getCore().isStressPrinted()) {
         outFile << "FIELD cauchyStressInfo 4" << "\n";
 
         outFile << "dimlessCauchyStressEigenval1 1 " << triangles.size() << "double" << "\n";
@@ -186,30 +185,32 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
         outFile << "SCALARS triArea double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < triangles.size(); ++i) {
-            outFile << 1.0 / triangles[i].currAreaInv << "\n";
-        }
+        for (const auto &triangle: triangles) { outFile << 1.0 / triangle.currAreaInv << "\n"; }
     }
 
-    // Now print radii triangle centroids are at in reference state.
-    outFile << "SCALARS triRefRadialCoord double 1" << "\n"
-            << "LOOKUP_TABLE default" << "\n";
+//    // Now print radii triangle centroids are at in reference state.
+//    outFile << "SCALARS triRefRadialCoord double 1" << "\n"
+//            << "LOOKUP_TABLE default" << "\n";
+//
+//    for (int i = 0; i < triangles.size(); ++i) {
+//        outFile << triangles[i].refCentroid.norm() << "\n";
+//    }
 
-    for (int i = 0; i < triangles.size(); ++i) {
-        outFile << triangles[i].refCentroid.norm() << "\n";
-    }
-
+    outFile << "POINT_DATA " << nodes.size() << "\n";
     // Now print angle deficits at nodes, if specified in settings file.
     if (settings.getCore().isAngleDeficitPrinted()) {
 
-        outFile << "POINT_DATA " << nodes.size() << "\n";
 
         outFile << "SCALARS angleDeficit double 1" << "\n"
                 << "LOOKUP_TABLE default" << "\n";
 
-        for (int i = 0; i < nodes.size(); ++i) {
-            outFile << angleDeficits[i] << "\n";
-        }
+        for (int i = 0; i < nodes.size(); ++i) { outFile << angleDeficits[i] << "\n"; }
+    }
+
+    if (settings.getCore().isForcePrinted()) {
+        outFile << "SCALARS nodeForce double 1 " << "\n"
+                << "LOOKUP_TABLE default" << "\n";;
+        for (auto &node: nodes) { outFile << node.force.norm() << "\n"; }
     }
 
     outFile.close();

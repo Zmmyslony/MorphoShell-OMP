@@ -42,10 +42,8 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
                         const std::vector<double> &gaussCurvatures, const std::vector<double> &meanCurvatures,
                         const std::vector<double> &angleDeficits, const std::vector<double> &interiorNodeAngleDeficits,
                         const std::vector<double> &boundaryNodeAngleDeficits,
-                        const std::vector<double> &stretchEnergyDensities,
-                        const std::vector<double> &bendEnergyDensities, const std::vector<double> &stretchEnergies,
-                        const std::vector<double> &bendEnergies, const std::vector<double> &kineticEnergies,
-                        const std::vector<double> &strainMeasures,
+                        const std::vector<double> &stretchEnergies, const std::vector<double> &bendEnergies,
+                        const std::vector<double> &kineticEnergies, const std::vector<double> &strainMeasures,
                         const std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
                         const std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
                         const SettingsNew &settings, const std::string &outputDirName);
