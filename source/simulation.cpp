@@ -23,7 +23,6 @@
 #include "functions/kahanSum.hpp"
 #include "calculations/calcNodeNeighbours.hpp"
 #include "calculations/calc_nonVertexPatchNodes_and_MatForPatchDerivs.hpp"
-#include "calculations/calcTriangleGeometries_and_DialledProgTensors.hpp"
 #include "setRemainingInitCond_and_NodeMasses.hpp"
 #include "functions/perturbInitialPositionsWithRandomNoise.hpp"
 #include "calculations/calcEnergiesAndStresses.hpp"

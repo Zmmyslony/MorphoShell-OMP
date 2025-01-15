@@ -89,7 +89,6 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #include "functions/extract_Just_Filename.hpp"
 #include "initialDirAndFileHandling.hpp"
 #include "readVTKData.hpp"
-#include "calculations/calcTriangleGeometries_and_DialledProgTensors.hpp"
 #include "calculations/calcTrianglesIncidentOnNodes.hpp"
 #include "calculations/calcTriangleAdjacencies_And_Edges.hpp"
 #include "calculations/calcNodeNeighbours.hpp"
