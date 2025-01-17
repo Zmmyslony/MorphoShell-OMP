@@ -51,6 +51,20 @@ The directory the files are put in is created in main().
 #include "Triangle.hpp"
 #include "functions/kahanSum.hpp"
 
+using double_vector = std::pair<std::string, std::vector<double>>;
+
+std::stringstream convert_into_stream(const double_vector &data_pair) {
+    std::stringstream stream;
+    stream << "SCALARS " << data_pair.first << " double 1" << "\n"
+           << "LOOKUP_TABLE default" << "\n";
+
+    for (double i: data_pair.second) {
+        stream << i << " ";
+    }
+    stream << "\n";
+    return stream;
+}
+
 void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const int &stepcount,
                         const double &time, const double &currDialInFactor, const size_t &progTensorSequenceCounter,
                         const std::vector<double> &gaussCurvatures, const std::vector<double> &meanCurvatures,
@@ -63,16 +77,15 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
                         const SettingsNew &settings, const std::string &outputDirName) {
 
     std::ofstream outFile(outputDirName + "/stepcount_" + std::to_string(stepcount) + "_output.vtk");
-//    std::stringstream outFile;
     if (!outFile) {
         throw std::runtime_error("Error: Problem creating or opening output file.");
     }
+    std::stringstream header_stream;
 
-
-    outFile << std::scientific << std::setprecision(14)
-            << "# vtk DataFile Version 4.2" << "\n"
-            << "dial_in_factor = " << currDialInFactor << " dialling programmed tensors _"
-            << progTensorSequenceCounter + 1 << ", time = " << time << ", stepcount = " << stepcount;
+    header_stream << std::scientific << std::setprecision(14)
+                  << "# vtk DataFile Version 4.2" << "\n"
+                  << "dial_in_factor = " << currDialInFactor << " dialling programmed tensors _"
+                  << progTensorSequenceCounter + 1 << ", time = " << time << ", stepcount = " << stepcount;
 
     /* If specified in settings file, also print total stretching and bending
     energies here.*/
@@ -80,9 +93,9 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
         double nonDimStretchEnergy = kahanSum(stretchEnergies) / settings.getStretchEnergyScale();
         double nonDimBendEnergy = kahanSum(bendEnergies) / settings.getStretchEnergyScale();
         double nonDimKineticEnergy = kahanSum(kineticEnergies) / settings.getStretchEnergyScale();
-        outFile << ", non-dimensionalised stretch, bend, kinetic, and total energies: "
-                << nonDimStretchEnergy << ", " << nonDimBendEnergy << ", " << nonDimKineticEnergy
-                << ", " << nonDimKineticEnergy << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy;
+        header_stream << ", non-dimensionalised stretch, bend, kinetic, and total energies: "
+                      << nonDimStretchEnergy << ", " << nonDimBendEnergy << ", " << nonDimKineticEnergy
+                      << ", " << nonDimKineticEnergy << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy;
     }
 
     /* If angle deficits were calculated, print the sum of the non-boundary
@@ -90,127 +103,110 @@ void writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triang
     Gauss curvature and integrated geodesic curvature terms in Gauss-Bonnet
     respectively.*/
     if (settings.getCore().isAngleDeficitPrinted()) {
-        outFile << ", total interior angle deficit = " << kahanSum(interiorNodeAngleDeficits)
-                << ", total boundary angle deficit = " << kahanSum(boundaryNodeAngleDeficits);
+        header_stream << ", total interior angle deficit = " << kahanSum(interiorNodeAngleDeficits)
+                      << ", total boundary angle deficit = " << kahanSum(boundaryNodeAngleDeficits);
     }
 
 
     // Continue with rest of preamble and then output the relevant data to file.
-    outFile << "\n" << "ASCII" << "\n"
-            << "DATASET POLYDATA" << "\n"
-            << "POINTS " << nodes.size() << " double" << "\n";
+    header_stream << "\n" << "ASCII" << "\n";
+    outFile << header_stream.rdbuf();
 
+
+    std::stringstream mesh_stream;
+    mesh_stream << "DATASET POLYDATA" << "\n"
+                << "POINTS " << nodes.size() << " double" << "\n";
     for (const auto &node: nodes) {
-        outFile << node.pos(0)
-                << " " << node.pos(1)
-                << " " << node.pos(2) << "\n";
+        mesh_stream << node.pos(0) << " " << node.pos(1) << " " << node.pos(2) << "\n";
     }
 
-    outFile << "POLYGONS " << triangles.size() << " " << 4 * triangles.size() << "\n";
-
+    mesh_stream << "POLYGONS " << triangles.size() << " " << 4 * triangles.size() << "\n";
     for (const auto &triangle: triangles) {
-        outFile << "3 " << triangle.vertexLabels(0)
-                << " " << triangle.vertexLabels(1)
-                << " " << triangle.vertexLabels(2) << "\n";
+        mesh_stream << "3 " << triangle.vertexLabels(0)
+                        << " " << triangle.vertexLabels(1)
+                        << " " << triangle.vertexLabels(2) << "\n";
     }
+    outFile << mesh_stream.rdbuf();
 
     outFile << "CELL_DATA " << triangles.size() << "\n";
 
-    outFile << "SCALARS gaussCurv double 1" << "\n"
-            << "LOOKUP_TABLE default" << "\n";
-
-    for (int i = 0; i < triangles.size(); ++i) {
-        outFile << gaussCurvatures[i] << "\n";
-    }
-
-    outFile << "SCALARS meanCurv double 1" << "\n"
-            << "LOOKUP_TABLE default" << "\n";
-
-    for (int i = 0; i < triangles.size(); ++i) {
-        outFile << meanCurvatures[i] << "\n";
-    }
-
-    /* Now print non-dimensionalised stretch and bend energies, if specified in
-    settings file. Print also our strain measure, which is not completely
-    dissimilar to a non-dimensional stretch energy. Also, Cauchy stress info.*/
-    if (settings.getCore().isEnergyPrinted()) {
-        outFile << "SCALARS nonDimStretchEnergyDensity double 1" << "\n"
-                << "LOOKUP_TABLE default" << "\n";
-
-        for (const auto &triangle: triangles) {
-            outFile << triangle.stretchEnergyDensity / settings.getStretchEnergyDensityScale() << "\n";
-        }
-
-        outFile << "SCALARS nonDimBendEnergyDensity double 1" << "\n"
-                << "LOOKUP_TABLE default" << "\n";
-
-        for (const auto &triangle: triangles) {
-            outFile << triangle.bendEnergyDensity / settings.getStretchEnergyDensityScale() << "\n";
-        }
-
-        outFile << "SCALARS strainMeasure double 1" << "\n"
-                << "LOOKUP_TABLE default" << "\n";
-
-        for (int i = 0; i < triangles.size(); ++i) { outFile << strainMeasures[i] << "\n"; }
-    }
-
     if (settings.getCore().isStressPrinted()) {
-        outFile << "FIELD cauchyStressInfo 4" << "\n";
+        std::stringstream stress_stream;
+        stress_stream << "FIELD cauchyStressInfo 4" << "\n";
 
-        outFile << "dimlessCauchyStressEigenval1 1 " << triangles.size() << "double" << "\n";
+        stress_stream << "dimlessCauchyStressEigenval1 1 " << triangles.size() << "double" << "\n";
         for (int i = 0; i < triangles.size(); ++i) {
-            outFile << cauchyStressEigenvals[i](0) /
+            stress_stream << cauchyStressEigenvals[i](0) /
                        (settings.getCore().getShearModulus() * settings.getCore().getThickness()) << "\n";
         }
-        outFile << "cauchyStressEigenvec1 3 " << triangles.size() << "double" << "\n";
+        stress_stream << "cauchyStressEigenvec1 3 " << triangles.size() << "double" << "\n";
         for (int i = 0; i < triangles.size(); ++i) {
-            outFile << cauchyStressEigenvecs[i](0, 0) << " " << cauchyStressEigenvecs[i](1, 0) << " "
+            stress_stream << cauchyStressEigenvecs[i](0, 0) << " " << cauchyStressEigenvecs[i](1, 0) << " "
                     << cauchyStressEigenvecs[i](2, 0) << "\n";
         }
-        outFile << "dimlessCauchyStressEigenval2 1 " << triangles.size() << "double" << "\n";
+        stress_stream << "dimlessCauchyStressEigenval2 1 " << triangles.size() << "double" << "\n";
         for (int i = 0; i < triangles.size(); ++i) {
-            outFile << cauchyStressEigenvals[i](1) /
+            stress_stream << cauchyStressEigenvals[i](1) /
                        (settings.getCore().getShearModulus() * settings.getCore().getThickness()) << "\n";
         }
-        outFile << "cauchyStressEigenvec2 3 " << triangles.size() << "double" << "\n";
+        stress_stream << "cauchyStressEigenvec2 3 " << triangles.size() << "double" << "\n";
         for (int i = 0; i < triangles.size(); ++i) {
-            outFile << cauchyStressEigenvecs[i](0, 1) << " " << cauchyStressEigenvecs[i](1, 1) << " "
+            stress_stream << cauchyStressEigenvecs[i](0, 1) << " " << cauchyStressEigenvecs[i](1, 1) << " "
                     << cauchyStressEigenvecs[i](2, 1) << "\n";
         }
+        outFile << stress_stream.rdbuf();
     }
 
-    // Now print current triangle areas if specified in settings file.
-    if (settings.getCore().isTriangleAreaPrinted()) {
-
-        outFile << "SCALARS triArea double 1" << "\n"
-                << "LOOKUP_TABLE default" << "\n";
-
-        for (const auto &triangle: triangles) { outFile << 1.0 / triangle.currAreaInv << "\n"; }
-    }
-
-//    // Now print radii triangle centroids are at in reference state.
-//    outFile << "SCALARS triRefRadialCoord double 1" << "\n"
-//            << "LOOKUP_TABLE default" << "\n";
-//
-//    for (int i = 0; i < triangles.size(); ++i) {
-//        outFile << triangles[i].refCentroid.norm() << "\n";
-//    }
 
     outFile << "POINT_DATA " << nodes.size() << "\n";
-    // Now print angle deficits at nodes, if specified in settings file.
-    if (settings.getCore().isAngleDeficitPrinted()) {
+
+    double_vector gauss_curvature("gaussCurvature", std::vector<double>(nodes.size(), 0));
+    double_vector mean_curvature("meanCurvature", std::vector<double>(nodes.size(), 0));
+    double_vector force("force", std::vector<double>(nodes.size(), 0));
+    double_vector stretch_energy_density("stretchEnergyDensityNonDim", std::vector<double>(nodes.size(), 0));
+    double_vector bend_energy_density("bendEnergyDensityNonDim", std::vector<double>(nodes.size(), 0));
+    double_vector node_area("nodeArea", std::vector<double>(nodes.size(), 0));
+    double_vector strain_measure("strainMeasure", std::vector<double>(nodes.size(), 0));
+    double_vector angle_deficits("angleDeficits", angleDeficits);
 
 
-        outFile << "SCALARS angleDeficit double 1" << "\n"
-                << "LOOKUP_TABLE default" << "\n";
-
-        for (int i = 0; i < nodes.size(); ++i) { outFile << angleDeficits[i] << "\n"; }
+#pragma omp parallel for
+    for (unsigned int i = 0; i < nodes.size(); i++) {
+        unsigned int incident_triangle_count = nodes[i].incidentTriLabels.size();
+        for (auto j: nodes[i].incidentTriLabels) {
+            gauss_curvature.second[i] += gaussCurvatures[j] / incident_triangle_count;
+            mean_curvature.second[i] += meanCurvatures[j] / incident_triangle_count;
+            strain_measure.second[i] += strainMeasures[j] / incident_triangle_count;
+            stretch_energy_density.second[i] += triangles[j].stretchEnergyDensity /
+                                                (settings.getStretchEnergyDensityScale() / incident_triangle_count);
+            bend_energy_density.second[i] += triangles[j].bendEnergyDensity /
+                                             (settings.getStretchEnergyDensityScale() / incident_triangle_count);
+            node_area.second[i] += (1 / triangles[j].currAreaInv) / incident_triangle_count;
+        }
+        force.second[i] = nodes[i].force.norm();
     }
 
-    if (settings.getCore().isForcePrinted()) {
-        outFile << "SCALARS nodeForce double 1 " << "\n"
-                << "LOOKUP_TABLE default" << "\n";;
-        for (auto &node: nodes) { outFile << node.force.norm() << "\n"; }
+    std::vector<double_vector *> data_to_export;
+    data_to_export.emplace_back(&gauss_curvature);
+    data_to_export.emplace_back(&mean_curvature);
+    if (settings.getCore().isEnergyPrinted()) {
+        data_to_export.emplace_back(&bend_energy_density);
+        data_to_export.emplace_back(&stretch_energy_density);
+        data_to_export.emplace_back(&strain_measure);
+    }
+
+    if (settings.getCore().isForcePrinted()) { data_to_export.emplace_back(&force); }
+    if (settings.getCore().isAngleDeficitPrinted()) { data_to_export.emplace_back(&angle_deficits); }
+    if (settings.getCore().isTriangleAreaPrinted()) { data_to_export.emplace_back(&node_area); }
+
+    std::vector<std::stringstream> streams_to_export(data_to_export.size());
+#pragma omp parallel for
+    for (int i = 0; i < data_to_export.size(); i++) {
+        streams_to_export[i] = convert_into_stream(*data_to_export[i]);
+    }
+
+    for (auto &stream: streams_to_export) {
+        outFile << stream.rdbuf();
     }
 
     outFile.close();
