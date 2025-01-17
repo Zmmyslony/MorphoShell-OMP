@@ -38,6 +38,9 @@ triangular element, such as vertices, area etc.*/
 
 
 class Triangle {
+    double local_elongation = 1;
+    double relative_height = 0;
+
 public:
     /* Custom output stream allowing the debugging display function to print to
     a particular file in addition to std::cout.*/
@@ -123,8 +126,6 @@ public:
     /* Dialled in programmed scalar 'tau' factor.*/
     double dialledProgTau;
 
-    double local_elongation = 0.94;
-
     std::vector<Eigen::Vector3d> programmed_metric_infos = {{1, 1, 1}};
     std::vector<Eigen::Matrix<double, 2, 2>> programmed_metric_inv {Eigen::Matrix<double, 2, 2>::Identity()};
     std::vector<Eigen::Matrix<double, 2, 2>> programmed_second_fundamental_form = {Eigen::Matrix<double, 2, 2>::Zero()};
@@ -175,16 +176,16 @@ public:
     Eigen::Matrix<double, 2, 2> bendEnergyDensityDerivWRTMetric;
 
 private:
-    void updateProgrammedMetric(int stage_counter, double dial_in_factor);
+    void updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor);
 
-    void updateProgrammedMetricFromLCEInfo(int stage_counter, double dial_in_factor,
-                                           bool is_elongation_dynamically_updated);
+    void updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor,
+                                        bool is_elongation_dynamically_updated, double transfer_coefficient);
 
     void updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root);
 
     void updateProgrammedTaus(int stage_counter, double dial_in_factor);
 
-    void updateProgrammedMetricFromLCE(double dirAngle, double lambda, double nu);
+    void updateProgrammedMetricImplicit(double dirAngle, double lambda, double nu);
 
 public:
     double bendEnergyDensity;
@@ -264,10 +265,11 @@ public:
 
     void setLocalElongation(double local_elongation);
 
-    double getLocalElongation() const;
+    void setRelativeHeight(double relative_height);
 
     void updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
-                                    bool is_lce_metric_used, bool is_elongation_dynamically_updated);
+                                    bool is_lce_metric_used, bool is_elongation_dynamically_updated,
+                                    double transfer_coefficient);
 };
 
 #endif

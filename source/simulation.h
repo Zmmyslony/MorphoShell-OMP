@@ -134,7 +134,7 @@ class Simulation {
 
     void read_vtk_data(const CoreConfig &config);
 
-    void configure_nodes();
+    void configure_nodes() const;
 
     /** Remaining geometry/topology/mesh-related things. */
     void configure_topological_properties();
@@ -200,8 +200,8 @@ class Simulation {
 //    void print_total_load_force();
 
     void setup_characteristic_scales();
-
     void setup_equilibrium_dial_in_factors();
+    void setInitialTriangleElongations();
 
     /* Create std::vectors (with one element for each triangle) that will be passed
     by reference to functions calculating the Gauss and mean curvatures, and
@@ -221,7 +221,7 @@ class Simulation {
     void setup_imposed_seide_deformations(double &s1, int highest_node, int lowest_node,
                                           std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
 
-    void first_step_configuration(double &seide_quotient, std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
+    void first_step_configuration();
 
     long long int progress_single_step(int counter);
 

@@ -139,9 +139,7 @@ void Simulation::read_vtk_data(const CoreConfig &config) {
 
     readVTKData(nodes, triangles, programmed_metric_infos, inverted_programmed_metrics, programmed_taus,
                 programmed_second_fundamental_forms, settings_new.getCore().isLceModeEnabled(),
-                initialisation_filename,
-                initial_stage,
-                dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename, config);
+                initialisation_filename, initial_stage, dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename, config);
 
     stage_count = (int) inverted_programmed_metrics.size();
 
@@ -160,7 +158,7 @@ void Simulation::read_vtk_data(const CoreConfig &config) {
 }
 
 
-void Simulation::configure_nodes() {
+void Simulation::configure_nodes() const {
     std::cout << "Number of nodes = " << num_nodes << std::endl;
     std::cout << "Number of triangles = " << num_triangles << std::endl;
 
@@ -275,7 +273,7 @@ void Simulation::find_smallest_element() {
     // This is slightly incorrect as it takes the smallest element and largest tau, instead of taking
     // smallest ratio of size to tau, though it is just erring on the side of caution.
     std::vector<double> largest_tau_vector(stage_count);
-    double largest_tau = DBL_MIN;
+    auto largest_tau = DBL_MIN;
     for (auto &triangle: triangles) {
         for (auto &tau: triangle.programmed_taus) {
             if (tau < largest_tau) { largest_tau = tau; }
@@ -522,8 +520,7 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
 //}
 
 
-void Simulation::first_step_configuration(double &seide_quotient,
-                                          std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
+void Simulation::first_step_configuration() {
     slides = settings_new.getSlides();
     cones = settings_new.getCones();
     std::vector<Eigen::Vector3d> node_positions(nodes.size());
@@ -544,8 +541,8 @@ void Simulation::begin_equilibrium_search(int counter) {
     updateTriangleProperties(counter);
     simulation_status = WaitingForEquilibrium;
     // NB an EquilCheck has not actually just occurred, but this has the
-    //desired effect of ensuring that each DialInFactor value is held
-    //for at least one TimeBetweenEquilChecks.
+    // desired effect of ensuring that each DialInFactor value is held
+    // for at least one TimeBetweenEquilChecks.
     time_equilibriation = settings_new.getTimeBetweenEquilibriumChecks();
 
     settings_new.useEquilibriumDamping();
@@ -639,7 +636,7 @@ void Simulation::add_non_elastic_forces() {
 
 /// Updates local triangle elongation depending on the height relative to the lowest Triangle, by keeping
 /// (1 - transfer_coefficient) * previous_elongation + transfer_coefficient * new_elongation
-void updateLocalElongation(std::vector<Triangle> &triangles, double transfer_coefficient, double elongation_per_mm) {
+void setTriangleRelativeHeights(std::vector<Triangle> &triangles) {
     Triangle lowest_triangle = *std::min_element(triangles.begin(), triangles.end(),
                                                  [](const auto &one, const auto &two) {
                                                      return one.getHeight() < two.getHeight();
@@ -647,25 +644,22 @@ void updateLocalElongation(std::vector<Triangle> &triangles, double transfer_coe
     double min_height = lowest_triangle.getHeight();
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
-        double previous_elongation = triangles[i].getLocalElongation();
-        double new_height_elongation = 1 - (triangles[i].getHeight() - min_height) * elongation_per_mm;
-        triangles[i].setLocalElongation(
-                (1 - transfer_coefficient) * previous_elongation + transfer_coefficient * new_height_elongation);
+        triangles[i].setRelativeHeight(triangles[i].getHeight() - min_height);
     }
 }
 
 
 void Simulation::updateTriangleProperties(int counter) {
     const double dial_in_factor_root = sqrt(dial_in_factor);
-    bool is_LCE_metric_used = settings_new.getCore().isLceModeEnabled() && !settings_new.getCore().isAnsatzMetricUsed();
+    bool is_LCE_metric_used = settings_new.getCore().isLceModeEnabled();
 
-    if (is_LCE_metric_used) { updateLocalElongation(triangles, 0.01, 0.06); }
+    setTriangleRelativeHeights(triangles);
 
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         if (simulation_status == Dialling) {
             triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used,
-                                                    true);
+                                                    true, 0.01);
         }
         triangles[i].updateGeometricProperties(nodes);
     }
@@ -853,10 +847,10 @@ void Simulation::run_tensor_increment(int stage_counter) {
     std::cout << "\nBeginning dynamical evolution.\n" << std::endl;
 
     std::vector<Eigen::Vector3d> nodeUnstressedConePosits(num_nodes);
-    double seide_quotient = DBL_MAX;
+//    double seide_quotient = DBL_MAX;
 
     while (phase_counter < dial_in_phases.size() - 1) {
-        if (step_count == 0) { first_step_configuration(seide_quotient, nodeUnstressedConePosits); }
+        if (step_count == 0) { first_step_configuration(); }
         check_if_equilibrium_search_begun(stage_counter);
         if (simulation_status == Dialling) { update_dial_in_factor(); }
 
@@ -881,14 +875,24 @@ void Simulation::advance_time() {
 }
 
 
+void Simulation::setInitialTriangleElongations() {
+#pragma omp parallel for
+    for (int i = 0; i < triangles.size(); i++) {
+        triangles[i].setLocalElongation(triangles[i].programmed_metric_infos[1](1));
+    }
+}
+
 int Simulation::run_simulation() {
     std::cout << std::scientific << std::setprecision(8);
     std::ofstream forceDistFile;
 
+    if (settings_new.getCore().isLceModeEnabled()) {
+        setInitialTriangleElongations();
+    }
     /* Loop over the sequence of programmed tensors, dialling-in and waiting for
     equilibrium between each pair in the sequence. This loop is redundant in most use
     cases for this code, where only a single set of programmed tensors is supplied.*/
-    for (std::size_t stage_counter = initial_stage; stage_counter < stage_count - 1; stage_counter++) {
+    for (int stage_counter = (int)initial_stage; stage_counter < stage_count - 1; stage_counter++) {
         run_tensor_increment(stage_counter);
 
         if (stage_count > 2 && stage_counter < stage_count - 2) {

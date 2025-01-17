@@ -148,7 +148,7 @@ void Triangle::updateSecondFundamentalForm(double bendingPreFac, double JPreFact
     secFF(1, 0) = vectorOfSecFFComps(1);
     secFF(1, 1) = vectorOfSecFFComps(2);
 
-    Eigen::Matrix<double, 2, 2> scaledSecFF = programmedSecFF;
+    Eigen::Matrix<double, 2, 2> scaledSecFF;
 
     Eigen::Matrix<double, 2, 2> relativeSecFF = programmedMetInv * (secFF - programmedSecFF);
     double areaMultiplier = bendingPreFac * programmedMetInvDet;
@@ -171,7 +171,7 @@ void Triangle::updateFirstFundamentalForm(double stretchingPreFac) {
     stretchEnergyDensity = stretchingPreFac * dialledProgTau *
                            ((met * programmedMetInv).trace() +
                             metInvDet / programmedMetInvDet -
-                            3.0 / dialledProgTau);
+                            3 / dialledProgTau);
 }
 
 
@@ -202,7 +202,12 @@ double Triangle::getLinearSize() const {
     return shortest_altitude;
 }
 
-void Triangle::updateProgrammedMetricFromLCE(double dirAngle, double lambda, double nu) {
+template<typename T>
+T interpolate(const T &previous, const T &next, double ratio) {
+    return (1 - ratio) * previous + ratio * next;
+}
+
+void Triangle::updateProgrammedMetricImplicit(double dirAngle, double lambda, double nu) {
     double cosDirAng = cos(dirAngle);
     double sinDirAng = sin(dirAngle);
     double lambdaToTheMinus2 = pow(lambda, -2);
@@ -215,48 +220,44 @@ void Triangle::updateProgrammedMetricFromLCE(double dirAngle, double lambda, dou
     programmedMetInvDet = programmedMetInv.determinant();
 }
 
-void Triangle::updateProgrammedMetricFromLCEInfo(int stage_counter, double dial_in_factor,
-                                                 bool is_elongation_dynamically_updated) {
-    Eigen::Vector3d metric_current = (1.0 - dial_in_factor) * programmed_metric_infos[stage_counter] +
-                                     dial_in_factor * programmed_metric_infos[stage_counter + 1];
+void Triangle::updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor,
+                                              bool is_elongation_dynamically_updated, double transfer_coefficient) {
+    Eigen::Vector3d metric_current = interpolate(programmed_metric_infos[stage_counter],
+                                                 programmed_metric_infos[stage_counter + 1], dial_in_factor);
+
     double dirAng = metric_current(0);
     double lambda = metric_current(1);
     double nu = metric_current(2);
     if (is_elongation_dynamically_updated) {
+        double target_elongation = 1 - (1 - lambda) * relative_height;
+        local_elongation = interpolate(local_elongation, target_elongation, transfer_coefficient);
         lambda = local_elongation;
     }
-
-    updateProgrammedMetricFromLCE(dirAng, lambda, nu);
+    updateProgrammedMetricImplicit(dirAng, lambda, nu);
 }
 
-void Triangle::updateProgrammedMetric(int stage_counter, double dial_in_factor) {
-    Eigen::Matrix<double, 2, 2> metric_previous = programmed_metric_inv[stage_counter];
-    Eigen::Matrix<double, 2, 2> metric_next = programmed_metric_inv[stage_counter + 1];
-    programmedMetInv = (1.0 - dial_in_factor) * metric_previous + dial_in_factor * metric_next;
+void Triangle::updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor) {
+    programmedMetInv = interpolate(programmed_metric_inv[stage_counter], programmed_metric_inv[stage_counter + 1],
+                                   dial_in_factor);
     programmedMetInvDet = programmedMetInv.determinant();
 }
 
 void Triangle::updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root) {
-    Eigen::Matrix<double, 2, 2> fundamental_form_previous = programmed_second_fundamental_form[stage_counter];
-    Eigen::Matrix<double, 2, 2> fundamental_form_next = programmed_second_fundamental_form[stage_counter + 1];
-
-    programmedSecFF =
-            (1.0 - dial_in_factor_root) * fundamental_form_previous +
-            dial_in_factor_root * fundamental_form_next;
+    programmedSecFF = interpolate(programmed_second_fundamental_form[stage_counter], programmed_second_fundamental_form[stage_counter + 1], dial_in_factor_root);
 }
 
 void Triangle::updateProgrammedTaus(int stage_counter, double dial_in_factor) {
-    double tau_previous = programmed_taus[stage_counter];
-    double tau_next = programmed_taus[stage_counter + 1];
-    dialledProgTau = (1.0 - dial_in_factor) * tau_previous + dial_in_factor * tau_next;
+    dialledProgTau = interpolate(programmed_taus[stage_counter], programmed_taus[stage_counter + 1], dial_in_factor);
 }
 
 void Triangle::updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
-                                          bool is_lce_metric_used, bool is_elongation_dynamically_updated) {
+                                          bool is_lce_metric_used, bool is_elongation_dynamically_updated,
+                                          double transfer_coefficient) {
     if (is_lce_metric_used) {
-        updateProgrammedMetricFromLCEInfo(stage_counter, dial_in_factor, is_elongation_dynamically_updated);
+        updateProgrammedMetricImplicit(stage_counter, dial_in_factor, is_elongation_dynamically_updated,
+                                       transfer_coefficient);
     } else {
-        updateProgrammedMetric(stage_counter, dial_in_factor);
+        updateProgrammedMetricExplicit(stage_counter, dial_in_factor);
     }
     updateProgrammedSecondFundamentalForm(stage_counter, dial_in_factor_root);
     updateProgrammedTaus(stage_counter, dial_in_factor);
@@ -407,10 +408,11 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
             "issue in that case. Aborting.");
 }
 
-void Triangle::setLocalElongation(double local_elongation) {
-    Triangle::local_elongation = local_elongation;
+
+void Triangle::setRelativeHeight(double relative_height) {
+    Triangle::relative_height = relative_height;
 }
 
-double Triangle::getLocalElongation() const {
-    return local_elongation;
+void Triangle::setLocalElongation(double local_elongation) {
+    Triangle::local_elongation = local_elongation;
 }
