@@ -202,23 +202,31 @@ double Triangle::getLinearSize() const {
     return shortest_altitude;
 }
 
-void Triangle::updateProgrammedMetricFromLCEInfo(int stage_counter, double dial_in_factor) {
-    Eigen::Vector3d metric_previous = programmed_metric_infos[stage_counter];
-    Eigen::Vector3d metric_next = programmed_metric_infos[stage_counter + 1];
-    double dirAng = (1.0 - dial_in_factor) * metric_previous(0) + dial_in_factor * metric_next(0);
-    double cosDirAng = cos(dirAng);
-    double sinDirAng = sin(dirAng);
-    double lambda = (1.0 - dial_in_factor) * metric_previous(1) + dial_in_factor * metric_next(1);
-    double nu = (1.0 - dial_in_factor) * metric_previous(2) + dial_in_factor * metric_next(2);
-    double lambdaToTheMinus2 = 1.0 / (lambda * lambda);
-    double lambdaToThe2Nu = pow(lambda, 2.0 * nu);
+void Triangle::updateProgrammedMetricFromLCE(double dirAngle, double lambda, double nu) {
+    double cosDirAng = cos(dirAngle);
+    double sinDirAng = sin(dirAngle);
+    double lambdaToTheMinus2 = pow(lambda, -2);
+    double lambdaToThe2Nu = pow(lambda, 2 * nu);
 
-    programmedMetInv(0, 0) =
-            lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
+    programmedMetInv(0, 0) = lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
     programmedMetInv(0, 1) = (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
     programmedMetInv(1, 0) = programmedMetInv(0, 1);
-    programmedMetInv(1, 1) =
-            lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
+    programmedMetInv(1, 1) = lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
+    programmedMetInvDet = programmedMetInv.determinant();
+}
+
+void Triangle::updateProgrammedMetricFromLCEInfo(int stage_counter, double dial_in_factor,
+                                                 bool is_elongation_dynamically_updated) {
+    Eigen::Vector3d metric_current = (1.0 - dial_in_factor) * programmed_metric_infos[stage_counter] +
+                                     dial_in_factor * programmed_metric_infos[stage_counter + 1];
+    double dirAng = metric_current(0);
+    double lambda = metric_current(1);
+    double nu = metric_current(2);
+    if (is_elongation_dynamically_updated) {
+        lambda = local_elongation;
+    }
+
+    updateProgrammedMetricFromLCE(dirAng, lambda, nu);
 }
 
 void Triangle::updateProgrammedMetric(int stage_counter, double dial_in_factor) {
@@ -244,9 +252,9 @@ void Triangle::updateProgrammedTaus(int stage_counter, double dial_in_factor) {
 }
 
 void Triangle::updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
-                                          bool is_LCE_metric_used) {
-    if (is_LCE_metric_used) {
-        updateProgrammedMetricFromLCEInfo(stage_counter, dial_in_factor);
+                                          bool is_lce_metric_used, bool is_elongation_dynamically_updated) {
+    if (is_lce_metric_used) {
+        updateProgrammedMetricFromLCEInfo(stage_counter, dial_in_factor, is_elongation_dynamically_updated);
     } else {
         updateProgrammedMetric(stage_counter, dial_in_factor);
     }
@@ -311,6 +319,9 @@ Eigen::Matrix<double, 6, 1> patchColumn(const Eigen::Vector3d &position, const E
     return patchColumn;
 }
 
+double Triangle::getHeight() const {
+    return centroid(2);
+}
 
 int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes,
                                       double patch_threshold) {
@@ -343,7 +354,7 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
     std::set<std::vector<unsigned int>> candidate_trios;
     for (unsigned int p: possiblePatchNodeLabels) {
         for (unsigned int q: possiblePatchNodeLabels) {
-            for (unsigned int r : possiblePatchNodeLabels) {
+            for (unsigned int r: possiblePatchNodeLabels) {
                 candidate_trios.insert({p, q, r});
             }
         }
@@ -365,20 +376,20 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
         bool isMatReversible = tempPatchNodeDataMatrixDecomp.isInvertible();
 
         if (isMatReversible) {
-        Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
-        Eigen::Matrix<double, 6, 3> candidatePatchDiv;
-        candidatePatchDiv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
+            Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
+            Eigen::Matrix<double, 6, 3> candidatePatchDiv;
+            candidatePatchDiv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
 
-        Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
-        secDerivMatTempSVD.compute(candidatePatchDiv);
+            Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
+            secDerivMatTempSVD.compute(candidatePatchDiv);
 
-        double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
-        double conditionNumber = singular_values * pow(patch_size, 2);
+            double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
+            double conditionNumber = singular_values * pow(patch_size, 2);
 
             if (conditionNumber < lowestConditionNumber) {
-            lowestConditionNumber = conditionNumber;
-            nonVertexPatchNodesLabels = {candidateIndices[0], candidateIndices[1], candidateIndices[2]};
-            matForPatchSecDerivs = candidatePatchDiv;
+                lowestConditionNumber = conditionNumber;
+                nonVertexPatchNodesLabels = {candidateIndices[0], candidateIndices[1], candidateIndices[2]};
+                matForPatchSecDerivs = candidatePatchDiv;
             }
         }
     }
@@ -394,4 +405,12 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
             "threshold. Try increasing this threshold. If that does not solve the issue, or causes "
             "other issues, the patch node search will probably need to be extended. Please report this "
             "issue in that case. Aborting.");
+}
+
+void Triangle::setLocalElongation(double local_elongation) {
+    Triangle::local_elongation = local_elongation;
+}
+
+double Triangle::getLocalElongation() const {
+    return local_elongation;
 }

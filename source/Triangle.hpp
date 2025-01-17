@@ -123,6 +123,8 @@ public:
     /* Dialled in programmed scalar 'tau' factor.*/
     double dialledProgTau;
 
+    double local_elongation = 0.94;
+
     std::vector<Eigen::Vector3d> programmed_metric_infos = {{1, 1, 1}};
     std::vector<Eigen::Matrix<double, 2, 2>> programmed_metric_inv {Eigen::Matrix<double, 2, 2>::Identity()};
     std::vector<Eigen::Matrix<double, 2, 2>> programmed_second_fundamental_form = {Eigen::Matrix<double, 2, 2>::Zero()};
@@ -175,11 +177,14 @@ public:
 private:
     void updateProgrammedMetric(int stage_counter, double dial_in_factor);
 
-    void updateProgrammedMetricFromLCEInfo(int stage_counter, double dial_in_factor);
+    void updateProgrammedMetricFromLCEInfo(int stage_counter, double dial_in_factor,
+                                           bool is_elongation_dynamically_updated);
 
     void updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root);
 
     void updateProgrammedTaus(int stage_counter, double dial_in_factor);
+
+    void updateProgrammedMetricFromLCE(double dirAngle, double lambda, double nu);
 
 public:
     double bendEnergyDensity;
@@ -255,9 +260,14 @@ public:
      */
     double getLinearSize() const;
 
+    double getHeight() const;
+
+    void setLocalElongation(double local_elongation);
+
+    double getLocalElongation() const;
 
     void updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
-                                    bool is_LCE_metric_used);
+                                    bool is_lce_metric_used, bool is_elongation_dynamically_updated);
 };
 
 #endif
