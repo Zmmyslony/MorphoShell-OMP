@@ -637,15 +637,35 @@ void Simulation::add_non_elastic_forces() {
     }
 }
 
+/// Updates local triangle elongation depending on the height relative to the lowest Triangle, by keeping
+/// (1 - transfer_coefficient) * previous_elongation + transfer_coefficient * new_elongation
+void updateLocalElongation(std::vector<Triangle> &triangles, double transfer_coefficient, double elongation_per_mm) {
+    Triangle lowest_triangle = *std::min_element(triangles.begin(), triangles.end(),
+                                                 [](const auto &one, const auto &two) {
+                                                     return one.getHeight() < two.getHeight();
+                                                 });
+    double min_height = lowest_triangle.getHeight();
+#pragma omp parallel for
+    for (int i = 0; i < triangles.size(); i++) {
+        double previous_elongation = triangles[i].getLocalElongation();
+        double new_height_elongation = 1 - (triangles[i].getHeight() - min_height) * elongation_per_mm;
+        triangles[i].setLocalElongation(
+                (1 - transfer_coefficient) * previous_elongation + transfer_coefficient * new_height_elongation);
+    }
+}
+
+
 void Simulation::updateTriangleProperties(int counter) {
     const double dial_in_factor_root = sqrt(dial_in_factor);
     bool is_LCE_metric_used = settings_new.getCore().isLceModeEnabled() && !settings_new.getCore().isAnsatzMetricUsed();
 
+    if (is_LCE_metric_used) { updateLocalElongation(triangles, 0.01, 0.06); }
 
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         if (simulation_status == Dialling) {
-            triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used);
+            triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used,
+                                                    true);
         }
         triangles[i].updateGeometricProperties(nodes);
     }
@@ -836,7 +856,7 @@ void Simulation::run_tensor_increment(int stage_counter) {
     double seide_quotient = DBL_MAX;
 
     while (phase_counter < dial_in_phases.size() - 1) {
-        if (step_count == 0) { first_step_configuration(seide_quotient, nodeUnstressedConePosits);}
+        if (step_count == 0) { first_step_configuration(seide_quotient, nodeUnstressedConePosits); }
         check_if_equilibrium_search_begun(stage_counter);
         if (simulation_status == Dialling) { update_dial_in_factor(); }
 
