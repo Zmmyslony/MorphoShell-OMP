@@ -38,7 +38,7 @@ The forces are also checked, to catch code crashed in which the forces usually
 
 
 bool isForceThresholdExceeded(const Node &node, const SettingsNew &settings) {
-    return node.force.norm() >= 1e5 * settings.getForceScale();
+    return node.force.norm() >= 1e5 * settings.getForceScale() || std::isnan(node.force(0));
 }
 
 
@@ -46,7 +46,7 @@ void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles) {
     std::cout << " ----------------------------------------" << std::endl;
     std::cout << " ------------CRASH REPORT----------------" << std::endl;
     std::cout << " ----------------------------------------" << std::endl;
-    std::cout << "Offending node and its incident triangles: " << std::endl;
+    std::cout << "First offending node and its incident triangles: " << std::endl;
 
     node.display();
     for (int t = 0; t < node.incidentTriLabels.size(); ++t) {
