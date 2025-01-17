@@ -139,7 +139,8 @@ void Simulation::read_vtk_data(const CoreConfig &config) {
 
     readVTKData(nodes, triangles, programmed_metric_infos, inverted_programmed_metrics, programmed_taus,
                 programmed_second_fundamental_forms, settings_new.getCore().isLceModeEnabled(),
-                initialisation_filename, initial_stage, dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename, config);
+                initialisation_filename, initial_stage, dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename,
+                config);
 
     stage_count = (int) inverted_programmed_metrics.size();
 
@@ -666,12 +667,12 @@ void Simulation::updateTriangleProperties(int counter) {
 }
 
 long long int Simulation::progress_single_step(int counter) {
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    auto begin = std::chrono::high_resolution_clock::now();
     zeroForces(nodes);
     updateTriangleProperties(counter);
     add_elastic_forces();
     add_non_elastic_forces();
-    auto duration = std::chrono::steady_clock::now() - begin;
+    auto duration = std::chrono::high_resolution_clock::now() - begin;
     long long duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
     return duration_us;
 }
@@ -685,6 +686,7 @@ void Simulation::update_dial_in_factor() {
 
 
 void Simulation::save_and_print_details(int counter, long long int duration_us) {
+    auto begin = std::chrono::high_resolution_clock::now();
     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings_new.getCore());
     if (settings_new.getCore().isEnergyPrinted()) {
@@ -692,24 +694,20 @@ void Simulation::save_and_print_details(int counter, long long int duration_us) 
                                 stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                 cauchyStressEigenvals, cauchyStressEigenvecs, settings_new.getCore());
     }
+    auto duration = std::chrono::high_resolution_clock::now() - begin;
+    long long prep_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
 
-    // Here we hack the angleDeficits to instead tell us whether a node has a Seide displacement imposed or not.
-    for (int n = 0; n < num_nodes; ++n) {
-        if (nodes[n].isSeideDisplacementEnabled) {
-            angleDeficits[n] = 1;
-        } else {
-            angleDeficits[n] = 0;
-        }
-    }
-    writeVTKDataOutput(nodes, triangles, step_count, time_global, dial_in_factor, counter,
-                       gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
-                       boundaryNodeAngleDeficits,
-                       stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
-                       cauchyStressEigenvals, cauchyStressEigenvecs, settings_new, output_dir_name);
+    long long export_us = writeVTKDataOutput(nodes, triangles, step_count, time_global, dial_in_factor, counter,
+                                             gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
+                                             boundaryNodeAngleDeficits,
+                                             stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
+                                             cauchyStressEigenvals, cauchyStressEigenvecs, settings_new,
+                                             output_dir_name);
+
 
     std::cout << log_prefix()
-              << "Last step's execution time " << duration_us << " us."
-              << std::endl;
+              << "Last step's execution time " << duration_us << " us. Prep " << prep_us << " us, export "
+              << export_us << " us." << std::endl;
 
 }
 
@@ -892,7 +890,7 @@ int Simulation::run_simulation() {
     /* Loop over the sequence of programmed tensors, dialling-in and waiting for
     equilibrium between each pair in the sequence. This loop is redundant in most use
     cases for this code, where only a single set of programmed tensors is supplied.*/
-    for (int stage_counter = (int)initial_stage; stage_counter < stage_count - 1; stage_counter++) {
+    for (int stage_counter = (int) initial_stage; stage_counter < stage_count - 1; stage_counter++) {
         run_tensor_increment(stage_counter);
 
         if (stage_count > 2 && stage_counter < stage_count - 2) {
