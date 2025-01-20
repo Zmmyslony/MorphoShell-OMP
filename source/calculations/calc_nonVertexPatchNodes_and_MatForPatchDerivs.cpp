@@ -53,8 +53,6 @@ later.
 
 void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                                                     double patch_threshold) {
-
-    // Number of boundary triangles that tried multiple candidates for patches
     int invalid_non_boundary_triangle_count = 0;
 
 #pragma omp parallel for reduction (+ : invalid_non_boundary_triangle_count)
@@ -63,17 +61,10 @@ void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &nod
 
     }
 
-    /*Print also the number of non-boundary triangles that had to search through
-    multiple possible patch options to find one satisfying the determinant
-    condition. It seems unlikely that the determinant will be a small for
-    triangles in the interior of a reasonable mesh, so if this number is large,
-    that suggests something suspicious. One explanation might be that
-    settings.PatchMatrixDimensionlessConditioningThreshold has been set to too
-    low a value*/
-//    logStream.open();
-    std::cout << "Number of non-boundary triangles that had to search through \n" <<
-              "multiple possible patch options to find one \nsatisfying the condition number " <<
-              "criterion was " << invalid_non_boundary_triangle_count <<
-              ", \nwhich should not be a large proportion of the mesh's triangles." << std::endl;
-//    logStream.close();
+    if (invalid_non_boundary_triangle_count > 0) {
+        std::cout << "Number of non-boundary triangles that had to search through \n" <<
+                  "multiple possible patch options to find one \nsatisfying the condition number " <<
+                  "criterion was " << invalid_non_boundary_triangle_count <<
+                  ", \nwhich should not be a large proportion of the mesh's triangles." << std::endl;
+    }
 }

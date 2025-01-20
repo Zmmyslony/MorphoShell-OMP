@@ -45,11 +45,11 @@ public:
 
     const std::vector<Cone> &getCones() const;
 
-    std::string SetupPrintFrequency();
+    void SetupPrintFrequency();
 
-    std::string SetupStepTime(double size_factor);
+    void SetupStepTime(double size_factor);
 
-    std::string SetupDialInTime(double size_factor);
+    void SetupDialInTime(double size_factor);
 
     void SetupCharacteristicSizes(double total_area, double size_factor);
     void useEquilibriumDamping();

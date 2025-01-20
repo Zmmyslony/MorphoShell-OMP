@@ -51,26 +51,6 @@ void Simulation::setupLogging() {
 }
 
 
-//void Simulation::save_vtk() {
-//    vtkNew<vtkPoints> nodes_vtk;
-//    for (auto &node : nodes) {
-//        nodes_vtk -> InsertNextPoint(node.pos(0), node.pos(1), node.pos(1));
-//    }
-//
-//    vtkNew<vtkCellArray> triangles_vtk;
-//    for (auto &triangle : triangles) {
-//        vtkNew<vtkTriangle> triangle_vtk;
-//        for (int i = 0; i < 3; i++) {
-//            tirangle_vtk -> GetPointIds() -> SetId(i, triangle.vertexLabels(i));
-//        }
-//        triangles_vtk -> InsertNextCell(triangle_vtk);
-//    }
-//    vtkNew<vtkPolyData> polydata;
-//    polydata -> SetPoints(nodes_vtk);
-//    polydata -> SetPolys(triangles_vtk);
-//}
-
-
 void Simulation::setup_filenames(int argc, char *argv[]) {
     init_string += "Simulation run began at: " + getRealTime() + "\n";
     init_string += "The command that was run was:\n";
@@ -126,11 +106,6 @@ void Simulation::read_settings_new(int argc, char *argv[]) {
 
 
 void Simulation::read_vtk_data(const CoreConfig &config) {
-    std::cout << "Now attempting to read data files. An error here likely \n"
-                 "implies a problem with a data file, for example a mismatch between the \n"
-                 "number of nodes or triangles stated and the number actually present; \n"
-                 "or other similar mismatches in numbers of data values; or a format problem. \n"
-                 "Remember the input files must have exactly the correct format." << std::endl;
     std::vector<std::vector<Eigen::Vector3d>> programmed_metric_infos;
     std::vector<std::vector<Eigen::Matrix<double, 2, 2> >> inverted_programmed_metrics;
     std::vector<std::vector<double>> programmed_taus;
@@ -159,8 +134,8 @@ void Simulation::read_vtk_data(const CoreConfig &config) {
 
 
 void Simulation::configure_nodes() const {
-    std::cout << "Number of nodes = " << num_nodes << std::endl;
-    std::cout << "Number of triangles = " << num_triangles << std::endl;
+    std::cout << "Nodes count = " << num_nodes << std::endl;
+    std::cout << "Triangle count = " << num_triangles << std::endl;
 
     if (num_triangles < 50) {
         std::cerr << "Your mesh has a small number of triangles. \nBeware that the code "
@@ -204,16 +179,17 @@ void Simulation::configure_topological_properties() {
 
     double initPerimeter = kahanSum(initBoundaryEdgeLengths);
     characteristic_long_length = initPerimeter;
-    std::cout << "Initial perimeter = " << initPerimeter << std::endl;
 
     if (3 * num_triangles != 2 * num_edges - numBoundaryEdges) {
         throw std::runtime_error(
                 "Something has gone wrong in calculating triangle adjacencies and/or edges: the current edge and triangle counts violate a topological identity.");
     }
 
-    std::cout << "Number of edges = " << num_edges << std::endl;
-    std::cout << "Number of boundary edges = " << numBoundaryEdges << std::endl;
-    std::cout << "Number of non-boundary edges = " << num_edges - numBoundaryEdges << std::endl;
+    std::cout << "Edges count = " << num_edges << std::endl;
+    std::cout << "Boundary edges count = " << numBoundaryEdges << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Initial perimeter = " << initPerimeter << std::endl;
 }
 
 
@@ -225,6 +201,7 @@ void Simulation::configure_triangles() {
         }
     }
 
+    std::cout << std::endl;
     std::cout << "Number of boundary triangles = " << numBoundaryTriangles << std::endl;
     std::cout << "Number of holes in mesh = " << 1 + num_edges - num_nodes - num_triangles
               << std::endl; // From Euler's formula for a planar graph.
@@ -236,12 +213,8 @@ void Simulation::configure_triangles() {
 }
 
 void Simulation::set_node_patches() {
-    std::cout << "\n" << "Beginning patch selection and related pre-calculations." << std::endl;
-
     calc_nonVertexPatchNodes_and_MatForPatchDerivs(nodes, triangles,
                                                    settings_new.getCore().getPatchMatrixThreshold());
-
-    std::cout << "Successfully completed patch setup." << "\n" << std::endl;
 }
 
 
@@ -281,6 +254,7 @@ void Simulation::find_smallest_element() {
     }
     characteristic_length_over_tau = characteristic_short_length / sqrt(largest_tau);
 
+    std::cout << std::endl;
     std::cout << "Sheet thickness = " << settings_new.getCore().getThickness() << std::endl;
     std::cout << "Approx smallest element linear size = " << characteristic_short_length << std::endl;
 }
@@ -347,9 +321,9 @@ void Simulation::init(int argc, char *argv[]) {
     find_smallest_element();
     correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(triangles, nodes);
 
-    std::cout << settings_new.SetupDialInTime(characteristic_long_length);
-    std::cout << settings_new.SetupStepTime(characteristic_short_length);
-    std::cout << settings_new.SetupPrintFrequency();
+    settings_new.SetupDialInTime(characteristic_long_length);
+    settings_new.SetupStepTime(characteristic_short_length);
+    settings_new.SetupPrintFrequency();
 
     setup_characteristic_scales();
     setup_equilibrium_dial_in_factors();

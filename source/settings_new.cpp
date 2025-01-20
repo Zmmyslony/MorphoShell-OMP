@@ -71,51 +71,42 @@ const std::vector<Slide> &SettingsNew::getSlides() const {
     return slides;
 }
 
-std::string SettingsNew::SetupDialInTime(double size_factor) {
+void SettingsNew::SetupDialInTime(double size_factor) {
     /* Calculate 'dialling in' time and damping coefficient based on toy model
     stretching and bending analyses. The 'Long times' are approximate characteristic
     times for the longest-wavelength modes in the system for stretching and bending.
     The damping coefficient is chosen to approximately critically damp the longest-
     wavelength bending mode.
     */
-    std::stringstream log_stream;
-
     num_damping_prefactor = getCore().getDampingPrefactor() * getCore().getDampingScale(size_factor);
-    log_stream << "Numerical damping Coefficient = " << num_damping_prefactor << std::endl;
+    std::cout << std::endl;
+    std::cout << "Numerical damping coefficient = " << num_damping_prefactor << std::endl;
 
     double stretching_time_scale = getCore().getStretchingTimeScale(size_factor);
     double bending_time_scale = getCore().getBendingTimeScale(size_factor);
 
     if (stretching_time_scale > bending_time_scale) {
         duration_phase = stretching_time_scale;
-        log_stream << "Phase duration = " << duration_phase
-                   << ", set based on stretching rather than bending." << std::endl;
+        std::cout << "Phase duration (stretching based) = " << duration_phase << std::endl;
     } else {
         duration_phase = bending_time_scale;
-        log_stream << "Phase duration = " << duration_phase
-                   << ", set based on bending rather than stretching." << std::endl;
+        std::cout << "Phase duration (bending based) = " << duration_phase << std::endl;
     }
-    return log_stream.str();
 }
 
 
-std::string SettingsNew::SetupStepTime(double size_factor) {
+void SettingsNew::SetupStepTime(double size_factor) {
     /* Calculate time step based on toy model stretching and bending analyses (take
     whichever gives shortest characteristic time), and print. */
-    std::stringstream log_stream;
 
-    double stretchingTimeStep;
-    double bendingTimeStep;
+    double stretchingTimeStep = core.getStretchingTimeStep(size_factor);
+    double bendingTimeStep = core.getBendingTimeStep(size_factor);
 
-    if (!core.isGradientDescentDynamics()) {
-        stretchingTimeStep = core.getStretchingTimeStep(size_factor);
-        bendingTimeStep = core.getBendingTimeStep(size_factor);
-    } else {
-
+    if (core.isGradientDescentDynamics()) {
         stretchingTimeStep = core.getStretchingTimeStepGradientDescent(size_factor);
         bendingTimeStep = core.getBendingTimeStepGradientDescent(size_factor);
 
-        log_stream
+        std::cout
                 << "\nUSING GRADIENT DESCENT DYNAMICS." << std::endl
                 << "BE WARNED - this feature is only intended for use on nearly converged states supplied as fully dialled-in ansatzes."
                 << std::endl
@@ -127,18 +118,12 @@ std::string SettingsNew::SetupStepTime(double size_factor) {
 
     }
 
-
-    log_stream << "Short stretching and bending timescales: " << stretchingTimeStep << ", " << bendingTimeStep
-               << std::endl;
-
     if (stretchingTimeStep < bendingTimeStep) {
         time_step_size = stretchingTimeStep;
-        log_stream << "Time step = " << time_step_size << ", set based on stretching rather than bending."
-                   << std::endl;
+        std::cout << "Time step (stretching) = " << stretchingTimeStep << " (bending = " << bendingTimeStep << ")" << std::endl;
     } else {
         time_step_size = bendingTimeStep;
-        log_stream << "Time step = " << time_step_size << ", set based on bending rather than stretching."
-                   << std::endl;
+        std::cout << "Time step (bending) = " << bendingTimeStep << " (stretching = " << stretchingTimeStep << ")" << std::endl;
     }
 
     /* Fix up DialInStepTime if gradient descent is being used, just to give
@@ -147,12 +132,10 @@ std::string SettingsNew::SetupStepTime(double size_factor) {
         duration_phase = 1000 * time_step_size;
         interval_equilibrium_check = core.getDialInTimePrefactor() * duration_phase;
     }
-
-    return log_stream.str();
 }
 
 
-std::string SettingsNew::SetupPrintFrequency() {
+void SettingsNew::SetupPrintFrequency() {
     /* Calculate print frequency based on DialInStepTime / TimeStep, tuned by a
 dimensionless parameter in the setting file and rounded to the nearest integer.
 This rounding should work fine as long as the PrintFrequency isn't ridiculously
@@ -163,24 +146,22 @@ be a useful thing to do sometimes. If PrintFrequency is set to a negative value
 we instead set InversePrintRate to -1, which means no output files are regularly
 written at all.
 */
-    std::stringstream log_stream;
     if (core.getPrintFrequency() < 0) {
         interval_print_step = -1;
-        return log_stream.str();
+        return;
     }
 
     if (core.getPrintFrequency() < 1) {
-        log_stream
+        std::cout
                 << "Error: To avoid potential divide-by-zero problems we do NOT allow settings.PrintFrequency to lie in [0, 1). This is overkill somewhat, and could be relaxed if need be."
                 << std::endl;
-        return log_stream.str();
+        return;
     }
 
     interval_print_step = lround(duration_phase / (time_step_size * core.getPrintFrequency()));
     if (interval_print_step == 0) {
         interval_print_step = 1;
     }
-    return log_stream.str();
 }
 
 void SettingsNew::SetupCharacteristicSizes(double total_area, double size_factor) {
