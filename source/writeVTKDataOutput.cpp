@@ -139,12 +139,16 @@ long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vect
 
     for (const auto &node: nodes) {
         if (is_binary) {
-            for (unsigned int i = 0; i < 3; i++){
-                double val = node.pos(i);
-                SwapEnd(val);
+            double x = node.pos(0);
+            double y = node.pos(1);
+            double z = node.pos(2);
+            SwapEnd(x);
+            SwapEnd(y);
+            SwapEnd(z);
 
-                mesh_stream.write((const char *) &val, sizeof(double));
-            }
+            mesh_stream.write((const char *) &x, sizeof(double));
+            mesh_stream.write((const char *) &y, sizeof(double));
+            mesh_stream.write((const char *) &z, sizeof(double));
         } else {
             mesh_stream << node.pos(0) << " " << node.pos(1) << " " << node.pos(2) << "\n";
         }
@@ -157,13 +161,17 @@ long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vect
     SwapEnd(element_count);
     for (const auto &triangle: triangles) {
         if (is_binary) {
-            mesh_stream.write((const char *) &element_count, sizeof(uint32_t));
-            for (unsigned int i = 0; i < 3; i++){
-                uint32_t val = triangle.vertexLabels(i);
-                SwapEnd(val);
+            uint32_t i0 = triangle.vertexLabels(0);
+            uint32_t i1 = triangle.vertexLabels(1);
+            uint32_t i2 = triangle.vertexLabels(2);
+            SwapEnd(i0);
+            SwapEnd(i1);
+            SwapEnd(i2);
 
-                mesh_stream.write((const char *) &val, sizeof(uint32_t));
-            }
+            mesh_stream.write((const char *) &element_count, sizeof(uint32_t));
+            mesh_stream.write((const char *) &i0, sizeof(uint32_t));
+            mesh_stream.write((const char *) &i1, sizeof(uint32_t));
+            mesh_stream.write((const char *) &i2, sizeof(uint32_t));
         } else {
             mesh_stream << "3 " << triangle.vertexLabels(0)
                         << " " << triangle.vertexLabels(1)
@@ -224,11 +232,13 @@ long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vect
             gauss_curvature.second[i] += gaussCurvatures[j] / incident_triangle_count;
             mean_curvature.second[i] += meanCurvatures[j] / incident_triangle_count;
             strain_measure.second[i] += strainMeasures[j] / incident_triangle_count;
-            stretch_energy_density.second[i] += triangles[j].stretchEnergyDensity /
+            const Triangle* triangle = &triangles[j];
+
+            stretch_energy_density.second[i] += triangle->stretchEnergyDensity /
                                                 (settings.getStretchEnergyDensityScale() / incident_triangle_count);
-            bend_energy_density.second[i] += triangles[j].bendEnergyDensity /
+            bend_energy_density.second[i] += triangle->bendEnergyDensity /
                                              (settings.getStretchEnergyDensityScale() / incident_triangle_count);
-            node_area.second[i] += (1 / triangles[j].currAreaInv) / incident_triangle_count;
+            node_area.second[i] += (1 / triangle->currAreaInv) / incident_triangle_count;
         }
         force.second[i] = nodes[i].force.norm();
     }
