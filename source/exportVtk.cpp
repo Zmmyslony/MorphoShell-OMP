@@ -94,14 +94,14 @@ writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &
     auto begin = std::chrono::high_resolution_clock::now();
 
     std::ofstream outFile(outputDirName + "/step_count.vtk." + std::to_string(stepcount),
-                          std::ios::out | std::ios::app | std::ios::binary);
+                          std::ios::out | std::ios::binary);
     if (!outFile) {
         throw std::runtime_error("Error: Problem creating or opening output file.");
     }
     std::stringstream header_stream;
 
     header_stream << std::scientific << std::setprecision(5)
-                  << "# vtk DataFile Version 3.0" << "\n"
+                  << "# vtk DataFile Version 4.0" << "\n"
                   << "dial_in_factor = " << currDialInFactor << " dialling programmed tensors _"
                   << progTensorSequenceCounter + 1 << ", time = " << time << ", stepcount = " << stepcount;
 
@@ -126,7 +126,7 @@ writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &
 #ifdef BINARY_EXPORT
     header_stream << std::endl << "BINARY" << std::endl;
 #else
-    header_stream << std::endl << "ACII" << std::endl;
+    header_stream << std::endl << "ASCII" << std::endl;
 #endif
     outFile << header_stream.rdbuf();
 
