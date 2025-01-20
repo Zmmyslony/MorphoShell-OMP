@@ -6,9 +6,8 @@ set(CMAKE_CXX_FLAGS -ffast-math)
 find_package(OpenMP REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
-
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(VTK COMPONENTS)
+find_package(VTK REQUIRED COMPONENTS)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -63,9 +62,9 @@ target_link_libraries(Morphoshell PRIVATE ${LIBCONFIGPP_LIB})
 target_link_libraries(Morphoshell PRIVATE OpenMP::OpenMP_CXX)
 target_link_libraries(Morphoshell PRIVATE Eigen3::Eigen)
 target_link_libraries(Morphoshell PRIVATE ${VTK_LIBRARIES})
-#
-#vtk_module_autoinit(
-#        TARGETS Morphoshell
-#        MODULES ${VTK_LIBRARIES}
-#)
+
+vtk_module_autoinit(
+        TARGETS Morphoshell
+        MODULES ${VTK_LIBRARIES}
+)
 

@@ -58,13 +58,23 @@ std::cout << teststring << std::endl;
 #include <stdexcept>
 #include <fstream>
 
+#include <vtkPolyDataReader.h>
+#include <vtkPolyData.h>
+#include <vtkCellData.h>
+#include <vtkPointData.h>
+
 #include "readVTKData.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
 
-void readVTKDataNew() {
 
+vtkSmartPointer<vtkPolyData> ReadPolyData(const char *fileName) {
+    vtkNew<vtkPolyDataReader> reader;
+    reader->SetFileName(fileName);
+    reader->Update();
+    return reader->GetOutput();
 }
+
 
 void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                  std::vector<std::vector<Eigen::Vector3d> > &sequenceOf_ProgMetricInfo,
@@ -76,175 +86,99 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                  std::vector<Eigen::Vector3d> &nodeAnsatzPositions, const std::string &ansatz_data_file_name_str,
                  const CoreConfig &config) {
 
-    /* Variable to hold number of different sets of programmed tensors are
-    present in the input file. These are all stored and then activated in
-    sequence in the dynamics.*/
-    int numProgTensorsInSequence;
+    auto main_vtk_data = ReadPolyData((const char *) init_data_file_name_str.c_str());
+    auto ansatz_vtk_data = ReadPolyData((const char *) ansatz_data_file_name_str.c_str());
 
-    /* Temporary string variable used to help check the data files have the
-    correct format. */
-    std::string tempString;
-
-    std::cout << "Beginning reading of input non-ansatz data file." << std::endl;
-
-
-    std::ifstream init_DataFile(init_data_file_name_str);
-    if (!init_DataFile) {
-        throw std::runtime_error("Error: Problem opening data file given as second command line argument.");
-    }
-
-    // Ignore first 4 lines.
-    for (int i = 0; i < 4; ++i) {
-        init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
-
-    // Ignore "POINTS".
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
-
-    // Get number of nodes and resize nodes container accordingly.
-    int num_nodes;
-    init_DataFile >> num_nodes;
-    if (num_nodes <= 0) {
+    unsigned int vertex_count = main_vtk_data->GetNumberOfPoints();
+    unsigned int triangle_count = main_vtk_data->GetNumberOfCells();
+    if (ansatz_data_file_name_str != "no_ansatz_file" &&
+        (vertex_count != ansatz_vtk_data->GetNumberOfPoints() ||
+         triangle_count != ansatz_vtk_data->GetNumberOfCells())) {
         throw std::runtime_error(
-                "Error: Problem with (or before) line giving number of nodes in non-ansatz data file.");
-    } else {
-        nodes.resize(num_nodes);
+                "VTK files for programmed quantities and ansatz have different count of vertices or polygons.");
     }
 
-    // Ignore rest of line.
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    // Put node label and coordinates in nodes container.
-    for (int nodeLabel = 0; nodeLabel < num_nodes; ++nodeLabel) {
-        nodes.at(nodeLabel).label = nodeLabel;
-        init_DataFile >> nodes.at(nodeLabel).pos(0);
-        init_DataFile >> nodes.at(nodeLabel).pos(1);
-        init_DataFile >> nodes.at(nodeLabel).pos(2);
-        init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ignore delimeter at end of line.
+    // Read in the reference node positions
+    nodes.reserve(vertex_count);
+    for (unsigned int i = 0; i < vertex_count; i++) {
+        double coords[3];
+        main_vtk_data->GetPoint(i, coords);
+        nodes.emplace_back(i, coords);
     }
 
-
-    // Check we've arrived at the expected line of the file: 'POLYGONS'
-    init_DataFile >> tempString;
-    if (tempString.compare("POLYGONS")) {
-        throw std::runtime_error(
-                "Error: Problem with non-ansatz data file, at or before 'POLYGONS' line. E.g. may have provided or stated wrong number of nodes.");
-    }
-    tempString.clear();
-
-
-    /* Get number of triangles and resize triangles, director angles and
-    director twists containers accordingly. */
-    int num_triangles;
-    init_DataFile >> num_triangles;
-    if (num_triangles <= 0) {
-        throw std::runtime_error("Error: Problem with line giving number of triangles in non-ansatz data file.");
-    }
-    triangles.resize(num_triangles);
-
-
-    // Ignore rest of line.
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    // Put triangles' self and vertex labels in triangles container.
-    for (int triangleLabel = 0; triangleLabel < num_triangles; ++triangleLabel) {
-        triangles.at(triangleLabel).label = triangleLabel;
-        /* Ignore first number of each row, which just says this polygon has
-        3 vertices.*/
-        init_DataFile.ignore(1);
-        init_DataFile >> triangles.at(triangleLabel).vertexLabels(0);
-        init_DataFile >> triangles.at(triangleLabel).vertexLabels(1);
-        init_DataFile >> triangles.at(triangleLabel).vertexLabels(2);
-        init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
-
-    // Check we've arrived at the expected line of the file: 'CELL_DATA'...
-    init_DataFile >> tempString;
-    if (tempString.compare("CELL_DATA")) {
-        throw std::runtime_error(
-                "Error: Problem with non-ansatz data file, at or before 'CELL_DATA' line. E.g. may have provided or stated wrong number of triangles.");
-    }
-    tempString.clear();
-    // Ignore rest of line.
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    // Ignore 'FIELD programmed_Quantities'.
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
-    // Record number of separate sets of programmed tensors have been given.
-    init_DataFile >> numProgTensorsInSequence;
-    if (numProgTensorsInSequence % 3 == 0) {
-        numProgTensorsInSequence = numProgTensorsInSequence /
-                                   3; //From this line onwards a programmed metric/secFF/tau triple is considered a single entry of the sequence
-    } else {
-        throw std::runtime_error(
-                "Error: Stated no. of programmed metrics + no. of programmed secFFs in sequence (stated in input file after 'FIELD programmed_Tensors') is not even, suggesting mismatch.");
-    }
-    // Ignore rest of line.
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    /* Resize data structures which will hold the sequence of programmed
-    tensors. The +1 leaves the first in the sequence to be the trivial tensors
-    for the initial flat plane. */
-    sequenceOf_ProgMetricInfo.resize(numProgTensorsInSequence + 1);
-    sequenceOf_InvProgMetrics.resize(numProgTensorsInSequence + 1);
-    sequenceOf_ProgTaus.resize(numProgTensorsInSequence + 1);
-    sequenceOf_ProgSecFFs.resize(numProgTensorsInSequence + 1);
-
-
-    // Now loop to read in the full sequence of programmed tensors.
-    for (int sequenceIdx = 1; sequenceIdx < numProgTensorsInSequence + 1; ++sequenceIdx) {
-
-        sequenceOf_ProgMetricInfo.at(sequenceIdx).resize(num_triangles);
-        sequenceOf_InvProgMetrics.at(sequenceIdx).resize(num_triangles);
-        sequenceOf_ProgTaus.at(sequenceIdx).resize(num_triangles);
-        sequenceOf_ProgSecFFs.at(sequenceIdx).resize(num_triangles);
-
-        // Check we've arrived at the expected line of the file: 'progMetricInfo'...
-        init_DataFile >> tempString;
-        if (tempString.find("progMetricInfo") == std::string::npos) {
-            throw std::runtime_error("Error: Problem with non-ansatz data file, at or before a 'progMetricInfo' line.");
+    // If ansatz is specified, read in the ansatz nodes too
+    if (ansatz_data_file_name_str != "no_ansatz_file") {
+        nodeAnsatzPositions.reserve(vertex_count);
+        for (unsigned int i = 0; i < vertex_count; i++) {
+            double coords[3];
+            ansatz_vtk_data->GetPoint(i, coords);
+            nodeAnsatzPositions.emplace_back(Eigen::Vector3d({coords[0], coords[1], coords[2]}));
         }
-        tempString.clear();
-        // Ignore rest of line.
-        init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
 
-        // Read triangles' programmed (energetically favoured) metric info.
+    // Read in the triangle structure
+    triangles.reserve(triangle_count);
+    for (unsigned int i = 0; i < triangle_count; i++) {
+        vtkNew<vtkIdList> ids;
+        main_vtk_data->GetCellPoints(i, ids);
+        if (ids->GetNumberOfIds() != 3) {
+            throw std::runtime_error("Mesh error: non-triangular polygons are present in the mesh.");
+        }
+        triangles.emplace_back(Triangle(i, ids->GetId(0), ids->GetId(1), ids->GetId(2)));
+    }
+
+
+    // Read in the programmed quantities which are defined as cell data.
+    auto cell_data = main_vtk_data->GetCellData();
+    if (cell_data->GetNumberOfArrays() % 3 != 0) {
+        throw std::runtime_error("VTK: too many fields defining the deformation - they should be provided in triplets"
+                                 "(progMetricInfo_i, progSecFFComps_i, progTaus_i), with i starting at 0.");
+    }
+
+    int progTensorCount = cell_data->GetNumberOfArrays() / 3;
+    sequenceOf_ProgMetricInfo.resize(progTensorCount + 1);
+    sequenceOf_InvProgMetrics.resize(progTensorCount + 1);
+    sequenceOf_ProgTaus.resize(progTensorCount + 1);
+    sequenceOf_ProgSecFFs.resize(progTensorCount + 1);
+
+    for (unsigned int i = 1; i < progTensorCount + 1; i++) {
+        auto metric_info = cell_data->GetArray(("progMetricInfo_" + std::to_string(i - 1)).c_str());
+        auto bend_info = cell_data->GetArray(("progSecFFComps_" + std::to_string(i - 1)).c_str());
+        auto tau_info = cell_data->GetArray(("progTaus_" + std::to_string(i - 1)).c_str());
+
+        sequenceOf_ProgMetricInfo[i].resize(triangle_count);
+        sequenceOf_InvProgMetrics[i].resize(triangle_count);
+        sequenceOf_ProgTaus[i].resize(triangle_count);
+        sequenceOf_ProgSecFFs[i].resize(triangle_count);
+
         Eigen::Vector3d tempProgMetricInfo;
-        Eigen::Matrix<double, 2, 2> tempProgMetric;
-        Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > lu;
-        for (int triangleLabel = 0; triangleLabel < num_triangles; ++triangleLabel) {
-
-            init_DataFile >> tempProgMetricInfo(0);
-            init_DataFile >> tempProgMetricInfo(1);
-            init_DataFile >> tempProgMetricInfo(2);
-
+        for (unsigned int j = 0; j < triangle_count; j++) {
+            tempProgMetricInfo = {metric_info->GetTuple(j)[0],
+                                  metric_info->GetTuple(j)[1],
+                                  metric_info->GetTuple(j)[2]};
             if (is_lce_mode_enabled) {
-
-                sequenceOf_ProgMetricInfo.at(sequenceIdx).at(triangleLabel) = tempProgMetricInfo;
-
-                /* In case the metric components will be dialled, rather than lambda directly,
-                set the corresponding programmed inverse metric components accordingly.*/
-                double dirAng = tempProgMetricInfo(0);
-                double cosDirAng = cos(dirAng);
-                double sinDirAng = sin(dirAng);
-                double lambda = tempProgMetricInfo(1);
-                double nu = tempProgMetricInfo(2);
-                double lambdaToTheMinus2 = 1.0 / (lambda * lambda);
-                double lambdaToThe2Nu = pow(lambda, 2.0 * nu);
-
-                sequenceOf_InvProgMetrics.at(sequenceIdx).at(triangleLabel)(0, 0) =
-                        lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
-                sequenceOf_InvProgMetrics.at(sequenceIdx).at(triangleLabel)(0, 1) =
-                        (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
-                sequenceOf_InvProgMetrics.at(sequenceIdx).at(triangleLabel)(1, 0) = sequenceOf_InvProgMetrics.at(
-                        sequenceIdx).at(triangleLabel)(0, 1);
-                sequenceOf_InvProgMetrics.at(sequenceIdx).at(triangleLabel)(1, 1) =
-                        lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
+                sequenceOf_ProgMetricInfo[i][j] = tempProgMetricInfo;
+                // TODO - CHECK IF WE NEED TO ALSO INCLUDE THE INVERSE OF THE METRIC.
+//                /* In case the metric components will be dialled, rather than lambda directly,
+//                set the corresponding programmed inverse metric components accordingly.*/
+//                double dirAng = tempProgMetricInfo(0);
+//                double cosDirAng = cos(dirAng);
+//                double sinDirAng = sin(dirAng);
+//                double lambda = tempProgMetricInfo(1);
+//                double nu = tempProgMetricInfo(2);
+//                double lambdaToTheMinus2 = 1.0 / (lambda * lambda);
+//                double lambdaToThe2Nu = pow(lambda, 2.0 * nu);
+//
+//                sequenceOf_InvProgMetrics[i][j](0, 0) =
+//                        lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
+//                sequenceOf_InvProgMetrics[i][j](0, 1) =
+//                        (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
+//                sequenceOf_InvProgMetrics[i][j](1, 0) = sequenceOf_InvProgMetrics.at([i][j](0, 1);
+//                sequenceOf_InvProgMetrics[i][j](1, 1) =
+//                        lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
             } else {
-                // Note, before I didn't use tempProgMetric, I just used
-                // triangles.at(triangleLabel).invProgMetric = triangles.at(triangleLabel).invProgMetric.inverse()
-                // but this is WRONG due to the way Eigen works (aliasing)!
+                Eigen::Matrix<double, 2, 2> tempProgMetric;
+                Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > lu;
                 tempProgMetric(0, 0) = tempProgMetricInfo(0);
                 tempProgMetric(0, 1) = tempProgMetricInfo(1);
                 tempProgMetric(1, 0) = tempProgMetric(0, 1);
@@ -258,118 +192,43 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                     throw std::runtime_error(
                             "Error: One of the programmed metrics that was read in was not invertible. Aborting.");
                 }
-                sequenceOf_InvProgMetrics.at(sequenceIdx).at(triangleLabel) = tempProgMetric.inverse();
+                sequenceOf_InvProgMetrics[i][j] = tempProgMetric.inverse();
             }
 
-            init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        }
+            sequenceOf_ProgSecFFs[i][j](0, 0) = bend_info->GetTuple(j)[0];
+            sequenceOf_ProgSecFFs[i][j](0, 1) = bend_info->GetTuple(j)[1];
+            sequenceOf_ProgSecFFs[i][j](1, 0) = bend_info->GetTuple(j)[1];
+            sequenceOf_ProgSecFFs[i][j](1, 1) = bend_info->GetTuple(j)[2];
 
-
-        // Check we've arrived at the expected line of the file: 'progSecFFComps'...
-        init_DataFile >> tempString;
-        if (tempString.find("progSecFFComps") == std::string::npos) {
-            throw std::runtime_error(
-                    "Error: Problem with non-ansatz data file, at or before a 'progSecFFComps' line. E.g. may have provided or stated wrong number of programmed metrics.");
-        }
-        tempString.clear();
-        // Ignore rest of line.
-        init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-        /* Put triangles' programmed (energetically favoured) second fundamental
-        forms in their container.*/
-        for (int triangleLabel = 0; triangleLabel < num_triangles; ++triangleLabel) {
-            init_DataFile >> sequenceOf_ProgSecFFs.at(sequenceIdx).at(triangleLabel)(0, 0);
-            init_DataFile >> sequenceOf_ProgSecFFs.at(sequenceIdx).at(triangleLabel)(0, 1);
-            sequenceOf_ProgSecFFs.at(sequenceIdx).at(triangleLabel)(1, 0) = sequenceOf_ProgSecFFs.at(sequenceIdx).at(
-                    triangleLabel)(0, 1);
-            init_DataFile >> sequenceOf_ProgSecFFs.at(sequenceIdx).at(triangleLabel)(1, 1);
-            init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        }
-
-
-        // Check we've arrived at the expected line of the file: 'progTaus'...
-        init_DataFile >> tempString;
-        if (tempString.find("progTaus") == std::string::npos) {
-            throw std::runtime_error(
-                    "Error: Problem with non-ansatz data file, at or before a 'progTaus' line. E.g. may have provided or stated wrong number of programmed secFFs.");
-        }
-        tempString.clear();
-        // Ignore rest of line.
-        init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-        // Put triangles' programmed tau values in their container.
-        for (int triangleLabel = 0; triangleLabel < num_triangles; ++triangleLabel) {
-            init_DataFile >> sequenceOf_ProgTaus.at(sequenceIdx).at(triangleLabel);
-            init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            sequenceOf_ProgTaus[i][j] = tau_info->GetTuple(j)[0];
         }
     }
 
-    // Check we've arrived at the expected line of the file: 'POINT_DATA'...
-    init_DataFile >> tempString;
-    if (tempString.compare("POINT_DATA")) {
-        throw std::runtime_error(
-                "Error: Problem with non-ansatz data file, at or before 'POINT_DATA'. E.g. may have provided or stated wrong number of programmed tau values.");
-    }
-    tempString.clear();
-    // Ignore rest of line.
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    // Ignore next 2 lines preambling point data.
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    // Read in clamping information
+    auto point_data = main_vtk_data->GetPointData();
 
-    // Put node clamp and load indicators in nodes container.
-    // std::ios_base::boolalpha ensures that '0's and '1's  will be interpreted as bools.
-    init_DataFile.unsetf(std::ios_base::boolalpha);
-    for (int nodeLabel = 0; nodeLabel < num_nodes; ++nodeLabel) {
-        bool is_node_clamped;
-        init_DataFile >> is_node_clamped;
-        if (is_node_clamped) { nodes[nodeLabel].clamp(config); }
-        init_DataFile >> nodes.at(nodeLabel).isLoadForceEnabled;
-        init_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    auto clamp_and_load_indicators = point_data->GetArray("clamp_And_Load_Indicators");
+    for (unsigned int i = 0; i < vertex_count; i++) {
+        if (clamp_and_load_indicators->GetTuple(i)[0]) {
+            nodes[i].clamp(config);
+        }
+        nodes[i].isLoadForceEnabled = (bool)clamp_and_load_indicators->GetTuple(i)[1];
     }
 
-    /* Close the data file, as we should be at the end now. We check we
-    actually did reach the end first, and for other errors that can be caught
-    automatically by a std::ifstream. */
-    if (init_DataFile.bad() || init_DataFile.fail()) {
-        throw std::runtime_error(
-                "Error: Unknown problem with non-ansatz data file. One of .bad(), .fail() was true - investigate! "
-                "E.g. you may not have supplied enough node clamp/load indicator data in the file, so the file may have reached its end prematurely.");
-    }
-    init_DataFile >> tempString; // Attempts to read whatever is left, which should be nothing!
-    if (!init_DataFile.eof()) {
-        throw std::runtime_error(
-                "Error: Did not reach end of non-ansatz data file as expected. Check that it has exactly the correct format.");
-    }
-    init_DataFile.close();
 
-    std::cout
-            << "Completed reading of non-ansatz data file. Note; it is still possible that something went wrong in the process.\n"
-            << std::endl;
-
-    //////////////////////////////////////////////////////////////////////
-    /* Now read the file with anzatz node positions if given as third command
-    line argument. Only the preamble and node positions data is read;
-    whatever comes after that is ignored.*/
-
+    // Read in the dial-in factor and programmed quantity counter.
     if (ansatz_data_file_name_str != "no_ansatz_file") {
 
         /* Temp variable used to check a value is non-negative
         while assigning it to a std::size_t which is unsigned.*/
         int tempProgTensorSequenceCounter;
 
-        std::cout << "Beginning reading of ansatz data file." << std::endl;
-
         std::ifstream ansatz_DataFile(ansatz_data_file_name_str);
         if (!ansatz_DataFile) {
             throw std::runtime_error("Error: Problem opening ansatz data file given as third command line argument.");
         }
-
-
         // Ignore first line.
         ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-
         /* Get the dial-in factor and corresponding point in the programmed
         tensors sequence that evolution of the ansatz should start from.*/
         ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
@@ -379,57 +238,6 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         ansatz_DataFile >> tempProgTensorSequenceCounter;
         // Adjust offset so a single set of programmed tensors means dialling starts from the trivial '_0' tensors etc.
         progTensorSequenceCounterToStartFrom = tempProgTensorSequenceCounter - 1;
-        // Ignore rest of line.
-        ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-        // Check a few things that could have gone wrong.
-        if (dialInFactorToStartFrom < 0) {throw std::runtime_error("Ansatz reading: dialInFactorToStartFrom < 0:" + std::to_string(dialInFactorToStartFrom));}
-        if (dialInFactorToStartFrom > 1) {throw std::runtime_error("Ansatz reading: dialInFactorToStartFrom > 1:" + std::to_string(dialInFactorToStartFrom));}
-        if (tempProgTensorSequenceCounter <= 0) {throw std::runtime_error("Ansatz reading: tempProgTensorSequenceCounter <= 0:" + std::to_string(tempProgTensorSequenceCounter));}
-        if (tempProgTensorSequenceCounter > numProgTensorsInSequence) {throw std::runtime_error("Ansatz reading: tempProgTensorSequenceCounter > numProgTensorsInSequence:" + std::to_string(tempProgTensorSequenceCounter));}
-
-
-        // Ignore two lines of preamble.
-        ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-        // Check number of nodes stated in ansatz file matches settings.NumNodes.
-        ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
-        int ansatzStatedNumNodes;
-        ansatz_DataFile >> ansatzStatedNumNodes;
-        if (ansatzStatedNumNodes != num_nodes) {
-            throw std::runtime_error(
-                    "Error: Problem with (or before) line giving number of nodes in ansatz data file. "
-                    "E.g. you may have supplied ansatz and initial data files with inconsistent numbers of nodes.");
-        }
-        // Ignore rest of line.
-        ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-
-        // Put node ansatz coordinates into suitable container.
-        nodeAnsatzPositions.resize(num_nodes);
-        for (int nodeLabel = 0; nodeLabel < num_nodes; ++nodeLabel) {
-            ansatz_DataFile >> nodeAnsatzPositions.at(nodeLabel)(0);
-            ansatz_DataFile >> nodeAnsatzPositions.at(nodeLabel)(1);
-            ansatz_DataFile >> nodeAnsatzPositions.at(nodeLabel)(2);
-            ansatz_DataFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        }
-
-
-        /* Close the data file, ignoring any remaining data. We also check
-        for other errors that can be caught automatically by a
-        std::ifstream. */
-        if (ansatz_DataFile.bad() || ansatz_DataFile.fail()) {
-            throw std::runtime_error(
-                    "Error: Unknown problem with ansatz data file. One of .bad(), .fail() was true - investigate! "
-                    " E.g. you may not have supplied enough ansatz node positions, so the file reached its end prematurely.");
-        }
-        ansatz_DataFile.close();
-
-//        logStream.open();
-        std::cout
-                << "Completed reading of ansatz data file. Note, it is still possible that something went wrong in the process.\n"
-                << std::endl;
-//        logStream.close();
     }
 }

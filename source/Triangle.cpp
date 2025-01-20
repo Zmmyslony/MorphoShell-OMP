@@ -243,7 +243,8 @@ void Triangle::updateProgrammedMetricExplicit(int stage_counter, double dial_in_
 }
 
 void Triangle::updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root) {
-    programmedSecFF = interpolate(programmed_second_fundamental_form[stage_counter], programmed_second_fundamental_form[stage_counter + 1], dial_in_factor_root);
+    programmedSecFF = interpolate(programmed_second_fundamental_form[stage_counter],
+                                  programmed_second_fundamental_form[stage_counter + 1], dial_in_factor_root);
 }
 
 void Triangle::updateProgrammedTaus(int stage_counter, double dial_in_factor) {
@@ -415,4 +416,11 @@ void Triangle::setRelativeHeight(double relative_height) {
 
 void Triangle::setLocalElongation(double local_elongation) {
     Triangle::local_elongation = local_elongation;
+}
+
+Triangle::Triangle(int label, int id_0, int id_1, int id_2) : Triangle() {
+    Triangle::label = label;
+    vertexLabels(0) = id_0;
+    vertexLabels(1) = id_1;
+    vertexLabels(2) = id_2;
 }

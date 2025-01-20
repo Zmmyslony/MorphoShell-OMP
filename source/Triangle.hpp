@@ -230,6 +230,8 @@ public:
         stretchEnergyDensity = DBL_MAX;
     }
 
+    Triangle(int label, int id_0, int id_1, int id_2);
+
     // Declare other member functions.
 
     // Debugging function to display all member data.

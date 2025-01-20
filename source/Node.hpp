@@ -105,6 +105,15 @@ public:
         force.fill(DBL_MAX);
     }
 
+    explicit Node(int n_label, const double positions[3]) {
+        label = n_label;
+        pos(0) = positions[0];
+        pos(1) = positions[1];
+        pos(2) = positions[2];
+        vel.fill(DBL_MAX);
+        force.fill(DBL_MAX);
+    }
+
     // Declare other member functions.
 
     // Debugging function to display all member data.
