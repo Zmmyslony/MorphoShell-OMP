@@ -59,6 +59,7 @@ class Simulation {
     SettingsNew settings_new;
     std::vector<Slide> slides;
     std::vector<Cone> cones;
+    std::streambuf *cout_buf = std::cout.rdbuf();
 
     int num_nodes = 0;
     int num_triangles = 0;

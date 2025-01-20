@@ -43,11 +43,10 @@ void Simulation::setupLogging() {
     log_filename = output_dir_name + "/log.txt";
     out = std::ofstream(log_filename);
     std::streambuf *out_buf = out.rdbuf();         //Get streambuf for output stream
-    std::streambuf *cout_buf = std::cout.rdbuf();    //Get streambuf for cout
 
     std::streambuf *tee_buf = new basic_teestream(out_buf, cout_buf); //create new teebuf
 
-    std::cout.rdbuf(tee_buf);//Redirect cout
+    std::cout.rdbuf(tee_buf); //Redirect cout
     std::cout << std::defaultfloat << std::setprecision(6);
 }
 
@@ -901,6 +900,7 @@ int Simulation::run_simulation() {
 
     std::cout << "Reached simulation time = " << time_global << " using " << step_count << " time steps" << std::endl;
     std::cout << "Simulation finished successfully." << std::endl;
+    std::cout.rdbuf(cout_buf);
     return 0;
 }
 
