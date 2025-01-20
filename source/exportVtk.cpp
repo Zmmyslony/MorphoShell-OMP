@@ -37,6 +37,8 @@ The directory the files are put in is created in main().
 #define EIGEN_NO_DEBUG
 #endif
 
+#define BINARY_EXPORT
+
 #include <Eigen/Dense>
 
 #include <cstddef>
@@ -52,47 +54,47 @@ The directory the files are put in is created in main().
 #include "functions/kahanSum.hpp"
 
 // Thanks to https://stackoverflow.com/questions/105252
-template <typename T>
-void SwapEnd(T& var)
-{
-    char* varArray = reinterpret_cast<char*>(&var);
-    for(long i = 0; i < static_cast<long>(sizeof(var)/2); i++)
-        std::swap(varArray[sizeof(var) - 1 - i],varArray[i]);
+template<typename T>
+void SwapEnd(T &var) {
+    char *varArray = reinterpret_cast<char *>(&var);
+    for (long i = 0; i < static_cast<long>(sizeof(var) / 2); i++)
+        std::swap(varArray[sizeof(var) - 1 - i], varArray[i]);
 }
 
 using double_vector = std::pair<std::string, std::vector<double>>;
 
-std::stringstream convert_into_stream(const double_vector &data_pair, bool is_binary) {
+std::stringstream convert_into_stream(const double_vector &data_pair) {
     std::stringstream stream;
     stream << "SCALARS " << data_pair.first << " double 1" << "\n"
            << "LOOKUP_TABLE default" << "\n";
 
     for (double i: data_pair.second) {
-        if (is_binary) {
-            SwapEnd(i);
-            stream.write((char const *) &i, sizeof(double));
-        } else {
-            stream << i << " ";
-        }
+#ifdef BINARY_EXPORT
+        SwapEnd(i);
+        stream.write((char const *) &i, sizeof(double));
+#else
+        stream << i << " ";
+#endif
     }
     stream << std::endl;
     return stream;
 }
 
-long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const int &stepcount,
-                                 const double &time, const double &currDialInFactor, const size_t &progTensorSequenceCounter,
-                                 const std::vector<double> &gaussCurvatures, const std::vector<double> &meanCurvatures,
-                                 const std::vector<double> &angleDeficits, const std::vector<double> &interiorNodeAngleDeficits,
-                                 const std::vector<double> &boundaryNodeAngleDeficits,
-                                 const std::vector<double> &stretchEnergies, const std::vector<double> &bendEnergies,
-                                 const std::vector<double> &kineticEnergies, const std::vector<double> &strainMeasures,
-                                 const std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
-                                 const std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
-                                 const SettingsNew &settings, const std::string &outputDirName) {
+long long int
+writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &triangles, const int &stepcount,
+                   const double &time, const double &currDialInFactor, const size_t &progTensorSequenceCounter,
+                   const std::vector<double> &gaussCurvatures, const std::vector<double> &meanCurvatures,
+                   const std::vector<double> &angleDeficits, const std::vector<double> &interiorNodeAngleDeficits,
+                   const std::vector<double> &boundaryNodeAngleDeficits,
+                   const std::vector<double> &stretchEnergies, const std::vector<double> &bendEnergies,
+                   const std::vector<double> &kineticEnergies, const std::vector<double> &strainMeasures,
+                   const std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
+                   const std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
+                   const SettingsNew &settings, const std::string &outputDirName) {
     auto begin = std::chrono::high_resolution_clock::now();
-    bool is_binary = true;
 
-    std::ofstream outFile(outputDirName + "/step_count.vtk." + std::to_string(stepcount), std::ios::out | std::ios::app | std::ios::binary);
+    std::ofstream outFile(outputDirName + "/step_count.vtk." + std::to_string(stepcount),
+                          std::ios::out | std::ios::app | std::ios::binary);
     if (!outFile) {
         throw std::runtime_error("Error: Problem creating or opening output file.");
     }
@@ -114,10 +116,6 @@ long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vect
                       << ", " << nonDimKineticEnergy << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy;
     }
 
-    /* If angle deficits were calculated, print the sum of the non-boundary
-    and boundary node deficits separately, corresponding to the integrated
-    Gauss curvature and integrated geodesic curvature terms in Gauss-Bonnet
-    respectively.*/
     if (settings.getCore().isAngleDeficitPrinted()) {
         header_stream << ", total interior angle deficit = " << kahanSum(interiorNodeAngleDeficits)
                       << ", total boundary angle deficit = " << kahanSum(boundaryNodeAngleDeficits);
@@ -125,11 +123,11 @@ long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vect
 
 
     // Continue with rest of preamble and then output the relevant data to file.
-    if (is_binary) {
-        header_stream << std::endl << "BINARY" << std::endl;
-    } else {
-        header_stream << std::endl << "ACII" << std::endl;
-    }
+#ifdef BINARY_EXPORT
+    header_stream << std::endl << "BINARY" << std::endl;
+#else
+    header_stream << std::endl << "ACII" << std::endl;
+#endif
     outFile << header_stream.rdbuf();
 
     std::stringstream mesh_stream;
@@ -138,20 +136,20 @@ long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vect
                 << "POINTS " << nodes.size() << " double" << std::endl;
 
     for (const auto &node: nodes) {
-        if (is_binary) {
-            double x = node.pos(0);
-            double y = node.pos(1);
-            double z = node.pos(2);
-            SwapEnd(x);
-            SwapEnd(y);
-            SwapEnd(z);
+#ifdef BINARY_EXPORT
+        double x = node.pos(0);
+        double y = node.pos(1);
+        double z = node.pos(2);
+        SwapEnd(x);
+        SwapEnd(y);
+        SwapEnd(z);
 
-            mesh_stream.write((const char *) &x, sizeof(double));
-            mesh_stream.write((const char *) &y, sizeof(double));
-            mesh_stream.write((const char *) &z, sizeof(double));
-        } else {
-            mesh_stream << node.pos(0) << " " << node.pos(1) << " " << node.pos(2) << "\n";
-        }
+        mesh_stream.write((const char *) &x, sizeof(double));
+        mesh_stream.write((const char *) &y, sizeof(double));
+        mesh_stream.write((const char *) &z, sizeof(double));
+#else
+        mesh_stream << node.pos(0) << " " << node.pos(1) << " " << node.pos(2) << "\n";
+#endif
     }
 
     mesh_stream << std::endl;
@@ -160,23 +158,24 @@ long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vect
     uint32_t element_count = 3;
     SwapEnd(element_count);
     for (const auto &triangle: triangles) {
-        if (is_binary) {
-            uint32_t i0 = triangle.vertexLabels(0);
-            uint32_t i1 = triangle.vertexLabels(1);
-            uint32_t i2 = triangle.vertexLabels(2);
-            SwapEnd(i0);
-            SwapEnd(i1);
-            SwapEnd(i2);
+#ifdef BINARY_EXPORT
+        mesh_stream.write((const char *) &element_count, sizeof(uint32_t));
+        auto labels = triangle.vertexLabels;
+        uint32_t i0 = labels(0);
+        uint32_t i1 = labels(1);
+        uint32_t i2 = labels(2);
+        SwapEnd(i0);
+        SwapEnd(i1);
+        SwapEnd(i2);
 
-            mesh_stream.write((const char *) &element_count, sizeof(uint32_t));
-            mesh_stream.write((const char *) &i0, sizeof(uint32_t));
-            mesh_stream.write((const char *) &i1, sizeof(uint32_t));
-            mesh_stream.write((const char *) &i2, sizeof(uint32_t));
-        } else {
-            mesh_stream << "3 " << triangle.vertexLabels(0)
-                        << " " << triangle.vertexLabels(1)
-                        << " " << triangle.vertexLabels(2) << "\n";
-        }
+        mesh_stream.write((const char *) &i0, sizeof(uint32_t));
+        mesh_stream.write((const char *) &i1, sizeof(uint32_t));
+        mesh_stream.write((const char *) &i2, sizeof(uint32_t));
+#else
+        mesh_stream << "3 " << triangle.vertexLabels(0)
+                    << " " << triangle.vertexLabels(1)
+                    << " " << triangle.vertexLabels(2) << "\n";
+#endif
     }
     mesh_stream << std::endl;
     outFile << mesh_stream.rdbuf();
@@ -232,7 +231,7 @@ long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vect
             gauss_curvature.second[i] += gaussCurvatures[j] / incident_triangle_count;
             mean_curvature.second[i] += meanCurvatures[j] / incident_triangle_count;
             strain_measure.second[i] += strainMeasures[j] / incident_triangle_count;
-            const Triangle* triangle = &triangles[j];
+            const Triangle *triangle = &triangles[j];
 
             stretch_energy_density.second[i] += triangle->stretchEnergyDensity /
                                                 (settings.getStretchEnergyDensityScale() / incident_triangle_count);
@@ -259,7 +258,7 @@ long long int writeVTKDataOutput(const std::vector<Node> &nodes, const std::vect
     std::vector<std::stringstream> streams_to_export(data_to_export.size());
 #pragma omp parallel for
     for (int i = 0; i < data_to_export.size(); i++) {
-        streams_to_export[i] = convert_into_stream(*data_to_export[i], is_binary);
+        streams_to_export[i] = convert_into_stream(*data_to_export[i]);
     }
 
     for (auto &stream: streams_to_export) {
