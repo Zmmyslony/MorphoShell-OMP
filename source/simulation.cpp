@@ -797,7 +797,7 @@ void Simulation::equilibriumTest(int stage_counter, long long duration_us) {
  value was more than TimeBetweenEquilChecks ago, check for equilibrium.
  Also print total stretching and bending energies.*/
     if (simulation_status == WaitingForEquilibrium &&
-        time_equilibriation > settings_new.getTimeBetweenEquilibriumChecks()) {
+        time_equilibriation >= settings_new.getTimeBetweenEquilibriumChecks()) {
         check_for_equilibrium();
     }
 
