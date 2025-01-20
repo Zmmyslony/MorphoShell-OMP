@@ -17,7 +17,7 @@
 #include "functions/getRealTime.hpp"
 #include "functions/extract_Just_Filename.hpp"
 #include "initialDirAndFileHandling.hpp"
-#include "readVTKData.hpp"
+#include "readVtk.hpp"
 #include "calculations/calcTrianglesIncidentOnNodes.hpp"
 #include "calculations/calcTriangleAdjacencies_And_Edges.hpp"
 #include "functions/kahanSum.hpp"
@@ -29,7 +29,7 @@
 #include "EquilibriumCheck.hpp"
 #include "calculations/calcCurvatures.hpp"
 #include "advanceDynamics.hpp"
-#include "writeVTKDataOutput.hpp"
+#include "exportVtk.hpp"
 #include "calculations/calcDeformationForces.hpp"
 #include "functions/zeroForces.hpp"
 #include "physics/cone.h"
@@ -382,6 +382,7 @@ void Simulation::run_ansatz(int counter) {
 
         // Calculate all necessary geometry for the ansatz state.
         updateTriangleProperties(counter);
+        updateFirstFundamentalForms(triangles, settings_new.getCore());
         updateSecondFundamentalForms(triangles, settings_new.getCore());
 
 
@@ -690,7 +691,7 @@ void Simulation::save_and_print_details(int counter, long long int duration_us) 
     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings_new.getCore());
     if (settings_new.getCore().isEnergyPrinted()) {
-        calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
+        calcEnergiesAndStresses(nodes, triangles,
                                 stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                 cauchyStressEigenvals, cauchyStressEigenvecs, settings_new.getCore());
     }
@@ -728,7 +729,7 @@ void Simulation::error_large_force(int counter) {
     calcCurvatures(nodes, triangles, gaussCurvatures, meanCurvatures, angleDeficits,
                    interiorNodeAngleDeficits, boundaryNodeAngleDeficits, settings_new.getCore());
     if (settings_new.getCore().isEnergyPrinted()) {
-        calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
+        calcEnergiesAndStresses(nodes, triangles,
                                 stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                 cauchyStressEigenvals, cauchyStressEigenvecs, settings_new.getCore());
     }
@@ -747,7 +748,7 @@ void Simulation::check_for_equilibrium() {
     simulation_status = equilibriumCheck(nodes, settings_new, triangles);
     time_equilibriation = 0.0;
 
-    calcEnergiesAndStresses(nodes, triangles, stretchEnergyDensities, bendEnergyDensities,
+    calcEnergiesAndStresses(nodes, triangles,
                             stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                             cauchyStressEigenvals, cauchyStressEigenvecs, settings_new.getCore());
 }

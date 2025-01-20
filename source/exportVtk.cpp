@@ -46,7 +46,7 @@ The directory the files are put in is created in main().
 #include <vector>
 #include <stdexcept>
 
-#include "writeVTKDataOutput.hpp"
+#include "exportVtk.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "functions/kahanSum.hpp"

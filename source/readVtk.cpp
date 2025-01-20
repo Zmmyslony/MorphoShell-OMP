@@ -63,7 +63,7 @@ std::cout << teststring << std::endl;
 #include <vtkCellData.h>
 #include <vtkPointData.h>
 
-#include "readVTKData.hpp"
+#include "readVtk.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
 
