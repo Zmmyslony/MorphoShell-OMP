@@ -6,7 +6,7 @@
 #define SHELLOMORPH_CONFIG_BASE_H
 
 #include <iostream>
-#include <unordered_set>
+#include <unordered_map>
 #include <boost/filesystem/path.hpp>
 
 namespace fs = boost::filesystem;
@@ -16,7 +16,7 @@ namespace fs = boost::filesystem;
  * spaces, underscores and capitalisation. Key and value are separated by finding '='.
  */
 class ConfigBase {
-    std::vector<std::pair<std::string, std::string>> config_options;
+    std::unordered_map<std::string, std::string> config_options;
 
 public:
     ConfigBase();

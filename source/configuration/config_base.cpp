@@ -54,57 +54,48 @@ ConfigBase::ConfigBase(const fs::path &config_path) {
         }
         if (row.size() > 2) {
             std::cerr << "Too many entries for " << row[0] << " in " << config_path.string() <<
-                                       ".\nUsing only the first read value." << std::endl;
+                                       ".\nUsing only the first read value:" << row[1] << std::endl;
         } else if (row.size() < 2) {
             std::cerr << "Too few entries for " << row[0] << " in " << config_path.string() << "." << std::endl;
 
         }
 
-        std::pair<std::string, std::string> config_pair = {row[0], row[1]};
-        config_options.push_back(config_pair);
+        config_options[row[0]] = row[1];
     }
 }
 
 bool ConfigBase::get(const std::string &name, std::string &target) const {
     std::string normalised_name = clean_line(name);
-    for (auto &pair : config_options) {
-        if (pair.first == normalised_name) {
-            target = pair.second;
-            return true;
-        }
+    auto pos = config_options.find(name);
+
+    if (pos != config_options.end()) {
+        target = pos->second;
+        return true;
+    } else {
+        target = "NULL_PLACEHOLDER";
+        return false;
     }
-    target = "NULL_PLACEHOLDER";
-    return false;
 }
 
 bool ConfigBase::get(const std::string &name, double &target) const {
     std::string read_value;
     bool is_in_config = get(name, read_value);
-    if (is_in_config) {
-        target = std::stod(read_value);
-        return true;
-    }
-    return false;
+    if (is_in_config) { target = std::stod(read_value); }
+    return is_in_config;
 }
 
 bool ConfigBase::get(const std::string &name, int &target) const {
     std::string read_value;
     bool is_in_config = get(name, read_value);
-    if (is_in_config) {
-        target = std::stoi(read_value);
-        return true;
-    }
-    return false;
+    if (is_in_config) { target = std::stoi(read_value); }
+    return is_in_config;
 }
 
 bool ConfigBase::get(const std::string &name, bool &target) const {
     std::string read_value;
     bool is_in_config = get(name, read_value);
-    if (is_in_config) {
-        std::istringstream(read_value) >> std::boolalpha >> target;
-        return true;
-    }
-    return false;
+    if (is_in_config) { std::istringstream(read_value) >> std::boolalpha >> target; }
+    return is_in_config;
 }
 
 bool ConfigBase::get(const std::string &name, std::vector<std::string> &target) const {
