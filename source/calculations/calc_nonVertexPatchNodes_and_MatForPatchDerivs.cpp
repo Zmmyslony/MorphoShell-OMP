@@ -50,21 +50,31 @@ later.
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 
+void validatePatchSearch(const std::vector<double> &patch_values, double patch_threshold) {
+    auto max_iterator = std::max_element(patch_values.begin(), patch_values.end());
+    if (*max_iterator < patch_threshold) { return ;}
 
-void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
-                                                    double patch_threshold) {
+    int wrong_triangle_count = 0;
+    for (auto patch_value : patch_values) {
+        if (patch_value >= patch_threshold) { wrong_triangle_count++ ;}
+    }
+    long worst_offender_index = std::distance(patch_values.begin(), max_iterator);
+
+    throw std::runtime_error(
+            "Patch search failed. \n" +
+            std::to_string(wrong_triangle_count) + " triangles exceed the maximum threshold value of " + std::to_string(patch_threshold) + "\n" +
+            "with maximal value of  " + std::to_string(*max_iterator) + " for triangle " + std::to_string(worst_offender_index)
+            );
+
+}
+
+void createNodePatches(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+                       double patch_threshold) {
     int invalid_non_boundary_triangle_count = 0;
-
+    std::vector<double> patch_values(triangles.size());
 #pragma omp parallel for reduction (+ : invalid_non_boundary_triangle_count)
     for (int i = 0; i < triangles.size(); i++) {
-        invalid_non_boundary_triangle_count += triangles[i].updateMatForPatchDerivs(triangles, nodes, patch_threshold);
-
+        patch_values[i] = triangles[i].updateMatForPatchDerivs(triangles, nodes);
     }
-
-    if (invalid_non_boundary_triangle_count > 0) {
-        std::cout << "Number of non-boundary triangles that had to search through \n" <<
-                  "multiple possible patch options to find one \nsatisfying the condition number " <<
-                  "criterion was " << invalid_non_boundary_triangle_count <<
-                  ", \nwhich should not be a large proportion of the mesh's triangles." << std::endl;
-    }
+    validatePatchSearch(patch_values, patch_threshold);
 }

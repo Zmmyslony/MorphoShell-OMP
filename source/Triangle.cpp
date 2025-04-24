@@ -220,8 +220,7 @@ void Triangle::updateProgrammedMetricImplicit(double dirAngle, double lambda, do
     programmedMetInvDet = programmedMetInv.determinant();
 }
 
-void Triangle::updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor,
-                                              bool is_elongation_dynamically_updated, double transfer_coefficient) {
+void Triangle::updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor) {
     Eigen::Vector3d metric_current = interpolate(programmed_metric_infos[stage_counter],
                                                  programmed_metric_infos[stage_counter + 1], dial_in_factor);
 
@@ -325,8 +324,7 @@ double Triangle::getHeight() const {
     return centroid(2);
 }
 
-int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes,
-                                      double patch_threshold) {
+double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes) {
     refCentroid = (nodes[vertexLabels(0)].pos +
                    nodes[vertexLabels(1)].pos +
                    nodes[vertexLabels(2)].pos) / 3;
@@ -341,7 +339,6 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
                   return p1.second < p2.second;
               });
 
-    int invalid_non_boundary_triangle_count = 0;
     Eigen::Matrix<double, 6, 6> patchNodeDataMatrix;
     double raw_path_size_factor = (nodes[vertexLabels(0)].pos - refCentroid).squaredNorm() +
                                   (nodes[vertexLabels(1)].pos - refCentroid).squaredNorm() +
@@ -362,7 +359,7 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
         }
     }
 
-    double lowestConditionNumber = patch_threshold;
+    auto patch_condition_number = DBL_MAX;
     for (auto &candidateIndices: candidate_trios) {
         patchNodeDataMatrix.col(3) = patchColumn(nodes[candidateIndices[0]].pos, refCentroid);
         patchNodeDataMatrix.col(4) = patchColumn(nodes[candidateIndices[1]].pos, refCentroid);
@@ -386,27 +383,16 @@ int Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles, co
             secDerivMatTempSVD.compute(candidatePatchDiv);
 
             double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
-            double conditionNumber = singular_values * pow(patch_size, 2);
+            double current_condition_number = singular_values * pow(patch_size, 2);
 
-            if (conditionNumber < lowestConditionNumber) {
-                lowestConditionNumber = conditionNumber;
+            if (current_condition_number < patch_condition_number) {
+                patch_condition_number = current_condition_number;
                 nonVertexPatchNodesLabels = {candidateIndices[0], candidateIndices[1], candidateIndices[2]};
                 matForPatchSecDerivs = candidatePatchDiv;
             }
         }
     }
-
-    if (lowestConditionNumber < patch_threshold) {
-        return invalid_non_boundary_triangle_count;
-    }
-
-    throw std::runtime_error(
-            "T" + std::to_string(label) +
-            ": Search for patch nodes was exhausted without success; "
-            "all possible patch matrices in the search had a condition number above the acceptance "
-            "threshold. Try increasing this threshold. If that does not solve the issue, or causes "
-            "other issues, the patch node search will probably need to be extended. Please report this "
-            "issue in that case. Aborting.");
+    return patch_condition_number;
 }
 
 

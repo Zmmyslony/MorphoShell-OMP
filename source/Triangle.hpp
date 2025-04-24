@@ -255,7 +255,7 @@ public:
 
     void updateFirstFundamentalForm(double stretchingPreFac);
 
-    int updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes, double patch_threshold);
+    double updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes);
 
     /**
      * Returns the linear size of the triangle calculated as the shortest triangle altitude.
