@@ -688,8 +688,8 @@ void Simulation::save_and_print_details(int counter, long long int duration_us) 
 
 
     std::cout << log_prefix()
-              << "Last step's execution time " << duration_us << " us. Prep " << prep_us << " us, export "
-              << export_us << " us." << std::endl;
+              << "Last step's execution time " << duration_us << " us. Export time " << prep_us + export_us << " us ("
+              <<prep_us << "/" << export_us << " us prep/write)" << std::endl;
 
 }
 
