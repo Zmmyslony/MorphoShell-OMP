@@ -38,7 +38,7 @@ The forces are also checked, to catch code crashed in which the forces usually
 
 
 bool isForceThresholdExceeded(const Node &node, const SettingsNew &settings) {
-    return node.force.norm() >= 1e5 * settings.getForceScale() || std::isnan(node.force(0));
+    return node.force.norm() >= 1e5 * settings.getForceScale();
 }
 
 
