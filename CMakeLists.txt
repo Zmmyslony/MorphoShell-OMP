@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(Morphoshell)
 
-set(CMAKE_CXX_FLAGS -ffast-math)
-
 find_package(OpenMP REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -11,11 +9,6 @@ find_package(VTK REQUIRED COMPONENTS)
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_path(LIBCONFIG_DIR libconfig.h REQUIRED)
-find_library(LIBCONFIGPP_LIB libconfig++)
-if (NOT LIBCONFIGPP_LIB)
-    find_library(LIBCONFIGPP_LIB config++)
-endif ()
 
 set(SOURCE_FILES
         source/main.cpp source/advanceDynamics.cpp source/advanceDynamics.hpp source/calculations/calc_nonVertexPatchNodes_and_MatForPatchDerivs.cpp
@@ -57,8 +50,6 @@ set(SOURCE_FILES
 add_executable(Morphoshell ${SOURCE_FILES})
 
 target_link_libraries(Morphoshell PRIVATE ${Boost_LIBRARIES})
-target_include_directories(Morphoshell PRIVATE ${LIBCONFIG_DIR})
-target_link_libraries(Morphoshell PRIVATE ${LIBCONFIGPP_LIB})
 target_link_libraries(Morphoshell PRIVATE OpenMP::OpenMP_CXX)
 target_link_libraries(Morphoshell PRIVATE Eigen3::Eigen)
 target_link_libraries(Morphoshell PRIVATE ${VTK_LIBRARIES})
