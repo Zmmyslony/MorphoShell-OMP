@@ -87,16 +87,13 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                  const CoreConfig &config) {
 
     auto main_vtk_data = ReadPolyData((const char *) init_data_file_name_str.c_str());
-    auto ansatz_vtk_data = ReadPolyData((const char *) ansatz_data_file_name_str.c_str());
+    vtkSmartPointer<vtkPolyData> ansatz_vtk_data;
+    if (ansatz_data_file_name_str != "no_ansatz_file") {
+        ansatz_vtk_data = ReadPolyData((const char *) ansatz_data_file_name_str.c_str());
+    }
 
     unsigned int vertex_count = main_vtk_data->GetNumberOfPoints();
     unsigned int triangle_count = main_vtk_data->GetNumberOfCells();
-    if (ansatz_data_file_name_str != "no_ansatz_file" &&
-        (vertex_count != ansatz_vtk_data->GetNumberOfPoints() ||
-         triangle_count != ansatz_vtk_data->GetNumberOfCells())) {
-        throw std::runtime_error(
-                "VTK files for programmed quantities and ansatz have different count of vertices or polygons.");
-    }
 
     // Read in the reference node positions
     nodes.reserve(vertex_count);
@@ -108,6 +105,11 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
 
     // If ansatz is specified, read in the ansatz nodes too
     if (ansatz_data_file_name_str != "no_ansatz_file") {
+        if (vertex_count != ansatz_vtk_data->GetNumberOfPoints() ||triangle_count != ansatz_vtk_data->GetNumberOfCells()) {
+            throw std::runtime_error(
+                    "VTK files for programmed quantities and ansatz have different count of vertices or polygons.");
+        }
+
         nodeAnsatzPositions.reserve(vertex_count);
         for (unsigned int i = 0; i < vertex_count; i++) {
             double coords[3];
@@ -124,7 +126,7 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         if (ids->GetNumberOfIds() != 3) {
             throw std::runtime_error("Mesh error: non-triangular polygons are present in the mesh.");
         }
-        triangles.emplace_back(Triangle(i, ids->GetId(0), ids->GetId(1), ids->GetId(2)));
+        triangles.emplace_back(i, ids->GetId(0), ids->GetId(1), ids->GetId(2));
     }
 
 
@@ -132,20 +134,29 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
     auto cell_data = main_vtk_data->GetCellData();
     if (cell_data->GetNumberOfArrays() % 3 != 0) {
         throw std::runtime_error("VTK: too many fields defining the deformation - they should be provided in triplets"
-                                 "(progMetricInfo_i, progSecFFComps_i, progTaus_i), with i starting at 0.");
+                                 "(programmed_metric_info_i, programmed_bend_info_i, programmed_taus_i), with i starting at 0.");
+    } else if (cell_data -> GetNumberOfArrays() == 0) {
+        throw std::runtime_error("VTK: no fields defining the deformation are present in the input file.");
     }
 
     int progTensorCount = cell_data->GetNumberOfArrays() / 3;
+    std::cout << "test" << progTensorCount<< " " << cell_data->GetNumberOfArrays() << std::endl;
     sequenceOf_ProgMetricInfo.resize(progTensorCount + 1);
     sequenceOf_InvProgMetrics.resize(progTensorCount + 1);
     sequenceOf_ProgTaus.resize(progTensorCount + 1);
     sequenceOf_ProgSecFFs.resize(progTensorCount + 1);
 
-    for (unsigned int i = 1; i < progTensorCount + 1; i++) {
-        auto metric_info = cell_data->GetArray(("progMetricInfo_" + std::to_string(i - 1)).c_str());
-        auto bend_info = cell_data->GetArray(("progSecFFComps_" + std::to_string(i - 1)).c_str());
-        auto tau_info = cell_data->GetArray(("progTaus_" + std::to_string(i - 1)).c_str());
 
+    for (unsigned int i = 1; i < progTensorCount + 1; i++) {
+        auto metric_info = cell_data->GetArray(("programmed_metric_info_" + std::to_string(i - 1)).c_str());
+        auto bend_info = cell_data->GetArray(("programmed_bend_info_" + std::to_string(i - 1)).c_str());
+        auto tau_info = cell_data->GetArray(("programmed_taus_" + std::to_string(i - 1)).c_str());
+        if (metric_info == nullptr) { throw std::runtime_error("VTK does not contain programmed_metric_info_"  + std::to_string(i - 1)); }
+        if (bend_info == nullptr) { throw std::runtime_error("VTK does not contain programmed_bend_info_"  + std::to_string(i - 1)); }
+        if (tau_info == nullptr) { throw std::runtime_error("VTK does not contain programmed_taus_"  + std::to_string(i - 1)); }
+
+
+        std::cout << "test" << std::endl;
         sequenceOf_ProgMetricInfo[i].resize(triangle_count);
         sequenceOf_InvProgMetrics[i].resize(triangle_count);
         sequenceOf_ProgTaus[i].resize(triangle_count);
@@ -212,7 +223,7 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         if (clamp_and_load_indicators->GetTuple(i)[0]) {
             nodes[i].clamp(config);
         }
-        nodes[i].isLoadForceEnabled = (bool)clamp_and_load_indicators->GetTuple(i)[1];
+        nodes[i].isLoadForceEnabled = (bool) clamp_and_load_indicators->GetTuple(i)[1];
     }
 
 
