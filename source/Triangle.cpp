@@ -227,11 +227,29 @@ void Triangle::updateProgrammedMetricImplicit(int stage_counter, double dial_in_
     double dirAng = metric_current(0);
     double lambda = metric_current(1);
     double nu = metric_current(2);
-    if (is_elongation_dynamically_updated) {
-        double target_elongation = 1 - (1 - lambda) * relative_height;
-        local_elongation = interpolate(local_elongation, target_elongation, transfer_coefficient);
-        lambda = local_elongation;
-    }
+
+    updateProgrammedMetricImplicit(dirAng, lambda, nu);
+}
+
+void Triangle::updateProgrammedMetricDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
+                                                 double min_height, double max_height) {
+    Eigen::Vector3d metric_current = interpolate(programmed_metric_infos[stage_counter],
+                                                 programmed_metric_infos[stage_counter + 1], dial_in_factor);
+
+    double dirAng = metric_current(0);
+    double lambda = metric_current(1);
+    double nu = metric_current(2);
+
+    double normalized_height = (getHeight() - min_height) / (max_height - min_height);
+    if (fabs(max_height) - min_height < 1e-6) { normalized_height = 0; }
+    double target_elongation = 1 - (1 - lambda) * normalized_height;
+
+// TODO This is temporary
+//    double target_elongation = lambda - 0.05 * 0.05 * normalized_height;
+
+    local_elongation = interpolate(local_elongation, target_elongation, transfer_coefficient);
+    lambda = local_elongation;
+
     updateProgrammedMetricImplicit(dirAng, lambda, nu);
 }
 
@@ -252,10 +270,14 @@ void Triangle::updateProgrammedTaus(int stage_counter, double dial_in_factor) {
 
 void Triangle::updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
                                           bool is_lce_metric_used, bool is_elongation_dynamically_updated,
-                                          double transfer_coefficient) {
+                                          double transfer_coefficient, double min_height, double max_height) {
     if (is_lce_metric_used) {
-        updateProgrammedMetricImplicit(stage_counter, dial_in_factor, is_elongation_dynamically_updated,
-                                       transfer_coefficient);
+        if (is_elongation_dynamically_updated) {
+            updateProgrammedMetricDynamically(stage_counter, dial_in_factor, transfer_coefficient, min_height,
+                                              max_height);
+        } else {
+            updateProgrammedMetricImplicit(stage_counter, dial_in_factor);
+        }
     } else {
         updateProgrammedMetricExplicit(stage_counter, dial_in_factor);
     }
@@ -395,10 +417,6 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
     return patch_condition_number;
 }
 
-
-void Triangle::setRelativeHeight(double relative_height) {
-    Triangle::relative_height = relative_height;
-}
 
 void Triangle::setLocalElongation(double local_elongation) {
     Triangle::local_elongation = local_elongation;

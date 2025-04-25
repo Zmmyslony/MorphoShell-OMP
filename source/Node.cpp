@@ -58,10 +58,12 @@ void Node::add_gravity(const GravityConfig &config) {
 }
 
 
-void Node::add_damping(const SettingsNew &settings_new) {
-    if (settings_new.getCore().isGradientDescentDynamics()) { return; }
+double Node::add_damping(const SettingsNew &settings_new) {
+    if (settings_new.getCore().isGradientDescentDynamics()) { return 0; }
+
     force += -settings_new.getDampingFactor() * mass * vel /
              settings_new.getCore().getDensity();
+    return settings_new.getDampingFactor() * mass * pow(vel.norm(), 2) / settings_new.getCore().getDensity();
 }
 
 

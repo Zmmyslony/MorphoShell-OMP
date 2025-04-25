@@ -85,12 +85,11 @@ writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &
                    const double &time, const double &currDialInFactor, const size_t &progTensorSequenceCounter,
                    const std::vector<double> &gaussCurvatures, const std::vector<double> &meanCurvatures,
                    const std::vector<double> &angleDeficits, const std::vector<double> &interiorNodeAngleDeficits,
-                   const std::vector<double> &boundaryNodeAngleDeficits,
-                   const std::vector<double> &stretchEnergies, const std::vector<double> &bendEnergies,
-                   const std::vector<double> &kineticEnergies, const std::vector<double> &strainMeasures,
-                   const std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
-                   const std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
-                   const SettingsNew &settings, const std::string &outputDirName) {
+                   const std::vector<double> &boundaryNodeAngleDeficits, const std::vector<double> &stretchEnergies,
+                   const std::vector<double> &bendEnergies, const std::vector<double> &kineticEnergies,
+                   const std::vector<double> &strainMeasures, const std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
+                   const std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs, const SettingsNew &settings,
+                   const std::string &outputDirName, double energy_loss) {
     auto begin = std::chrono::high_resolution_clock::now();
 
     std::ofstream outFile(outputDirName + "/step_count.vtk." + std::to_string(stepcount),
@@ -115,7 +114,7 @@ writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &
                       << nonDimStretchEnergy << ", " << nonDimBendEnergy << ", " << nonDimKineticEnergy
                       << ", " << nonDimKineticEnergy << nonDimStretchEnergy + nonDimBendEnergy + nonDimKineticEnergy;
     }
-
+    header_stream << ", energy_loss: " << energy_loss;
     if (settings.getCore().isAngleDeficitPrinted()) {
         header_stream << ", total interior angle deficit = " << kahanSum(interiorNodeAngleDeficits)
                       << ", total boundary angle deficit = " << kahanSum(boundaryNodeAngleDeficits);

@@ -11,7 +11,6 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <libconfig.h++>
 #include <chrono>
 
 #include "functions/getRealTime.hpp"
@@ -213,8 +212,8 @@ void Simulation::configure_triangles() {
 }
 
 void Simulation::set_node_patches() {
-    calc_nonVertexPatchNodes_and_MatForPatchDerivs(nodes, triangles,
-                                                   settings_new.getCore().getPatchMatrixThreshold());
+    createNodePatches(nodes, triangles,
+                      settings_new.getCore().getPatchMatrixThreshold());
 }
 
 
@@ -570,9 +569,10 @@ Simulation::add_elastic_forces() {
 
 
 void Simulation::add_non_elastic_forces() {
-#pragma omp parallel for
+    damping_power_loss = 0;
+#pragma omp parallel for reduction (+ : damping_power_loss)
     for (int i = 0; i < nodes.size(); i++) {
-        nodes[i].add_damping(settings_new);
+        damping_power_loss += nodes[i].add_damping(settings_new);
         nodes[i].add_gravity(settings_new.getGravity());
 //        nodes[i].add_prod_force(settings_new);
 //        nodes[i].add_load_force();
@@ -609,18 +609,22 @@ void Simulation::add_non_elastic_forces() {
     }
 }
 
-/// Updates local triangle elongation depending on the height relative to the lowest Triangle, by keeping
-/// (1 - transfer_coefficient) * previous_elongation + transfer_coefficient * new_elongation
-void setTriangleRelativeHeights(std::vector<Triangle> &triangles) {
+// Gets the height of the lowest triangle
+double getMinimumTriangleHeight(std::vector<Triangle> &triangles) {
     Triangle lowest_triangle = *std::min_element(triangles.begin(), triangles.end(),
                                                  [](const auto &one, const auto &two) {
                                                      return one.getHeight() < two.getHeight();
                                                  });
-    double min_height = lowest_triangle.getHeight();
-#pragma omp parallel for
-    for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].setRelativeHeight(triangles[i].getHeight() - min_height);
-    }
+    return lowest_triangle.getHeight();
+}
+
+// Gets the height of the highest triangle
+double getMaximumTriangleHeight(std::vector<Triangle> &triangles) {
+    Triangle highest_triangle = *std::max_element(triangles.begin(), triangles.end(),
+                                                  [](const auto &one, const auto &two) {
+                                                      return one.getHeight() < two.getHeight();
+                                                  });
+    return highest_triangle.getHeight();
 }
 
 
@@ -628,13 +632,14 @@ void Simulation::updateTriangleProperties(int counter) {
     const double dial_in_factor_root = sqrt(dial_in_factor);
     bool is_LCE_metric_used = settings_new.getCore().isLceModeEnabled();
 
-    setTriangleRelativeHeights(triangles);
+    double min_height = getMinimumTriangleHeight(triangles);
+    double max_height = getMaximumTriangleHeight(triangles);
 
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         if (simulation_status == Dialling) {
             triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used,
-                                                    true, 0.01);
+                                                    true, 0.01, min_height, max_height);
         }
         triangles[i].updateGeometricProperties(nodes);
     }
@@ -658,6 +663,14 @@ void Simulation::update_dial_in_factor() {
     dial_in_factor = starting_dial_in_factor + (final_dial_in_factor - starting_dial_in_factor) * relative_time;
 }
 
+long long int Simulation::export_vtk(int counter) {
+    return ::writeVTKDataOutput(nodes, triangles, step_count, time_global, dial_in_factor, counter,
+                                gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
+                                boundaryNodeAngleDeficits,
+                                stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
+                                cauchyStressEigenvals, cauchyStressEigenvecs, settings_new,
+                                output_dir_name, damping_power_loss);
+}
 
 void Simulation::save_and_print_details(int counter, long long int duration_us) {
     auto begin = std::chrono::high_resolution_clock::now();
@@ -671,12 +684,7 @@ void Simulation::save_and_print_details(int counter, long long int duration_us) 
     auto duration = std::chrono::high_resolution_clock::now() - begin;
     long long prep_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
 
-    long long export_us = writeVTKDataOutput(nodes, triangles, step_count, time_global, dial_in_factor, counter,
-                                             gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
-                                             boundaryNodeAngleDeficits,
-                                             stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
-                                             cauchyStressEigenvals, cauchyStressEigenvecs, settings_new,
-                                             output_dir_name);
+    long long export_us = export_vtk(counter);
 
 
     std::cout << log_prefix()
@@ -706,11 +714,7 @@ void Simulation::error_large_force(int counter) {
                                 stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
                                 cauchyStressEigenvals, cauchyStressEigenvecs, settings_new.getCore());
     }
-    writeVTKDataOutput(nodes, triangles, step_count, time_global, dial_in_factor, counter,
-                       gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
-                       boundaryNodeAngleDeficits,
-                       stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
-                       cauchyStressEigenvals, cauchyStressEigenvecs, settings_new, output_dir_name);
+    export_vtk(counter);
     throw std::runtime_error("Unexpectedly large force at step " + std::to_string(step_count) + ".");
 }
 
@@ -819,7 +823,6 @@ void Simulation::run_tensor_increment(int stage_counter) {
     std::cout << "\nBeginning dynamical evolution.\n" << std::endl;
 
     std::vector<Eigen::Vector3d> nodeUnstressedConePosits(num_nodes);
-//    double seide_quotient = DBL_MAX;
 
     while (phase_counter < dial_in_phases.size() - 1) {
         if (step_count == 0) { first_step_configuration(); }

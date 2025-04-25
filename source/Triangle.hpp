@@ -39,7 +39,6 @@ triangular element, such as vertices, area etc.*/
 
 class Triangle {
     double local_elongation = 1;
-    double relative_height = 0;
 
 public:
     /* Custom output stream allowing the debugging display function to print to
@@ -91,7 +90,7 @@ public:
     triangles sharing an edge with this triangle. For boundary triangles one or
     two of these are missing, and different nodes are chosen based on proximity
     to this triangle's centroid. There is again no particular order.*/
-    Eigen::Vector3i nonVertexPatchNodesLabels;
+    Eigen::Matrix<unsigned int, 3, 1> nonVertexPatchNodesLabels;
 
     /* Position of triangle's centroid in initial (reference) x-y plane.*/
     Eigen::Vector3d refCentroid;
@@ -178,14 +177,16 @@ public:
 private:
     void updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor);
 
-    void updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor,
-                                        bool is_elongation_dynamically_updated, double transfer_coefficient);
+    void updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor);
 
     void updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root);
 
     void updateProgrammedTaus(int stage_counter, double dial_in_factor);
 
     void updateProgrammedMetricImplicit(double dirAngle, double lambda, double nu);
+
+    void updateProgrammedMetricDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
+                                                     double min_height, double max_height);
 
 public:
     double bendEnergyDensity;
@@ -267,11 +268,9 @@ public:
 
     void setLocalElongation(double local_elongation);
 
-    void setRelativeHeight(double relative_height);
-
     void updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
                                     bool is_lce_metric_used, bool is_elongation_dynamically_updated,
-                                    double transfer_coefficient);
+                                    double transfer_coefficient, double min_height, double max_height);
 };
 
 #endif

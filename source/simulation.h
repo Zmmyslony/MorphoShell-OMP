@@ -65,6 +65,7 @@ class Simulation {
     int num_triangles = 0;
     int num_edges = 0;
     int step_count = 0;
+    double damping_power_loss = 0;
     std::vector<Eigen::Vector3d> forcesForEachTriangle;
 
     double time_global = 0;
@@ -261,6 +262,8 @@ class Simulation {
     void check_if_equilibrium_search_begun(int stage_counter);
 
     bool isDataPrinted();
+
+    long long int export_vtk(int counter);
 
 public :
 
