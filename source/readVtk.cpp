@@ -140,7 +140,6 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
     }
 
     int progTensorCount = cell_data->GetNumberOfArrays() / 3;
-    std::cout << "test" << progTensorCount<< " " << cell_data->GetNumberOfArrays() << std::endl;
     sequenceOf_ProgMetricInfo.resize(progTensorCount + 1);
     sequenceOf_InvProgMetrics.resize(progTensorCount + 1);
     sequenceOf_ProgTaus.resize(progTensorCount + 1);
@@ -155,8 +154,6 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         if (bend_info == nullptr) { throw std::runtime_error("VTK does not contain programmed_bend_info_"  + std::to_string(i - 1)); }
         if (tau_info == nullptr) { throw std::runtime_error("VTK does not contain programmed_taus_"  + std::to_string(i - 1)); }
 
-
-        std::cout << "test" << std::endl;
         sequenceOf_ProgMetricInfo[i].resize(triangle_count);
         sequenceOf_InvProgMetrics[i].resize(triangle_count);
         sequenceOf_ProgTaus[i].resize(triangle_count);
