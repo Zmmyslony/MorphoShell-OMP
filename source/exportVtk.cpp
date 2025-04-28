@@ -178,38 +178,6 @@ writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &
     }
     mesh_stream << std::endl;
     outFile << mesh_stream.rdbuf();
-// TODO CONVERT TO BINARY EXPORT TOO
-
-//    outFile << "CELL_DATA " << triangles.size() << "\n";
-//
-//    if (settings.getCore().isStressPrinted()) {
-//        std::stringstream stress_stream;
-//        stress_stream << std::scientific << std::setprecision(5);
-//        stress_stream << "FIELD cauchyStressInfo 4" << "\n";
-//
-//        stress_stream << "dimlessCauchyStressEigenval1 1 " << triangles.size() << "double" << "\n";
-//        for (int i = 0; i < triangles.size(); ++i) {
-//            stress_stream << cauchyStressEigenvals[i](0) /
-//                             (settings.getCore().getShearModulus() * settings.getCore().getThickness()) << "\n";
-//        }
-//        stress_stream << "cauchyStressEigenvec1 3 " << triangles.size() << "double" << "\n";
-//        for (int i = 0; i < triangles.size(); ++i) {
-//            stress_stream << cauchyStressEigenvecs[i](0, 0) << " " << cauchyStressEigenvecs[i](1, 0) << " "
-//                          << cauchyStressEigenvecs[i](2, 0) << "\n";
-//        }
-//        stress_stream << "dimlessCauchyStressEigenval2 1 " << triangles.size() << "double" << "\n";
-//        for (int i = 0; i < triangles.size(); ++i) {
-//            stress_stream << cauchyStressEigenvals[i](1) /
-//                             (settings.getCore().getShearModulus() * settings.getCore().getThickness()) << "\n";
-//        }
-//        stress_stream << "cauchyStressEigenvec2 3 " << triangles.size() << "double" << "\n";
-//        for (int i = 0; i < triangles.size(); ++i) {
-//            stress_stream << cauchyStressEigenvecs[i](0, 1) << " " << cauchyStressEigenvecs[i](1, 1) << " "
-//                          << cauchyStressEigenvecs[i](2, 1) << "\n";
-//        }
-//        outFile << stress_stream.rdbuf();
-//    }
-
 
     outFile << "POINT_DATA " << nodes.size() << "\n";
 
@@ -224,7 +192,7 @@ writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &
 
 
 #pragma omp parallel for
-    for (unsigned int i = 0; i < nodes.size(); i++) {
+    for (int i = 0; i < nodes.size(); i++) {
         unsigned int incident_triangle_count = nodes[i].incidentTriLabels.size();
         for (auto j: nodes[i].incidentTriLabels) {
             gauss_curvature.second[i] += gaussCurvatures[j] / incident_triangle_count;

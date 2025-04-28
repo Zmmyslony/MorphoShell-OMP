@@ -1,13 +1,12 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.30)
 project(Morphoshell)
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(OpenMP REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(VTK REQUIRED COMPONENTS)
-
-set(CMAKE_CXX_STANDARD 17)
+find_package(VTK REQUIRED )
 
 
 set(SOURCE_FILES

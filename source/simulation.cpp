@@ -1,5 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "modernize-loop-convert"
 //
 // Created by Michał Zmyślony on 12/02/2024.
 //
@@ -569,14 +567,15 @@ Simulation::add_elastic_forces() {
 
 
 void Simulation::add_non_elastic_forces() {
-    damping_power_loss = 0;
-#pragma omp parallel for reduction (+ : damping_power_loss)
+    double local_damping_power_loss = 0;
+#pragma omp parallel for reduction (+ : local_damping_power_loss)
     for (int i = 0; i < nodes.size(); i++) {
-        damping_power_loss += nodes[i].add_damping(settings_new);
+        local_damping_power_loss += nodes[i].add_damping(settings_new);
         nodes[i].add_gravity(settings_new.getGravity());
 //        nodes[i].add_prod_force(settings_new);
 //        nodes[i].add_load_force();
     }
+    damping_power_loss = local_damping_power_loss;
 
     for (auto &slide: slides) {
         double interaction_force = 0;
@@ -689,7 +688,7 @@ void Simulation::save_and_print_details(int counter, long long int duration_us) 
 
     std::cout << log_prefix()
               << "Last step's execution time " << duration_us << " us. Export time " << prep_us + export_us << " us ("
-              <<prep_us << "/" << export_us << " us prep/write)" << std::endl;
+              << prep_us << "/" << export_us << " us prep/write)" << std::endl;
 
 }
 
@@ -884,6 +883,3 @@ int Simulation::run_simulation() {
 Simulation::Simulation(int argc, char **argv) {
     init(argc, argv);
 }
-
-
-#pragma clang diagnostic pop
