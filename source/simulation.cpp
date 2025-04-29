@@ -117,6 +117,7 @@ void Simulation::read_vtk_data(const CoreConfig &config) {
 
     // The first set of tensors are populated separately
     for (int i = 1; i < inverted_programmed_metrics.size(); i++) {
+#pragma omp parallel for
         for (int j = 0; j < triangles.size(); j++) {
             triangles[j].programmed_metric_infos.emplace_back(programmed_metric_infos[i][j]);
             triangles[j].programmed_metric_inv.emplace_back(inverted_programmed_metrics[i][j]);
@@ -192,6 +193,7 @@ void Simulation::configure_topological_properties() {
 
 void Simulation::configure_triangles() {
     int numBoundaryTriangles = 0;
+#pragma omp parallel for reduction(+ : numBoundaryTriangles)
     for (int i = 0; i < num_triangles; ++i) {
         if (triangles[i].isOnBoundary) {
             numBoundaryTriangles += 1;
@@ -362,7 +364,7 @@ void Simulation::run_ansatz(int counter) {
 
         /* Alter inverted_programmed_metrics[initial_stage] and similar to change where
         the programmed quantities are dialling from.*/
-
+#pragma omp parallel for
         for (int i = 0; i < num_triangles; ++i) {
             // Test for invertibility of metric before taking inverse.
             tempMetricDecomp.compute((triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse());
@@ -496,6 +498,7 @@ void Simulation::first_step_configuration() {
     slides = settings_new.getSlides();
     cones = settings_new.getCones();
     std::vector<Eigen::Vector3d> node_positions(nodes.size());
+#pragma omp parallel for
     for (int i = 0; i < nodes.size(); i++) {
         node_positions[i] = nodes[i].pos;
     }
@@ -525,41 +528,26 @@ void Simulation::begin_equilibrium_search(int counter) {
 
 void
 Simulation::add_elastic_forces() {
-    double stretchingPreFac = 0.5 * settings_new.getCore().getThickness() * settings_new.getCore().getShearModulus();
-    double bendingPreFac =
+    double stretching_pre_factor =
+            0.5 * settings_new.getCore().getThickness() * settings_new.getCore().getShearModulus();
+    double bending_pre_factor =
             0.5 * pow(settings_new.getCore().getThickness(), 3) * settings_new.getCore().getShearModulus() / 12;
-    double JPreFactor = settings_new.getCore().getGentFactor() / pow(settings_new.getCore().getThickness(), 2);
-
+    double j_pre_factor = settings_new.getCore().getGentFactor() / pow(settings_new.getCore().getThickness(), 2);
+    double poisson_ratio = settings_new.getCore().getPoissonRatio();
 #pragma omp parallel
     {
 #pragma omp for
         // Calculates forces experienced by nodes coming from each triangle.
         for (int i = 0; i < triangles.size(); i++) {
-            triangles[i].updateSecondFundamentalForm(bendingPreFac, JPreFactor,
-                                                     settings_new.getCore().getPoissonRatio());
-            triangles[i].updateHalfPK1Stress(stretchingPreFac);
-            Eigen::Matrix<double, 3, 3> stretchForces = triangles[i].getStretchingForces();
-
-            Eigen::Matrix<double, 3, 3> triangleEdgeNormals = triangles[i].getTriangleEdgeNormals();
-            Eigen::Matrix<double, 3, 3> normalDerivPiece =
-                    0.5 * triangles[i].currAreaInv * (triangles[i].patchSecDerivs.transpose() * triangleEdgeNormals);
-
-            for (int n = 0; n < 3; ++n) {
-                forcesForEachTriangle[6 * i + n] =
-                        triangles[i].getBendingForce(normalDerivPiece, n) + stretchForces.col(n);
-            }
-            for (int n = 3; n < 6; ++n) {
-                forcesForEachTriangle[6 * i + n] = triangles[i].getBendingForce(normalDerivPiece, n);
-            }
+            triangles[i].updateElasticForce(bending_pre_factor, j_pre_factor, stretching_pre_factor, poisson_ratio);
         }
 
-#pragma barrier
 #pragma omp for
         // Applies forces to each node.
         for (int i = 0; i < nodes.size(); i++) {
+            nodes[i].force = {0, 0, 0};
             for (auto &trianglesForNode: correspondingTrianglesForNodes[i]) {
-                int index = 6 * trianglesForNode.first + trianglesForNode.second;
-                nodes[i].force += forcesForEachTriangle[index];
+                nodes[i].force += triangles[trianglesForNode.first].getNodeForce(trianglesForNode.second);
             }
         }
     }
@@ -640,16 +628,17 @@ void Simulation::updateTriangleProperties(int counter) {
             triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used,
                                                     true, 0.01, min_height, max_height);
         }
-        triangles[i].updateGeometricProperties(nodes);
+        triangles[i].updateGeometricProperties();
     }
 }
 
 long long int Simulation::progress_single_step(int counter) {
     auto begin = std::chrono::high_resolution_clock::now();
-    zeroForces(nodes);
+
     updateTriangleProperties(counter);
     add_elastic_forces();
     add_non_elastic_forces();
+
     auto duration = std::chrono::high_resolution_clock::now() - begin;
     long long duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
     return duration_us;

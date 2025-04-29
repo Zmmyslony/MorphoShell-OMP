@@ -126,7 +126,7 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         if (ids->GetNumberOfIds() != 3) {
             throw std::runtime_error("Mesh error: non-triangular polygons are present in the mesh.");
         }
-        triangles.emplace_back(i, ids->GetId(0), ids->GetId(1), ids->GetId(2));
+        triangles.emplace_back(i, ids->GetId(0), ids->GetId(1), ids->GetId(2), nodes);
     }
 
 

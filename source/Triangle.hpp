@@ -39,6 +39,9 @@ triangular element, such as vertices, area etc.*/
 
 class Triangle {
     double local_elongation = 1;
+    const Node *corner_nodes[3];
+    const Node *patch_nodes[3];
+    Eigen::Vector3d node_elastic_force[6];
 
 public:
     /* Custom output stream allowing the debugging display function to print to
@@ -231,7 +234,7 @@ public:
         stretchEnergyDensity = DBL_MAX;
     }
 
-    Triangle(int label, int id_0, int id_1, int id_2);
+    Triangle(int label, int id_0, int id_1, int id_2, const std::vector<Node> &nodes);
 
     // Declare other member functions.
 
@@ -246,9 +249,9 @@ public:
 
     Eigen::Matrix<double, 3, 1> getBendingForce(const Eigen::Matrix<double, 3, 3> &normalDerivatives, int row);
 
-    void updateMetric(const std::vector<Node> &nodes);
+    void updateMetric();
 
-    void updateGeometricProperties(const std::vector<Node> &nodes);
+    void updateGeometricProperties();
 
     void updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio);
 
@@ -271,6 +274,10 @@ public:
     void updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
                                     bool is_lce_metric_used, bool is_elongation_dynamically_updated,
                                     double transfer_coefficient, double min_height, double max_height);
+
+    void updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio);
+
+    Eigen::Vector3d getNodeForce(unsigned int index) const;
 };
 
 #endif

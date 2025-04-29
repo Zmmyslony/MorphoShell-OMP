@@ -70,9 +70,8 @@ void validatePatchSearch(const std::vector<double> &patch_values, double patch_t
 
 void createNodePatches(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                        double patch_threshold) {
-    int invalid_non_boundary_triangle_count = 0;
     std::vector<double> patch_values(triangles.size());
-#pragma omp parallel for reduction (+ : invalid_non_boundary_triangle_count)
+#pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         patch_values[i] = triangles[i].updateMatForPatchDerivs(triangles, nodes);
     }

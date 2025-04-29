@@ -105,14 +105,12 @@ Eigen::Matrix<double, 3, 1> Triangle::getBendingForce(const Eigen::Matrix<double
 
     secFFDerivPreFacMat(1, 0) = secFFDerivPreFacMat(0, 1);
 
-    Eigen::Vector3d bendingForce;
-    bendingForce = -initArea * (energyDensityDerivWRTSecFF * secFFDerivPreFacMat).trace() * faceNormal;
-    return bendingForce;
+    return -initArea * (energyDensityDerivWRTSecFF * secFFDerivPreFacMat).trace() * faceNormal;
 }
 
-void Triangle::updateMetric(const std::vector<Node> &nodes) {
-    currSides.col(0).noalias() = nodes[vertexLabels(1)].pos - nodes[vertexLabels(0)].pos;
-    currSides.col(1).noalias() = nodes[vertexLabels(2)].pos - nodes[vertexLabels(0)].pos;
+void Triangle::updateMetric() {
+    currSides.col(0).noalias() = corner_nodes[1]->pos - corner_nodes[0]->pos;
+    currSides.col(1).noalias() = corner_nodes[2]->pos - corner_nodes[0]->pos;
     defGradient.noalias() = currSides * invInitSidesMat;
 
     met.noalias() = defGradient.transpose() * defGradient;
@@ -120,15 +118,12 @@ void Triangle::updateMetric(const std::vector<Node> &nodes) {
     metInvDet = metInv.determinant();
 }
 
-void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
-    updateMetric(nodes);
+void Triangle::updateGeometricProperties() {
+    updateMetric();
     Eigen::Matrix<double, 3, 6> matrixOfPatchNodeCoords;
-    for (int n = 0; n < 6; ++n) {
-        if (n < 3) {
-            matrixOfPatchNodeCoords.col(n).noalias() = nodes[vertexLabels(n)].pos;
-        } else {
-            matrixOfPatchNodeCoords.col(n).noalias() = nodes[nonVertexPatchNodesLabels(n - 3)].pos;
-        }
+    for (int n = 0; n < 3; ++n) {
+        matrixOfPatchNodeCoords.col(n).noalias() = corner_nodes[n]->pos;
+        matrixOfPatchNodeCoords.col(n + 3).noalias() = patch_nodes[n]->pos;
     }
     patchSecDerivs.noalias() = matrixOfPatchNodeCoords * matForPatchSecDerivs;
 
@@ -136,7 +131,7 @@ void Triangle::updateGeometricProperties(const std::vector<Node> &nodes) {
     currAreaInv = 2 / faceNormal.norm();
     faceNormal.noalias() = 0.5 * faceNormal * currAreaInv; // Normalising
 
-    centroid = (nodes[vertexLabels(0)].pos + nodes[vertexLabels(1)].pos + nodes[vertexLabels(2)].pos) / 3;
+    centroid = (corner_nodes[0]->pos + corner_nodes[1]->pos + corner_nodes[2]->pos) / 3;
 }
 
 
@@ -410,6 +405,9 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
             if (current_condition_number < patch_condition_number) {
                 patch_condition_number = current_condition_number;
                 nonVertexPatchNodesLabels = {candidateIndices[0], candidateIndices[1], candidateIndices[2]};
+                for (int i = 0; i < 3; i++) {
+                    patch_nodes[i] = &nodes[candidateIndices[i]];
+                }
                 matForPatchSecDerivs = candidatePatchDiv;
             }
         }
@@ -422,9 +420,35 @@ void Triangle::setLocalElongation(double local_elongation) {
     Triangle::local_elongation = local_elongation;
 }
 
-Triangle::Triangle(int label, int id_0, int id_1, int id_2) : Triangle() {
+Triangle::Triangle(int label, int id_0, int id_1, int id_2, const std::vector<Node> &nodes) : Triangle() {
     Triangle::label = label;
     vertexLabels(0) = id_0;
     vertexLabels(1) = id_1;
     vertexLabels(2) = id_2;
+    corner_nodes[0] = &nodes[id_0];
+    corner_nodes[1] = &nodes[id_1];
+    corner_nodes[2] = &nodes[id_2];
+}
+
+void Triangle::updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio) {
+    updateSecondFundamentalForm(bendingPreFac, JPreFactor, poisson_ratio);
+    updateHalfPK1Stress(stretchingPreFac);
+    Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces();
+
+    Eigen::Matrix<double, 3, 3> triangleEdgeNormals = getTriangleEdgeNormals();
+    Eigen::Matrix<double, 3, 3> normalDerivPiece =
+            0.5 * currAreaInv * (patchSecDerivs.transpose() * triangleEdgeNormals);
+
+    for (int n = 0; n < 3; ++n) {
+        node_elastic_force[n] = getBendingForce(normalDerivPiece, n) + stretchForces.col(n);
+        node_elastic_force[n + 3] = getBendingForce(normalDerivPiece, n + 3);
+    }
+}
+
+Eigen::Vector3d Triangle::getNodeForce(unsigned int index) const {
+    if (index < 6) {
+        return node_elastic_force[index];
+    } else {
+        throw std::runtime_error("Node index must be below 6.");
+    }
 }
