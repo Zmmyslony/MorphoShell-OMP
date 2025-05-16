@@ -190,7 +190,9 @@ private:
 
     void updateProgrammedMetricDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
                                                      double min_height, double max_height);
+    Eigen::Matrix<double, 3, 1> getBendingForcePatch(int row);
 
+    Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d normalDerivatives, int row);
 public:
     double bendEnergyDensity;
     double stretchEnergyDensity;
@@ -246,10 +248,6 @@ public:
     Eigen::Matrix<double, 3, 3> getStretchingForces();
 
     Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals();
-
-    Eigen::Matrix<double, 3, 1> getBendingForce(const Eigen::Matrix<double, 3, 3> &normalDerivatives, int row);
-
-    void updateMetric();
 
     void updateGeometricProperties();
 

@@ -73,7 +73,7 @@ void Triangle::display() {
 
 void Triangle::updateHalfPK1Stress(double stretchingPrefactor) {
     halfPK1Stress.noalias() = defGradient * (stretchingPrefactor * dialledProgTau *
-                                   (programmedMetInv - (metInvDet / programmedMetInvDet) * metInv));
+                                             (programmedMetInv - (metInvDet / programmedMetInvDet) * metInv));
 }
 
 Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces() {
@@ -90,48 +90,59 @@ Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals() {
     return triangleEdgeNormals;
 }
 
-Eigen::Matrix<double, 3, 1> Triangle::getBendingForce(const Eigen::Matrix<double, 3, 3> &normalDerivatives, int row) {
+Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d normalDerivatives, int row) {
     Eigen::Matrix<double, 2, 2> secFFDerivPreFacMat;
 
     secFFDerivPreFacMat(0, 0) = matForPatchSecDerivs(row, 0);
     secFFDerivPreFacMat(0, 1) = matForPatchSecDerivs(row, 1);
     secFFDerivPreFacMat(1, 1) = matForPatchSecDerivs(row, 2);
 
-    if (row < 3) {
-        secFFDerivPreFacMat(0, 0) += normalDerivatives(0, row);
-        secFFDerivPreFacMat(0, 1) += normalDerivatives(1, row);
-        secFFDerivPreFacMat(1, 1) += normalDerivatives(2, row);
-    }
+    secFFDerivPreFacMat(0, 0) += normalDerivatives(0);
+    secFFDerivPreFacMat(0, 1) += normalDerivatives(1);
+    secFFDerivPreFacMat(1, 1) += normalDerivatives(2);
 
     secFFDerivPreFacMat(1, 0) = secFFDerivPreFacMat(0, 1);
 
     return -initArea * (energyDensityDerivWRTSecFF * secFFDerivPreFacMat).trace() * faceNormal;
 }
 
-void Triangle::updateMetric() {
-    currSides.col(0).noalias() = corner_nodes[1]->pos - corner_nodes[0]->pos;
-    currSides.col(1).noalias() = corner_nodes[2]->pos - corner_nodes[0]->pos;
-    defGradient.noalias() = currSides * invInitSidesMat;
+Eigen::Matrix<double, 3, 1> Triangle::getBendingForcePatch(int row) {
+    Eigen::Matrix<double, 2, 2> secFFDerivPreFacMat;
 
-    met.noalias() = defGradient.transpose() * defGradient;
-    metInv.noalias() = met.inverse();
-    metInvDet = metInv.determinant();
+    secFFDerivPreFacMat(0, 0) = matForPatchSecDerivs(row, 0);
+    secFFDerivPreFacMat(0, 1) = matForPatchSecDerivs(row, 1);
+    secFFDerivPreFacMat(1, 1) = matForPatchSecDerivs(row, 2);
+
+    secFFDerivPreFacMat(1, 0) = secFFDerivPreFacMat(0, 1);
+
+    return -initArea * (energyDensityDerivWRTSecFF * secFFDerivPreFacMat).trace() * faceNormal;
 }
 
 void Triangle::updateGeometricProperties() {
-    updateMetric();
-    Eigen::Matrix<double, 3, 6> matrixOfPatchNodeCoords;
-    for (int n = 0; n < 3; ++n) {
-        matrixOfPatchNodeCoords.col(n).noalias() = corner_nodes[n]->pos;
-        matrixOfPatchNodeCoords.col(n + 3).noalias() = patch_nodes[n]->pos;
-    }
-    patchSecDerivs.noalias() = matrixOfPatchNodeCoords * matForPatchSecDerivs;
+    Eigen::Vector3d p0 = corner_nodes[0]->pos;
+    Eigen::Vector3d p1 = corner_nodes[1]->pos;
+    Eigen::Vector3d p2 = corner_nodes[2]->pos;
 
+    currSides.col(0).noalias() = p1 - p0;
+    currSides.col(1).noalias() = p2 - p0;
     faceNormal.noalias() = currSides.col(0).cross(currSides.col(1));
+    defGradient.noalias() = currSides * invInitSidesMat;
+
+    met.noalias()= defGradient.transpose() * defGradient;
+    metInv.noalias() = met.inverse();
+    metInvDet = metInv.determinant();
+
     currAreaInv = 2 / faceNormal.norm();
     faceNormal *= 0.5 * currAreaInv; // Normalising
 
-    centroid.noalias() = (corner_nodes[0]->pos + corner_nodes[1]->pos + corner_nodes[2]->pos) / 3;
+    patchSecDerivs.noalias() = p0 * matForPatchSecDerivs.row(0)
+                               + p1 * matForPatchSecDerivs.row(1)
+                               + p2 * matForPatchSecDerivs.row(2)
+                               + patch_nodes[0]->pos * matForPatchSecDerivs.row(3)
+                               + patch_nodes[1]->pos * matForPatchSecDerivs.row(4)
+                               + patch_nodes[2]->pos * matForPatchSecDerivs.row(5);
+
+    centroid.noalias() = (p0 + p1 + p2) / 3;
 }
 
 
@@ -428,7 +439,8 @@ Triangle::Triangle(int label, int id_0, int id_1, int id_2, const std::vector<No
     corner_nodes[2] = &nodes[id_2];
 }
 
-void Triangle::updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio) {
+void
+Triangle::updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio) {
     updateSecondFundamentalForm(bendingPreFac, JPreFactor, poisson_ratio);
     updateHalfPK1Stress(stretchingPreFac);
     Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces();
@@ -438,11 +450,12 @@ void Triangle::updateElasticForce(double bendingPreFac, double JPreFactor, doubl
             0.5 * currAreaInv * (patchSecDerivs.transpose() * triangleEdgeNormals);
 
     for (int n = 0; n < 3; ++n) {
-        node_elastic_force[n] = getBendingForce(normalDerivPiece, n) + stretchForces.col(n);
-        node_elastic_force[n + 3] = getBendingForce(normalDerivPiece, n + 3);
+        node_elastic_force[n].noalias() = getBendingForceNode(normalDerivPiece.col(n), n);
+        node_elastic_force[n].noalias() += stretchForces.col(n);
+        node_elastic_force[n + 3].noalias() = getBendingForcePatch(n + 3);
     }
 }
 
-const Eigen::Vector3d *Triangle::getNodeForce(unsigned int index) const {
+const Eigen::Vector3d *Triangle::getNodeForce(unsigned int index) const{
     return &(node_elastic_force[index]);
 }

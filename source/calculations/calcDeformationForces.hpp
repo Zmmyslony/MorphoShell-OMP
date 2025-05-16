@@ -27,13 +27,6 @@ Header file for update_elastic_forces.cpp
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../configuration/core_config.h"
 
-std::vector<std::vector<std::pair<int, int>>>
-getCorrespondingTrianglesForNodes(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes);
-
-//void update_elastic_forces(std::vector<Node> &nodes, std::vector<Triangle> &triangles, const CoreConfig &core_config,
-//                           const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes);
-
-
+void assignForceLocationsToNodes(std::vector<Triangle> &triangles, std::vector<Node> &nodes);
 

@@ -318,7 +318,7 @@ void Simulation::init(int argc, char *argv[]) {
 
     set_initial_conditions();
     find_smallest_element();
-    correspondingTrianglesForNodes = getCorrespondingTrianglesForNodes(triangles, nodes);
+    assignForceLocationsToNodes(triangles, nodes);
 
     settings_new.SetupDialInTime(characteristic_long_length);
     settings_new.SetupStepTime(characteristic_short_length);
@@ -545,10 +545,7 @@ Simulation::add_elastic_forces() {
 #pragma omp for
         // Applies forces to each node.
         for (int i = 0; i < nodes.size(); i++) {
-            nodes[i].force = {0, 0, 0};
-            for (auto &trianglesForNode: correspondingTrianglesForNodes[i]) {
-                nodes[i].force.noalias() += *triangles[trianglesForNode.first].getNodeForce(trianglesForNode.second);
-            }
+            nodes[i].updateForce();
         }
     }
 };
