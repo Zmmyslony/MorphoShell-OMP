@@ -40,7 +40,7 @@ containing the node's position, velocity etc.*/
 #include "settings_new.h"
 
 class Node {
-    /// Pointers to a field in a triangle which is connected to this node.
+    /// Pointers to a field in a triangles which correspond to this node.
     std::vector<Eigen::Vector3d *> force_pointers;
 public:
     void addForcePoints(const Eigen::Vector3d *force_address);

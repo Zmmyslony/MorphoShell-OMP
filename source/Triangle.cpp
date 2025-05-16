@@ -337,12 +337,12 @@ assignDistanceFromCentroid(const std::vector<unsigned int> &node_indices, const 
 
 Eigen::Matrix<double, 6, 1> patchColumn(const Eigen::Vector3d &position, const Eigen::Vector3d &centroid) {
     Eigen::Matrix<double, 6, 1> patchColumn;
-    patchColumn(0, 1) = 1;
-    patchColumn(1, 1) = (position(0) - centroid(0));
-    patchColumn(2, 1) = (position(1) - centroid(1));
-    patchColumn(3, 1) = 0.5 * patchColumn(1, 1) * patchColumn(1, 1);
-    patchColumn(4, 1) = patchColumn(1, 1) * patchColumn(2, 1);
-    patchColumn(5, 1) = 0.5 * patchColumn(2, 1) * patchColumn(2, 1);
+    patchColumn(0) = 1;
+    patchColumn(1) = (position(0) - centroid(0));
+    patchColumn(2) = (position(1) - centroid(1));
+    patchColumn(3) = 0.5 * patchColumn(1) * patchColumn(1);
+    patchColumn(4) = patchColumn(1) * patchColumn(2);
+    patchColumn(5) = 0.5 * patchColumn(2) * patchColumn(2);
     return patchColumn;
 }
 

@@ -150,6 +150,6 @@ void Node::addForcePoints(const Eigen::Vector3d *force_address) {
 void Node::updateForce() {
     force = {0, 0, 0};
     for (auto &pt: force_pointers) {
-        force += *pt;
+        force.noalias() += *pt;
     }
 }

@@ -44,17 +44,10 @@ class Triangle {
     Eigen::Vector3d node_elastic_force[6];
 
 public:
-    /* Custom output stream allowing the debugging display function to print to
-    a particular file in addition to std::cout.*/
-
-    /// Label so this triangle 'knows' which it is.
     int label;
-
-    /* Boolean representing whether the triangle has a vertex on the boundary of
-    the sample (true) or not (false).*/
     bool isOnBoundary;
 
-    /// Initial (reference) area and 1/(current area) for this triangle.
+    // Reference area
     double initArea;
     double currAreaInv;
 
@@ -129,9 +122,9 @@ public:
     double dialledProgTau;
 
     std::vector<Eigen::Vector3d> programmed_metric_infos = {{1, 1, 1}};
-    std::vector<Eigen::Matrix<double, 2, 2>> programmed_metric_inv {Eigen::Matrix<double, 2, 2>::Identity()};
+    std::vector<Eigen::Matrix<double, 2, 2>> programmed_metric_inv{Eigen::Matrix<double, 2, 2>::Identity()};
     std::vector<Eigen::Matrix<double, 2, 2>> programmed_second_fundamental_form = {Eigen::Matrix<double, 2, 2>::Zero()};
-    std::vector<double> programmed_taus {1};
+    std::vector<double> programmed_taus{1};
 
     /* Matrix representing the components of the *energetically* favoured
     (programmed) Second Fundamental Form in the x-y cartesian coordinate system
@@ -189,13 +182,27 @@ private:
     void updateProgrammedMetricImplicit(double dirAngle, double lambda, double nu);
 
     void updateProgrammedMetricDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
-                                                     double min_height, double max_height);
+                                           double min_height, double max_height);
+
     Eigen::Matrix<double, 3, 1> getBendingForcePatch(int row);
 
     Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d normalDerivatives, int row);
+
+    void updateHalfPK1Stress(double stretchingPrefactor);
+
+    Eigen::Matrix<double, 3, 3> getStretchingForces();
+
+    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals();
+
 public:
     double bendEnergyDensity;
     double stretchEnergyDensity;
+
+    void updateFirstFundamentalForm(double stretchingPreFac);
+
+    void updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio);
+
+    void updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio);
 
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
@@ -243,19 +250,9 @@ public:
     // Debugging function to display all member data.
     void display();
 
-    void updateHalfPK1Stress(double stretchingPrefactor);
-
-    Eigen::Matrix<double, 3, 3> getStretchingForces();
-
-    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals();
-
     void updateGeometricProperties();
 
-    void updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio);
-
     void updateAngleDeficits(std::vector<double> &angleDeficits) const;
-
-    void updateFirstFundamentalForm(double stretchingPreFac);
 
     double updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes);
 
@@ -272,8 +269,6 @@ public:
     void updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
                                     bool is_lce_metric_used, bool is_elongation_dynamically_updated,
                                     double transfer_coefficient, double min_height, double max_height);
-
-    void updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio);
 
     const Eigen::Vector3d *getNodeForce(unsigned int index) const;
 };
