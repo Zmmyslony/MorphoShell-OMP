@@ -143,8 +143,6 @@ void Triangle::updateSecondFundamentalForm(double bendingPreFac, double JPreFact
     secFF(1, 0) = vectorOfSecFFComps(1);
     secFF(1, 1) = vectorOfSecFFComps(2);
 
-    Eigen::Matrix<double, 2, 2> scaledSecFF;
-
     Eigen::Matrix<double, 2, 2> relativeSecFF = programmedMetInv * (secFF - programmedSecFF);
     double areaMultiplier = bendingPreFac * programmedMetInvDet;
 
@@ -445,10 +443,6 @@ void Triangle::updateElasticForce(double bendingPreFac, double JPreFactor, doubl
     }
 }
 
-Eigen::Vector3d Triangle::getNodeForce(unsigned int index) const {
-    if (index < 6) {
-        return node_elastic_force[index];
-    } else {
-        throw std::runtime_error("Node index must be below 6.");
-    }
+const Eigen::Vector3d *Triangle::getNodeForce(unsigned int index) const {
+    return &(node_elastic_force[index]);
 }

@@ -277,7 +277,7 @@ public:
 
     void updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio);
 
-    Eigen::Vector3d getNodeForce(unsigned int index) const;
+    const Eigen::Vector3d *getNodeForce(unsigned int index) const;
 };
 
 #endif

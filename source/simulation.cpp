@@ -370,7 +370,7 @@ void Simulation::run_ansatz(int counter) {
             tempMetricDecomp.compute((triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse());
             if (!tempMetricDecomp.isInvertible()) {
                 throw std::runtime_error(
-                        "At least one triangle had a non-invertible metric in the ansatz state. \n"
+                        "At least one triangle [" + std::to_string(i) + "] had a non-invertible metric in the ansatz state. \n"
                         "This should not occur in a reasonable mesh. Aborting.");
             }
 
@@ -547,7 +547,7 @@ Simulation::add_elastic_forces() {
         for (int i = 0; i < nodes.size(); i++) {
             nodes[i].force = {0, 0, 0};
             for (auto &trianglesForNode: correspondingTrianglesForNodes[i]) {
-                nodes[i].force += triangles[trianglesForNode.first].getNodeForce(trianglesForNode.second);
+                nodes[i].force.noalias() += *triangles[trianglesForNode.first].getNodeForce(trianglesForNode.second);
             }
         }
     }
