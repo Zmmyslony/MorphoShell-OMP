@@ -72,7 +72,7 @@ void Triangle::display() {
 }
 
 void Triangle::updateHalfPK1Stress(double stretchingPrefactor) {
-    halfPK1Stress = defGradient * (stretchingPrefactor * dialledProgTau *
+    halfPK1Stress.noalias() = defGradient * (stretchingPrefactor * dialledProgTau *
                                    (programmedMetInv - (metInvDet / programmedMetInvDet) * metInv));
 }
 
@@ -84,9 +84,9 @@ Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces() {
 Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals() {
     Eigen::Matrix<double, 3, 3> triangleEdgeNormals;
 
-    triangleEdgeNormals.col(1) = faceNormal.cross(currSides.col(1));
-    triangleEdgeNormals.col(2) = -faceNormal.cross(currSides.col(0));
-    triangleEdgeNormals.col(0) = -triangleEdgeNormals.col(1) - triangleEdgeNormals.col(2);
+    triangleEdgeNormals.col(1).noalias() = faceNormal.cross(currSides.col(1));
+    triangleEdgeNormals.col(2).noalias() = -faceNormal.cross(currSides.col(0));
+    triangleEdgeNormals.col(0).noalias() = -triangleEdgeNormals.col(1) - triangleEdgeNormals.col(2);
     return triangleEdgeNormals;
 }
 
@@ -129,9 +129,9 @@ void Triangle::updateGeometricProperties() {
 
     faceNormal.noalias() = currSides.col(0).cross(currSides.col(1));
     currAreaInv = 2 / faceNormal.norm();
-    faceNormal.noalias() = 0.5 * faceNormal * currAreaInv; // Normalising
+    faceNormal *= 0.5 * currAreaInv; // Normalising
 
-    centroid = (corner_nodes[0]->pos + corner_nodes[1]->pos + corner_nodes[2]->pos) / 3;
+    centroid.noalias() = (corner_nodes[0]->pos + corner_nodes[1]->pos + corner_nodes[2]->pos) / 3;
 }
 
 
