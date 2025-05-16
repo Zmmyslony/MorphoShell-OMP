@@ -84,7 +84,7 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
         tempinitSidesMatDecomp.compute(initSidesMat);
         if (!tempinitSidesMatDecomp.isInvertible()) {
             throw std::runtime_error(
-                    "At least one triangle had a non-invertible initial sides matrix. \n"
+                    "At least one triangle [" + std::to_string(i) + "] had a non-invertible initial sides matrix. \n"
                     "This should not occur in a reasonable mesh. Aborting.");
         } else {
             triangles[i].invInitSidesMat = initSidesMat.inverse();

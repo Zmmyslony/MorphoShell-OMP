@@ -310,7 +310,7 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
                      edges[triangles[i].edgeLabels(2)].isOnBoundary))
                 ) {
             throw std::runtime_error(
-                    "Error: Problem with triangle (edge-sharing) adjacencies or edges setup. Either there is a bug, or some mesh pathology; investigate further!");
+                    "Error: Problem with triangle (edge-sharing) at triangle " + std::to_string(i) + " - adjacencies or edges setup. Either there is a bug, or some mesh pathology; investigate further!");
         }
     }
     // If no problems have been spotted, store the total number of edges
