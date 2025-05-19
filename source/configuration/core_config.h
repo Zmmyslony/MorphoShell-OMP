@@ -48,6 +48,8 @@ class CoreConfig {
 
     // LCE mode - using director, default - using programmed metric and second fundamental form.
     bool is_lce_mode_enabled = false;
+    // If enabled together with the LCE mode, the elongation and curvature will dynamically change based on height.
+    bool is_stimulation_modulated = false;
     bool is_simple_sec_ff_used = true;
     bool is_boundary_clamped = false;
     bool is_initial_positions_perturbed = true;
@@ -167,6 +169,8 @@ public:
     bool isZFixedBc() const;
 
     double getUnits() const;
+
+    bool isStimulationModulated() const;
 
 };
 

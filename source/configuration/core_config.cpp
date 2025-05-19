@@ -56,6 +56,7 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
     config_base.get("dial_in_time_prefactor", dial_in_time_prefactor);
     config_base.get("time_step_prefactor", time_step_prefactor);
     config_base.get("is_lce_mode_enabled", is_lce_mode_enabled);
+    config_base.get("is_stimulation_modulated", is_stimulation_modulated);
     config_base.get("is_simple_sec_ff_used", is_simple_sec_ff_used);
     config_base.get("is_boundary_clamped", is_boundary_clamped);
     config_base.get("is_energy_printed", is_energy_printed);
@@ -254,5 +255,9 @@ bool CoreConfig::isStressPrinted() const {
 
 bool CoreConfig::isForcePrinted() const {
     return is_force_printed;
+}
+
+bool CoreConfig::isStimulationModulated() const {
+    return is_stimulation_modulated;
 }
 

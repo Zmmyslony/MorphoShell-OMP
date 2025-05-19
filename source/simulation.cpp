@@ -614,6 +614,7 @@ double getMaximumTriangleHeight(std::vector<Triangle> &triangles) {
 void Simulation::updateTriangleProperties(int counter) {
     const double dial_in_factor_root = sqrt(dial_in_factor);
     bool is_LCE_metric_used = settings_new.getCore().isLceModeEnabled();
+    bool is_stimulation_modulated = settings_new.getCore().isStimulationModulated();
 
     double min_height = getMinimumTriangleHeight(triangles);
     double max_height = getMaximumTriangleHeight(triangles);
@@ -622,7 +623,7 @@ void Simulation::updateTriangleProperties(int counter) {
     for (int i = 0; i < triangles.size(); i++) {
         if (simulation_status == Dialling) {
             triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used,
-                                                    true, 0.01, min_height, max_height);
+                                                    is_stimulation_modulated, 0.01, min_height, max_height);
         }
         triangles[i].updateGeometricProperties();
     }

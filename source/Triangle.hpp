@@ -46,6 +46,7 @@ class Triangle {
 public:
     int label;
     bool isOnBoundary;
+    double local_magnitude = 1;
 
     // Reference area
     double initArea;
@@ -181,8 +182,8 @@ private:
 
     void updateProgrammedMetricImplicit(double dirAngle, double lambda, double nu);
 
-    void updateProgrammedMetricDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
-                                           double min_height, double max_height);
+    void updateProgrammedTensorsDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
+                                            double min_height, double max_height);
 
     Eigen::Matrix<double, 3, 1> getBendingForcePatch(int row);
 

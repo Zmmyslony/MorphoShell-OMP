@@ -235,26 +235,25 @@ void Triangle::updateProgrammedMetricImplicit(int stage_counter, double dial_in_
     updateProgrammedMetricImplicit(dirAng, lambda, nu);
 }
 
-void Triangle::updateProgrammedMetricDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
-                                                 double min_height, double max_height) {
+void Triangle::updateProgrammedTensorsDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
+                                                  double min_height, double max_height) {
     Eigen::Vector3d metric_current = interpolate(programmed_metric_infos[stage_counter],
                                                  programmed_metric_infos[stage_counter + 1], dial_in_factor);
+    Eigen::Matrix<double, 2, 2> bend_programmed = interpolate(programmed_second_fundamental_form[stage_counter],
+                                                  programmed_second_fundamental_form[stage_counter+1], dial_in_factor);
 
     double dirAng = metric_current(0);
     double lambda = metric_current(1);
     double nu = metric_current(2);
 
     double normalized_height = (getHeight() - min_height) / (max_height - min_height);
-    if (fabs(max_height) - min_height < 1e-6) { normalized_height = 0; }
-    double target_elongation = 1 - (1 - lambda) * normalized_height;
+    if (fabs(max_height - min_height) < 1e-6) { normalized_height = 0; }
 
-// TODO This is temporary
-//    double target_elongation = lambda - 0.05 * 0.05 * normalized_height;
+    local_magnitude = interpolate(local_magnitude, normalized_height, transfer_coefficient);
+    local_elongation = 1 - (1 - lambda) * local_magnitude;
 
-    local_elongation = interpolate(local_elongation, target_elongation, transfer_coefficient);
-    lambda = local_elongation;
-
-    updateProgrammedMetricImplicit(dirAng, lambda, nu);
+    updateProgrammedMetricImplicit(dirAng, local_elongation, nu);
+    programmedSecFF = bend_programmed * (1 - local_magnitude);
 }
 
 void Triangle::updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor) {
@@ -277,15 +276,16 @@ void Triangle::updateProgrammedQuantities(int stage_counter, double dial_in_fact
                                           double transfer_coefficient, double min_height, double max_height) {
     if (is_lce_metric_used) {
         if (is_elongation_dynamically_updated) {
-            updateProgrammedMetricDynamically(stage_counter, dial_in_factor, transfer_coefficient, min_height,
-                                              max_height);
+            updateProgrammedTensorsDynamically(stage_counter, dial_in_factor, transfer_coefficient, min_height,
+                                               max_height);
         } else {
             updateProgrammedMetricImplicit(stage_counter, dial_in_factor);
+            updateProgrammedSecondFundamentalForm(stage_counter, dial_in_factor_root);
         }
     } else {
         updateProgrammedMetricExplicit(stage_counter, dial_in_factor);
+        updateProgrammedSecondFundamentalForm(stage_counter, dial_in_factor_root);
     }
-    updateProgrammedSecondFundamentalForm(stage_counter, dial_in_factor_root);
     updateProgrammedTaus(stage_counter, dial_in_factor);
 }
 
