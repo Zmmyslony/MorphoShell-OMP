@@ -119,9 +119,9 @@ Eigen::Matrix<double, 3, 1> Triangle::getBendingForcePatch(int row) {
 }
 
 void Triangle::updateGeometricProperties() {
-    Eigen::Vector3d p0 = corner_nodes[0]->pos;
-    Eigen::Vector3d p1 = corner_nodes[1]->pos;
-    Eigen::Vector3d p2 = corner_nodes[2]->pos;
+    Eigen::Vector3d p0 = *corner_nodes_pos[0];
+    Eigen::Vector3d p1 = *corner_nodes_pos[1];
+    Eigen::Vector3d p2 = *corner_nodes_pos[2];
 
     currSides.col(0).noalias() = p1 - p0;
     currSides.col(1).noalias() = p2 - p0;
@@ -138,9 +138,9 @@ void Triangle::updateGeometricProperties() {
     patchSecDerivs.noalias() = p0 * matForPatchSecDerivs.row(0)
                                + p1 * matForPatchSecDerivs.row(1)
                                + p2 * matForPatchSecDerivs.row(2)
-                               + patch_nodes[0]->pos * matForPatchSecDerivs.row(3)
-                               + patch_nodes[1]->pos * matForPatchSecDerivs.row(4)
-                               + patch_nodes[2]->pos * matForPatchSecDerivs.row(5);
+                               + *patch_nodes_pos[0] * matForPatchSecDerivs.row(3)
+                               + *patch_nodes_pos[1] * matForPatchSecDerivs.row(4)
+                               + *patch_nodes_pos[2] * matForPatchSecDerivs.row(5);
 
     centroid.noalias() = (p0 + p1 + p2) / 3;
 }
@@ -414,9 +414,11 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
             if (current_condition_number < patch_condition_number) {
                 patch_condition_number = current_condition_number;
                 nonVertexPatchNodesLabels = {candidateIndices[0], candidateIndices[1], candidateIndices[2]};
-                for (int i = 0; i < 3; i++) {
-                    patch_nodes[i] = &nodes[candidateIndices[i]];
-                }
+
+                patch_nodes_pos[0] = &nodes[candidateIndices[0]].pos;
+                patch_nodes_pos[1] = &nodes[candidateIndices[1]].pos;
+                patch_nodes_pos[2] = &nodes[candidateIndices[2]].pos;
+
                 matForPatchSecDerivs = candidatePatchDiv;
             }
         }
@@ -434,9 +436,9 @@ Triangle::Triangle(int label, int id_0, int id_1, int id_2, const std::vector<No
     vertexLabels(0) = id_0;
     vertexLabels(1) = id_1;
     vertexLabels(2) = id_2;
-    corner_nodes[0] = &nodes[id_0];
-    corner_nodes[1] = &nodes[id_1];
-    corner_nodes[2] = &nodes[id_2];
+    corner_nodes_pos[0] = &nodes[id_0].pos;
+    corner_nodes_pos[1] = &nodes[id_1].pos;
+    corner_nodes_pos[2] = &nodes[id_2].pos;
 }
 
 void
@@ -450,12 +452,11 @@ Triangle::updateElasticForce(double bendingPreFac, double JPreFactor, double str
             0.5 * currAreaInv * (patchSecDerivs.transpose() * triangleEdgeNormals);
 
     for (int n = 0; n < 3; ++n) {
-        node_elastic_force[n].noalias() = getBendingForceNode(normalDerivPiece.col(n), n);
-        node_elastic_force[n].noalias() += stretchForces.col(n);
-        node_elastic_force[n + 3].noalias() = getBendingForcePatch(n + 3);
+        node_elastic_force[n]->noalias() = getBendingForceNode(normalDerivPiece.col(n), n) + stretchForces.col(n);
+        node_elastic_force[n + 3]->noalias() = getBendingForcePatch(n + 3);
     }
 }
 
-const Eigen::Vector3d *Triangle::getNodeForce(unsigned int index) const{
-    return &(node_elastic_force[index]);
+void Triangle::setNodeForceAddress(unsigned int index, Eigen::Vector3d *address) {
+    node_elastic_force[index] = address;
 }

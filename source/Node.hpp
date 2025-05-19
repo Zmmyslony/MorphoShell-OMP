@@ -43,7 +43,7 @@ class Node {
     /// Pointers to a field in a triangles which correspond to this node.
     std::vector<Eigen::Vector3d *> force_pointers;
 public:
-    void addForcePoints(const Eigen::Vector3d *force_address);
+    void addNodeForceAddress(Eigen::Vector3d *force_address);
     void updateForce();
     /* Custom output stream allowing the debugging display function to print to
     a particular file in addition to std::cout.*/

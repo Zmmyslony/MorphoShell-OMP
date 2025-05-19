@@ -37,11 +37,17 @@ Function to calculate the current force due to strain and bending on each
 #include "calcDeformationForces.hpp"
 
 
-void assignForceLocationsToNodes(std::vector<Triangle> &triangles, std::vector<Node> &nodes) {
+void assignForceLocationsToNodes(std::vector<Triangle> &triangles, std::vector<Node> &nodes,
+                                 std::vector<Eigen::Vector3d> &node_forces_data) {
     for (int i = 0; i < triangles.size(); i++) {
         for (int j = 0; j < 3; j++) {
-            nodes[triangles[i].vertexLabels(j)].addForcePoints(triangles[i].getNodeForce(j));
-            nodes[triangles[i].nonVertexPatchNodesLabels(j)].addForcePoints(triangles[i].getNodeForce(j + 3));
+            int vertex_label = triangles[i].vertexLabels[j];
+            int patch_label = triangles[i].nonVertexPatchNodesLabels[j];
+
+            nodes[vertex_label].addNodeForceAddress(node_forces_data.data() + (6 * i + j));
+            nodes[patch_label].addNodeForceAddress(&node_forces_data[6 * i + j + 3]);
+            triangles[i].setNodeForceAddress(j, node_forces_data.data() + (6 * i + j));
+            triangles[i].setNodeForceAddress(j + 3, &node_forces_data[6 * i + j + 3]);
         }
     }
 }

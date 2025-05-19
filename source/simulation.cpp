@@ -212,8 +212,7 @@ void Simulation::configure_triangles() {
 }
 
 void Simulation::set_node_patches() {
-    createNodePatches(nodes, triangles,
-                      settings_new.getCore().getPatchMatrixThreshold());
+    createNodePatches(nodes, triangles, settings_new.getCore().getPatchMatrixThreshold());
 }
 
 
@@ -308,7 +307,6 @@ void Simulation::init(int argc, char *argv[]) {
     setup_filenames(argc, argv);
     read_settings_new(argc, argv);
     read_vtk_data(settings_new.getCore());
-
     configure_nodes();
     configure_topological_properties();
     configure_triangles();
@@ -318,7 +316,9 @@ void Simulation::init(int argc, char *argv[]) {
 
     set_initial_conditions();
     find_smallest_element();
-    assignForceLocationsToNodes(triangles, nodes);
+
+    node_force_proxy = std::vector<Eigen::Vector3d>(triangles.size() * 6);
+    assignForceLocationsToNodes(triangles, nodes, node_force_proxy);
 
     settings_new.SetupDialInTime(characteristic_long_length);
     settings_new.SetupStepTime(characteristic_short_length);
@@ -332,7 +332,6 @@ void Simulation::init(int argc, char *argv[]) {
     if (settings_new.getCore().isInitialPositionsPerturbed()) {
         perturbInitialPositionsWithRandomNoise(nodes, characteristic_short_length);
     }
-    forcesForEachTriangle.reserve(6 * triangles.size());
 }
 
 

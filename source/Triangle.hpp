@@ -39,9 +39,9 @@ triangular element, such as vertices, area etc.*/
 
 class Triangle {
     double local_elongation = 1;
-    const Node *corner_nodes[3];
-    const Node *patch_nodes[3];
-    Eigen::Vector3d node_elastic_force[6];
+    const Eigen::Vector3d *corner_nodes_pos[3];
+    const Eigen::Vector3d *patch_nodes_pos[3];
+    Eigen::Vector3d *node_elastic_force[6];
 
 public:
     int label;
@@ -214,10 +214,10 @@ public:
     and usefulTermsForSecFFDeriv
     are left with zero size at initialisation. */
     Triangle() {
-        label = INT_MAX;
+        label = -1;
         isOnBoundary = false;
-        vertexLabels.fill(INT_MAX);
-        nonVertexPatchNodesLabels.fill(INT_MAX);
+        vertexLabels.fill(-1);
+        nonVertexPatchNodesLabels.fill(-1);
         edgeLabels.fill(INT_MAX);
         initArea = DBL_MAX;
         currAreaInv = DBL_MAX;
@@ -270,7 +270,7 @@ public:
                                     bool is_lce_metric_used, bool is_elongation_dynamically_updated,
                                     double transfer_coefficient, double min_height, double max_height);
 
-    const Eigen::Vector3d *getNodeForce(unsigned int index) const;
+    void setNodeForceAddress(unsigned int index, Eigen::Vector3d *address);
 };
 
 #endif

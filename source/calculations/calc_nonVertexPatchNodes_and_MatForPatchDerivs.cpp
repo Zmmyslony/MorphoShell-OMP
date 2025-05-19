@@ -68,8 +68,7 @@ void validatePatchSearch(const std::vector<double> &patch_values, double patch_t
 
 }
 
-void createNodePatches(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
-                       double patch_threshold) {
+void createNodePatches(const std::vector<Node> &nodes, std::vector<Triangle> &triangles, double patch_threshold) {
     std::vector<double> patch_values(triangles.size());
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {

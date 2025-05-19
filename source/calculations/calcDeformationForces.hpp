@@ -28,5 +28,6 @@ Header file for update_elastic_forces.cpp
 #include "../Node.hpp"
 #include "../Triangle.hpp"
 
-void assignForceLocationsToNodes(std::vector<Triangle> &triangles, std::vector<Node> &nodes);
+void assignForceLocationsToNodes(std::vector<Triangle> &triangles, std::vector<Node> &nodes,
+                                 std::vector<Eigen::Vector3d>  &node_forces_data);
 

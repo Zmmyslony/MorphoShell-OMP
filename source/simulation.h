@@ -60,13 +60,12 @@ class Simulation {
     std::vector<Slide> slides;
     std::vector<Cone> cones;
     std::streambuf *cout_buf = std::cout.rdbuf();
-
+    std::vector<Eigen::Vector3d> node_force_proxy;
     int num_nodes = 0;
     int num_triangles = 0;
     int num_edges = 0;
     int step_count = 0;
     double damping_power_loss = 0;
-    std::vector<Eigen::Vector3d> forcesForEachTriangle;
 
     double time_global = 0;
     // Reset to zero every time equilibrium is checked, or every time a new DialInFactor value is reached.

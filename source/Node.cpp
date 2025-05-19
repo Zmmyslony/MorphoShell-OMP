@@ -143,8 +143,8 @@ void Node::clamp(const CoreConfig &config) {
     is_z_clamped = config.isZFixedBc();
 }
 
-void Node::addForcePoints(const Eigen::Vector3d *force_address) {
-    force_pointers.push_back(const_cast<Eigen::Vector3d *>(force_address));
+void Node::addNodeForceAddress(Eigen::Vector3d *force_address) {
+    force_pointers.push_back(force_address);
 }
 
 void Node::updateForce() {
