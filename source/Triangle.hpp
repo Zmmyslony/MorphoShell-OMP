@@ -168,8 +168,6 @@ public:
     /* Derivative of the bending energy density with respect to the secFF.*/
     Eigen::Matrix<double, 2, 2> energyDensityDerivWRTSecFF;
 
-    /* The derivative of the bending energy density with respect to the metric.*/
-    Eigen::Matrix<double, 2, 2> bendEnergyDensityDerivWRTMetric;
 
 private:
     void updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor);
@@ -238,7 +236,6 @@ public:
         patchSecDerivs.fill(DBL_MAX);
         secFF.fill(DBL_MAX);
         energyDensityDerivWRTSecFF.fill(DBL_MAX);
-        bendEnergyDensityDerivWRTMetric.fill(DBL_MAX);
         matForPatchSecDerivs.fill(DBL_MAX);
         bendEnergyDensity = DBL_MAX;
         stretchEnergyDensity = DBL_MAX;
@@ -249,7 +246,7 @@ public:
     // Declare other member functions.
 
     // Debugging function to display all member data.
-    void display();
+    std::stringstream display();
 
     void updateGeometricProperties();
 

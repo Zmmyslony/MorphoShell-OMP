@@ -34,19 +34,21 @@ left in the header file for clarity there.*/
 #define GRAVITY_MAGNITUDE (9.80665 * 1e3)
 
 //This is a debugging tool to display the node's data
-void Node::display() {
-    std::cout << "-----------------------------" << std::setprecision(15) << std::boolalpha << std::endl;
-    std::cout << "Node " << label << ":" << std::endl;
-    std::cout << "Labels of incident triangles: " << "\n" << incidentTriLabels << std::endl;
-    std::cout << "neighbourNodeLabels = " << "\n" << neighbourNodeLabels << std::endl;
-    std::cout << "Position = " << "\n" << pos << std::endl;
-    std::cout << "Velocity = " << "\n" << vel << std::endl;
-    std::cout << "Force = " << "\n" << force << std::endl;
-    std::cout << "Mass = " << mass << std::endl;
-    std::cout << "Boundary indicator: " << isOnBoundary << std::endl;
-    std::cout << "Clamp indicator: " << (is_x_clamped || is_y_clamped || is_z_clamped) << std::endl;
-    std::cout << "Load indicator: " << isLoadForceEnabled << std::endl;
-    std::cout << "-----------------------------" << std::endl;
+std::stringstream Node::display() {
+    std::stringstream msg;
+    msg << "-----------------------------" << std::setprecision(15) << std::boolalpha << std::endl;
+    msg << "Node " << label << ":" << std::endl;
+    msg << "Labels of incident triangles: " << "\n" << incidentTriLabels << std::endl;
+    msg << "neighbourNodeLabels = " << "\n" << neighbourNodeLabels << std::endl;
+    msg << "Position = " << "\n" << pos << std::endl;
+    msg << "Velocity = " << "\n" << vel << std::endl;
+    msg << "Force = " << "\n" << force << std::endl;
+    msg << "Mass = " << mass << std::endl;
+    msg << "Boundary indicator: " << isOnBoundary << std::endl;
+    msg << "Clamp indicator: " << (is_x_clamped || is_y_clamped || is_z_clamped) << std::endl;
+    msg << "Load indicator: " << isLoadForceEnabled << std::endl;
+    msg << "-----------------------------" << std::endl;
+    return msg;
 }
 
 void Node::add_gravity(const GravityConfig &config) {

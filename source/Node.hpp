@@ -120,7 +120,7 @@ public:
     // Declare other member functions.
 
     // Debugging function to display all member data.
-    void display();
+    std::stringstream display();
 
     /**
      * Adds gravitational force using the multiplier from the settings file. Use multiplier = 1 for normal pulling in

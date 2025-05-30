@@ -366,28 +366,19 @@ void Simulation::run_ansatz(int counter) {
 #pragma omp parallel for
         for (int i = 0; i < num_triangles; ++i) {
             // Test for invertibility of metric before taking inverse.
-            tempMetricDecomp.compute((triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse());
+            Eigen::Matrix2d metric = triangles[i].defGradient.transpose() * triangles[i].defGradient;
+            tempMetricDecomp.compute(metric);
             if (!tempMetricDecomp.isInvertible()) {
-                throw std::runtime_error(
-                        "At least one triangle [" + std::to_string(i) + "] had a non-invertible metric in the ansatz state. \n"
-                        "This should not occur in a reasonable mesh. Aborting.");
+                throw std::runtime_error(triangles[i].display().str() +
+                                         "At least one triangle [" + std::to_string(i) +
+                                         "] had a non-invertible metric in the ansatz state. \n"
+                                         "This should not occur in a reasonable mesh. Aborting.");
             }
-
-            if (settings_new.getCore().isFirstTensorSkipped()) {
-                triangles[i].programmed_metric_inv[initial_stage + 1] = (
-                        triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
-                triangles[i].programmed_taus[initial_stage + 1] =
-                        triangles[i].programmed_taus[initial_stage + 1];
-                triangles[i].programmed_second_fundamental_form[initial_stage +
-                                                                1] = triangles[i].secFF;
-            } else {
-                triangles[i].programmed_metric_inv[initial_stage] = (
-                        triangles[i].defGradient.transpose() * triangles[i].defGradient).inverse();
-                triangles[i].programmed_taus[initial_stage] =
-                        triangles[i].programmed_taus[initial_stage + 1];
-                triangles[i].programmed_second_fundamental_form[initial_stage] = triangles[i].secFF;
-            }
-
+            size_t stage = initial_stage;
+            if (settings_new.getCore().isFirstTensorSkipped()) { stage++; }
+            triangles[i].programmed_metric_inv[stage] = metric.inverse();
+            triangles[i].programmed_taus[stage] = triangles[i].programmed_taus[stage];
+            triangles[i].programmed_second_fundamental_form[stage] = triangles[i].secFF;
         }
     } else {
         dial_in_factor = dialInFactorToStartFrom;
@@ -810,20 +801,24 @@ void Simulation::run_tensor_increment(int stage_counter) {
     std::vector<Eigen::Vector3d> nodeUnstressedConePosits(num_nodes);
 
     while (phase_counter < dial_in_phases.size() - 1) {
-        if (step_count == 0) { first_step_configuration(); }
-        check_if_equilibrium_search_begun(stage_counter);
-        if (simulation_status == Dialling) { update_dial_in_factor(); }
+        try {
+            if (step_count == 0) { first_step_configuration(); }
+            check_if_equilibrium_search_begun(stage_counter);
+            if (simulation_status == Dialling) { update_dial_in_factor(); }
+            long long duration_us = progress_single_step(stage_counter);
 
-        long long duration_us = progress_single_step(stage_counter);
-        if (isDataPrinted()) { save_and_print_details(stage_counter, duration_us); }
-        if (is_equilibrium_seeked) { equilibriumTest(stage_counter, duration_us); }
+            if (isDataPrinted()) { save_and_print_details(stage_counter, duration_us); }
+            if (is_equilibrium_seeked) { equilibriumTest(stage_counter, duration_us); }
 
-        try { advanceDynamics(nodes, triangles, settings_new); }
-        catch (const std::runtime_error &error) {
-            error_large_force(stage_counter);
+            advanceDynamics(nodes, triangles, settings_new);
+            advance_physics();
+            advance_time();
         }
-        advance_physics();
-        advance_time();
+        catch (std::runtime_error &error) {
+            std::cout << "Error occurred at step " << step_count << ". Saving the output and stopping." << std::endl;
+            save_and_print_details(stage_counter, 0);
+            throw error;
+        }
     }
 }
 

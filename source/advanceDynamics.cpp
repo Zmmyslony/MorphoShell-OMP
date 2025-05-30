@@ -42,17 +42,20 @@ bool isForceThresholdExceeded(const Node &node, const SettingsNew &settings) {
 }
 
 
-void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles) {
-    std::cout << " ----------------------------------------" << std::endl;
-    std::cout << " ------------CRASH REPORT----------------" << std::endl;
-    std::cout << " ----------------------------------------" << std::endl;
-    std::cout << "First offending node and its incident triangles: " << std::endl;
+void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, const SettingsNew &settings) {
+    std::stringstream msg;
+    msg << " ----------------------------------------" << std::endl;
+    msg << " ------------CRASH REPORT----------------" << std::endl;
+    msg << " ----------------------------------------" << std::endl;
+    msg << "First offending node and its incident triangles: " << std::endl;
 
-    node.display();
+    msg << node.display().str();
     for (int t = 0; t < node.incidentTriLabels.size(); ++t) {
-        triangles[node.incidentTriLabels(t)].display();
+        msg << triangles[node.incidentTriLabels(t)].display().str();
     }
-    throw std::runtime_error("suspiciously_high_force");
+    std::cout << msg.str();
+    throw std::runtime_error(msg.str() + "Suspiciously high force at node " + std::to_string(node.label) + std::string(" (") +
+                             std::to_string(node.force.norm() / 1e5 * settings.getForceScale()) + " of limit).");
 }
 
 
@@ -60,7 +63,7 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
 #pragma omp parallel for
     for (int i = 0; i < nodes.size(); ++i) {
         if (isForceThresholdExceeded(nodes[i], settings)) {
-            logForceThresholdExceeded(nodes[i], triangles);
+            logForceThresholdExceeded(nodes[i], triangles, settings);
         }
         /*  Check the force is well-behaved. If not, throw error, and
             display offending nodes and its incident triangles.
@@ -71,7 +74,8 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         or Newtonian dynamics. Then advance positions accordingly. */
         if (settings.getCore().isGradientDescentDynamics()) {
             // Gradient Descent dynamics.
-            nodes[i].vel = settings.getCore().getDensity() * nodes[i].force / (settings.getDampingFactor() * nodes[i].mass);
+            nodes[i].vel =
+                    settings.getCore().getDensity() * nodes[i].force / (settings.getDampingFactor() * nodes[i].mass);
         } else {
             // Newtonian Dynamics.
             /* Advance velocity and *then* position (Semi-Implicit Euler, also

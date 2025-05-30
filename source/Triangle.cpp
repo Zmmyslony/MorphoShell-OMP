@@ -34,41 +34,42 @@ they are left in the header file for clarity there.*/
 
 
 //This is a debugging tool to display the node's data
-void Triangle::display() {
-    std::cout << "-----------------------------" << std::setprecision(15) << std::boolalpha << std::endl;
-    std::cout << "Triangle " << label << ":" << std::endl;
-    std::cout << "Boundary indicator = " << isOnBoundary << std::endl;
-    std::cout << "Initial (reference) area = " << initArea << std::endl;
-    std::cout << "invCurrArea = " << currAreaInv << std::endl;
-    std::cout << "Labels of vertices: " << vertexLabels.transpose() << std::endl;
-    std::cout << "Labels of edges: " << edgeLabels.transpose() << std::endl;
-    std::cout << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
+std::stringstream Triangle::display() {
+    std::stringstream msg;
+    msg << "-----------------------------" << std::setprecision(15) << std::boolalpha << std::endl;
+    msg << "Triangle " << label << ":" << std::endl;
+    msg << "Boundary indicator = " << isOnBoundary << std::endl;
+    msg << "Initial (reference) area = " << initArea << std::endl;
+    msg << "invCurrArea = " << currAreaInv << std::endl;
+    msg << "Labels of vertices: " << vertexLabels.transpose() << std::endl;
+    msg << "Labels of edges: " << edgeLabels.transpose() << std::endl;
+    msg << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
               << std::endl;
-    std::cout << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
-    std::cout << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
-    std::cout << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
+    msg << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
+    msg << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
+    msg << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
               << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
-    std::cout << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
+    msg << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
               << std::endl;
-    std::cout << "Current sides = " << "\n" << currSides << std::endl;
-    std::cout << "faceNormal = " << "\n" << faceNormal << std::endl;
-    std::cout << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
-    std::cout << "invInitInPlaneSidesMat = " << "\n" << invInitSidesMat << std::endl;
-    std::cout << "Dialled in inverse of programmed metric = " << "\n" << programmedMetInv << std::endl;
-    std::cout << "detDialledInvProgMetric = " << "\n" << programmedMetInvDet << std::endl;
-    std::cout << "Dialled in prog tau factor = " << dialledProgTau << std::endl;
-    std::cout << "Dialled in programmed second fundamental form = " << "\n" << programmedSecFF << std::endl;
-    std::cout << "Deformation gradient = " << "\n" << defGradient << std::endl;
-    std::cout << "metric = " << "\n" << met << std::endl;
-    std::cout << "Inverse of Metric = " << "\n" << metInv << std::endl;
-    std::cout << "Det of inverse of Metric = " << "\n" << metInvDet << std::endl;
-    std::cout << "matForPatchSecDerivs = " << "\n" << matForPatchSecDerivs << std::endl;
-    std::cout << "patchSecDerivs = " << "\n" << patchSecDerivs << std::endl;
-    std::cout << "Second fundamental form = " << "\n" << secFF << std::endl;
-    std::cout << "Bending energy density deriv wrt secFF = " << "\n" << energyDensityDerivWRTSecFF << std::endl;
-    std::cout << "bendEnergyDensityDerivWRTMetric = " << "\n" << bendEnergyDensityDerivWRTMetric << std::endl;
-    std::cout << "halfPK1Stress = " << "\n" << halfPK1Stress << std::endl;
-    std::cout << "-----------------------------" << std::endl;
+    msg << "Current sides = " << "\n" << currSides << std::endl;
+    msg << "faceNormal = " << "\n" << faceNormal << std::endl;
+    msg << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
+    msg << "invInitInPlaneSidesMat = " << "\n" << invInitSidesMat << std::endl;
+    msg << "Dialled in inverse of programmed metric = " << "\n" << programmedMetInv << std::endl;
+    msg << "detDialledInvProgMetric = " << "\n" << programmedMetInvDet << std::endl;
+    msg << "Dialled in prog tau factor = " << dialledProgTau << std::endl;
+    msg << "Dialled in programmed second fundamental form = " << "\n" << programmedSecFF << std::endl;
+    msg << "Deformation gradient = " << "\n" << defGradient << std::endl;
+    msg << "metric = " << "\n" << met << std::endl;
+    msg << "Inverse of Metric = " << "\n" << metInv << std::endl;
+    msg << "Det of inverse of Metric = " << "\n" << metInvDet << std::endl;
+    msg << "matForPatchSecDerivs = " << "\n" << matForPatchSecDerivs << std::endl;
+    msg << "patchSecDerivs = " << "\n" << patchSecDerivs << std::endl;
+    msg << "Second fundamental form = " << "\n" << secFF << std::endl;
+    msg << "Bending energy density deriv wrt secFF = " << "\n" << energyDensityDerivWRTSecFF << std::endl;
+    msg << "halfPK1Stress = " << "\n" << halfPK1Stress << std::endl;
+    msg << "-----------------------------" << std::endl;
+    return msg;
 }
 
 void Triangle::updateHalfPK1Stress(double stretchingPrefactor) {
@@ -254,6 +255,7 @@ void Triangle::updateProgrammedTensorsDynamically(int stage_counter, double dial
 
     updateProgrammedMetricImplicit(dirAng, local_elongation, nu);
     programmedSecFF = bend_programmed * (1 - local_magnitude);
+//    programmedSecFF = bend_programmed * local_magnitude;
 }
 
 void Triangle::updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor) {
