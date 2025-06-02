@@ -55,15 +55,13 @@ class Simulation {
 
     std::string init_string;
     std::string output_dir_name;
-//    Settings settings;
+
     SettingsNew settings_new;
     std::vector<Slide> slides;
     std::vector<Cone> cones;
     std::streambuf *cout_buf = std::cout.rdbuf();
     std::vector<Eigen::Vector3d> node_force_proxy;
-    int num_nodes = 0;
-    int num_triangles = 0;
-    int num_edges = 0;
+
     int step_count = 0;
     double damping_power_loss = 0;
 

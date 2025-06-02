@@ -126,16 +126,14 @@ void Simulation::read_vtk_data(const CoreConfig &config) {
         }
     }
 
-    num_nodes = (int) nodes.size();
-    num_triangles = (int) triangles.size();
 }
 
 
 void Simulation::configure_nodes() const {
-    std::cout << "Nodes count = " << num_nodes << std::endl;
-    std::cout << "Triangle count = " << num_triangles << std::endl;
+    std::cout << "Nodes count = " << nodes.size() << std::endl;
+    std::cout << "Triangle count = " << triangles.size() << std::endl;
 
-    if (num_triangles < 50) {
+    if (triangles.size() < 50) {
         std::cerr << "Your mesh has a small number of triangles. \nBeware that the code "
                      "is likely to be less accurate in this case, \nand unforeseen bugs are more "
                      "likely in extreme cases." << std::endl;
@@ -145,7 +143,7 @@ void Simulation::configure_nodes() const {
 
 void Simulation::configure_topological_properties() {
     calcTrianglesIncidentOnNodes(nodes, triangles);
-    num_edges = calcTriangleAdjacencies_And_Edges(nodes, triangles, edges);
+    calcTriangleAdjacencies_And_Edges(nodes, triangles, edges);
 
     /* Calculate and print the number of boundary and non-boundary edges.
     Also label the nodes connected by boundary edges as boundary nodes.
@@ -153,9 +151,9 @@ void Simulation::configure_topological_properties() {
     characteristic sample length in estimating characteristic times, time steps
     etc.*/
     int numBoundaryEdges = 0;
-    std::vector<double> initBoundaryEdgeLengths(num_edges);
+    std::vector<double> initBoundaryEdgeLengths(edges.size());
 
-    for (int i = 0; i < num_edges; ++i) {
+    for (int i = 0; i < edges.size(); ++i) {
         if (edges[i].isOnBoundary) {
 
             numBoundaryEdges += 1;
@@ -178,12 +176,12 @@ void Simulation::configure_topological_properties() {
     double initPerimeter = kahanSum(initBoundaryEdgeLengths);
     characteristic_long_length = initPerimeter;
 
-    if (3 * num_triangles != 2 * num_edges - numBoundaryEdges) {
+    if (3 * triangles.size() != 2 * edges.size() - numBoundaryEdges) {
         throw std::runtime_error(
                 "Something has gone wrong in calculating triangle adjacencies and/or edges: the current edge and triangle counts violate a topological identity.");
     }
 
-    std::cout << "Edges count = " << num_edges << std::endl;
+    std::cout << "Edges count = " << edges.size() << std::endl;
     std::cout << "Boundary edges count = " << numBoundaryEdges << std::endl;
 
     std::cout << std::endl;
@@ -194,7 +192,7 @@ void Simulation::configure_topological_properties() {
 void Simulation::configure_triangles() {
     int numBoundaryTriangles = 0;
 #pragma omp parallel for reduction(+ : numBoundaryTriangles)
-    for (int i = 0; i < num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
         if (triangles[i].isOnBoundary) {
             numBoundaryTriangles += 1;
         }
@@ -202,10 +200,11 @@ void Simulation::configure_triangles() {
 
     std::cout << std::endl;
     std::cout << "Number of boundary triangles = " << numBoundaryTriangles << std::endl;
-    std::cout << "Number of holes in mesh = " << 1 + num_edges - num_nodes - num_triangles
+    int hole_count = 1 + edges.size() - nodes.size() - triangles.size();
+    std::cout << "Number of holes in mesh = " << hole_count
               << std::endl; // From Euler's formula for a planar graph.
 
-    if (1 + num_edges - num_nodes - num_triangles < 0) {
+    if (hole_count < 0) {
         throw std::runtime_error(
                 "Something is very wrong with the mesh, because the code thinks it has a negative number of holes! A first thing to check is that all nodes touch at least one tri.");
     }
@@ -220,7 +219,7 @@ void Simulation::orient_node_labels() {
     updateTriangleProperties(-10);
     Eigen::Vector3d tempZAxisVec;
     tempZAxisVec << 0.0, 0.0, 1.0;
-    for (int i = 0; i < num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
         if (tempZAxisVec.dot(triangles[i].currSides.col(0).cross(triangles[i].currSides.col(1))) < 0) {
             int tempLabel = triangles[i].vertexLabels(2);
             triangles[i].vertexLabels(2) = triangles[i].vertexLabels(1);
@@ -286,20 +285,20 @@ void Simulation::setup_equilibrium_dial_in_factors() {
 }
 
 void Simulation::initialise_simulation_vectors() {
-    gaussCurvatures = std::vector<double>(num_triangles, DBL_MAX);
-    meanCurvatures = std::vector<double>(num_triangles, DBL_MAX);
-    stretchEnergies = std::vector<double>(num_triangles, DBL_MAX);
-    bendEnergies = std::vector<double>(num_triangles, DBL_MAX);
-    stretchEnergyDensities = std::vector<double>(num_triangles, DBL_MAX);
-    bendEnergyDensities = std::vector<double>(num_triangles, DBL_MAX);
-    kineticEnergies = std::vector<double>(num_nodes, DBL_MAX);
-    strainMeasures = std::vector<double>(num_triangles, DBL_MAX);
-    cauchyStressEigenvals = std::vector<Eigen::Vector2d>(num_triangles);
-    cauchyStressEigenvecs = std::vector<Eigen::Matrix<double, 3, 2>>(num_triangles);
+    gaussCurvatures = std::vector<double>(triangles.size(), DBL_MAX);
+    meanCurvatures = std::vector<double>(triangles.size(), DBL_MAX);
+    stretchEnergies = std::vector<double>(triangles.size(), DBL_MAX);
+    bendEnergies = std::vector<double>(triangles.size(), DBL_MAX);
+    stretchEnergyDensities = std::vector<double>(triangles.size(), DBL_MAX);
+    bendEnergyDensities = std::vector<double>(triangles.size(), DBL_MAX);
+    kineticEnergies = std::vector<double>(nodes.size(), DBL_MAX);
+    strainMeasures = std::vector<double>(triangles.size(), DBL_MAX);
+    cauchyStressEigenvals = std::vector<Eigen::Vector2d>(triangles.size());
+    cauchyStressEigenvecs = std::vector<Eigen::Matrix<double, 3, 2>>(triangles.size());
 
-    angleDeficits = std::vector<double>(num_nodes, DBL_MAX);
-    interiorNodeAngleDeficits = std::vector<double>(num_nodes, DBL_MAX);
-    boundaryNodeAngleDeficits = std::vector<double>(num_nodes, DBL_MAX);
+    angleDeficits = std::vector<double>(nodes.size(), DBL_MAX);
+    interiorNodeAngleDeficits = std::vector<double>(nodes.size(), DBL_MAX);
+    boundaryNodeAngleDeficits = std::vector<double>(nodes.size(), DBL_MAX);
 }
 
 
@@ -336,7 +335,7 @@ void Simulation::init(int argc, char *argv[]) {
 
 
 void Simulation::run_ansatz(int counter) {
-    for (int i = 0; i < num_nodes; ++i) {
+    for (int i = 0; i < nodes.size(); ++i) {
         nodes[i].pos = nodeAnsatzPositions[i];
     }
 
@@ -364,7 +363,7 @@ void Simulation::run_ansatz(int counter) {
         /* Alter inverted_programmed_metrics[initial_stage] and similar to change where
         the programmed quantities are dialling from.*/
 #pragma omp parallel for
-        for (int i = 0; i < num_triangles; ++i) {
+        for (int i = 0; i < triangles.size(); ++i) {
             // Test for invertibility of metric before taking inverse.
             Eigen::Matrix2d metric = triangles[i].defGradient.transpose() * triangles[i].defGradient;
             tempMetricDecomp.compute(metric);
@@ -393,7 +392,7 @@ void Simulation::run_ansatz(int counter) {
         time_phase = dial_in_since_last_phase / dial_in_phase_duration * settings_new.getDurationPhase();
 
         if (settings_new.getCore().isFirstTensorSkipped()) {
-            for (int i = 0; i < num_triangles; ++i) {
+            for (int i = 0; i < triangles.size(); ++i) {
                 triangles[i].programmed_metric_infos[initial_stage] =
                         triangles[i].programmed_metric_infos[initial_stage + 1];
                 triangles[i].programmed_second_fundamental_form[initial_stage] =
@@ -426,7 +425,7 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
             << "Imposing Seide displacements within the following (initial) vertical distances of the top and bottom: "
             << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
 
-    for (int n = 0; n < num_nodes; ++n) {
+    for (int n = 0; n < nodes.size(); ++n) {
         if (((nodes[highest_node].pos(2) - nodes[n].pos(2)) < intermLengthScaleUpper) ||
             ((nodes[n].pos(2) - nodes[lowest_node].pos(2)) < intermLengthScaleLower)) {
             nodes[n].isSeideDisplacementEnabled = true;
@@ -434,7 +433,7 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
     }
 
     // STORE PERFECT CONE ANSATZ
-    for (int n = 0; n < num_nodes; ++n) {
+    for (int n = 0; n < nodes.size(); ++n) {
         nodeUnstressedConePosits[n] = nodes[n].pos;
     }
     s1 = sqrt(nodes[highest_node].pos(0) * nodes[highest_node].pos(0) +
@@ -456,7 +455,7 @@ void Simulation::setup_imposed_seide_deformations(double &s1, int highest_node, 
 //        settings.p = pInit + time * settings.p_speed_prefactor * settings.shear_modulus * settings.sheet_thickness *
 //                             settings.sheet_thickness / settings.bending_long_time;
 //
-//        for (int n = 0; n < num_nodes; ++n) {
+//        for (int n = 0; n < nodes.size(); ++n) {
 //            if (nodes[n].isSeideDisplacementEnabled || step_count == 0) {
 //
 //                double tCone = settings.sheet_thickness / sqrt(settings.lambda);
@@ -798,7 +797,7 @@ void Simulation::run_tensor_increment(int stage_counter) {
 
     std::cout << "\nBeginning dynamical evolution.\n" << std::endl;
 
-    std::vector<Eigen::Vector3d> nodeUnstressedConePosits(num_nodes);
+    std::vector<Eigen::Vector3d> nodeUnstressedConePosits(nodes.size());
 
     while (phase_counter < dial_in_phases.size() - 1) {
         try {
