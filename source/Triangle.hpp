@@ -52,12 +52,10 @@ public:
     double initArea;
     double currAreaInv;
 
-    /* Indices (labels) of the nodes at the vertices of the triangle. These are
-    in no particular order*/
+    /* Indices (labels) of the nodes at the vertices of the triangle in no particular order*/
     Eigen::Vector3i vertexLabels;
 
-    /* Labels (and indices in the triangles' container vector) of the 3 edges of
-    this triangle.*/
+    /* Labels of the 3 edges of this triangle.*/
     Eigen::Vector3i edgeLabels;
 
     /* Vector storing, for each non-boundary edge, its initial
@@ -87,7 +85,7 @@ public:
     triangles sharing an edge with this triangle. For boundary triangles one or
     two of these are missing, and different nodes are chosen based on proximity
     to this triangle's centroid. There is again no particular order.*/
-    Eigen::Matrix<unsigned int, 3, 1> nonVertexPatchNodesLabels;
+    Eigen::Vector3i nonVertexPatchNodesLabels;
 
     /* Position of triangle's centroid in initial (reference) x-y plane.*/
     Eigen::Vector3d refCentroid;
@@ -185,7 +183,7 @@ private:
 
     Eigen::Matrix<double, 3, 1> getBendingForcePatch(int row);
 
-    Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d normalDerivatives, int row);
+    Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row);
 
     void updateHalfPK1Stress(double stretchingPrefactor);
 

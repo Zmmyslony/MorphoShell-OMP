@@ -45,10 +45,10 @@ std::stringstream Triangle::display() {
     msg << "Labels of edges: " << edgeLabels.transpose() << std::endl;
     msg << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
               << std::endl;
-    msg << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
-    msg << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
-    msg << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
-              << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
+//    msg << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
+//    msg << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
+//    msg << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
+//              << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
     msg << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
               << std::endl;
     msg << "Current sides = " << "\n" << currSides << std::endl;
@@ -91,7 +91,7 @@ Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals() {
     return triangleEdgeNormals;
 }
 
-Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d normalDerivatives, int row) {
+Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row) {
     Eigen::Matrix<double, 2, 2> secFFDerivPreFacMat;
 
     secFFDerivPreFacMat(0, 0) = matForPatchSecDerivs(row, 0);
