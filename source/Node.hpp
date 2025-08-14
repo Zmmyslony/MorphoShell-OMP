@@ -82,6 +82,7 @@ public:
 
     // Position vector (x, y and z coordinates).
     Eigen::Vector3d pos;
+    Eigen::Vector3d prev_pos;
 
     // Velocity vector.
     Eigen::Vector3d vel;
@@ -106,6 +107,7 @@ public:
         pos.fill(DBL_MAX);
         vel.fill(DBL_MAX);
         force.fill(DBL_MAX);
+        prev_pos.fill(DBL_MAX);
     }
 
     explicit Node(int n_label, const double positions[3]) {
@@ -113,6 +115,7 @@ public:
         pos(0) = positions[0];
         pos(1) = positions[1];
         pos(2) = positions[2];
+        prev_pos = pos;
         vel.fill(DBL_MAX);
         force.fill(DBL_MAX);
     }

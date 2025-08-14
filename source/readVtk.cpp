@@ -105,7 +105,8 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
 
     // If ansatz is specified, read in the ansatz nodes too
     if (ansatz_data_file_name_str != "no_ansatz_file") {
-        if (vertex_count != ansatz_vtk_data->GetNumberOfPoints() ||triangle_count != ansatz_vtk_data->GetNumberOfCells()) {
+        if (vertex_count != ansatz_vtk_data->GetNumberOfPoints() ||
+            triangle_count != ansatz_vtk_data->GetNumberOfCells()) {
             throw std::runtime_error(
                     "VTK files for programmed quantities and ansatz have different count of vertices or polygons.");
         }
@@ -133,9 +134,11 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
     // Read in the programmed quantities which are defined as cell data.
     auto cell_data = main_vtk_data->GetCellData();
     if (cell_data->GetNumberOfArrays() % 3 != 0) {
-        throw std::runtime_error("VTK: too many fields defining the deformation - they should be provided in triplets"
-                                 "(programmed_metric_info_i, programmed_bend_info_i, programmed_taus_i), with i starting at 0.");
-    } else if (cell_data -> GetNumberOfArrays() == 0) {
+        throw std::runtime_error(
+                "VTK: too many fields defining the deformation (" + std::to_string(cell_data->GetNumberOfArrays()) +
+                ")- they should be provided in triplets"
+                "(programmed_metric_info_i, programmed_bend_info_i, programmed_taus_i), with i starting at 0.");
+    } else if (cell_data->GetNumberOfArrays() == 0) {
         throw std::runtime_error("VTK: no fields defining the deformation are present in the input file.");
     }
 
@@ -150,9 +153,15 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         auto metric_info = cell_data->GetArray(("programmed_metric_info_" + std::to_string(i - 1)).c_str());
         auto bend_info = cell_data->GetArray(("programmed_bend_info_" + std::to_string(i - 1)).c_str());
         auto tau_info = cell_data->GetArray(("programmed_taus_" + std::to_string(i - 1)).c_str());
-        if (metric_info == nullptr) { throw std::runtime_error("VTK does not contain programmed_metric_info_"  + std::to_string(i - 1)); }
-        if (bend_info == nullptr) { throw std::runtime_error("VTK does not contain programmed_bend_info_"  + std::to_string(i - 1)); }
-        if (tau_info == nullptr) { throw std::runtime_error("VTK does not contain programmed_taus_"  + std::to_string(i - 1)); }
+        if (metric_info == nullptr) {
+            throw std::runtime_error("VTK does not contain programmed_metric_info_" + std::to_string(i - 1));
+        }
+        if (bend_info == nullptr) {
+            throw std::runtime_error("VTK does not contain programmed_bend_info_" + std::to_string(i - 1));
+        }
+        if (tau_info == nullptr) {
+            throw std::runtime_error("VTK does not contain programmed_taus_" + std::to_string(i - 1));
+        }
 
         sequenceOf_ProgMetricInfo[i].resize(triangle_count);
         sequenceOf_InvProgMetrics[i].resize(triangle_count);

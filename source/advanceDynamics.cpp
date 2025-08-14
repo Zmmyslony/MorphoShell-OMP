@@ -76,14 +76,24 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
             // Gradient Descent dynamics.
             nodes[i].vel =
                     settings.getCore().getDensity() * nodes[i].force / (settings.getDampingFactor() * nodes[i].mass);
+
+            nodes[i].pos += settings.getTimeStepSize() * nodes[i].vel;
         } else {
+            Eigen::Vector3d acceleration = nodes[i].force / nodes[i].mass;
+            double dt = settings.getTimeStepSize();
             // Newtonian Dynamics.
             /* Advance velocity and *then* position (Semi-Implicit Euler, also
             called Symplectic Euler).*/
-            nodes[i].vel += (settings.getTimeStepSize() / nodes[i].mass) * nodes[i].force;
+            nodes[i].vel += dt * acceleration;
+            nodes[i].pos += dt * nodes[i].vel;
+
+            // Velocity-Verlet algorithm:
+//            Eigen::Vector3d current_pos = nodes[i].pos;
+//            nodes[i].pos = (2 * nodes[i].pos - nodes[i].prev_pos) + dt * dt * acceleration;
+//            nodes[i].prev_pos = current_pos;
+//            nodes[i].vel = (nodes[i].pos - nodes[i].prev_pos) / dt;
         }
 
         // Advance position.
-        nodes[i].pos += settings.getTimeStepSize() * nodes[i].vel;
     }
 }

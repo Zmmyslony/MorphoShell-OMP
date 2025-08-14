@@ -44,13 +44,13 @@ std::stringstream Triangle::display() {
     msg << "Labels of vertices: " << vertexLabels.transpose() << std::endl;
     msg << "Labels of edges: " << edgeLabels.transpose() << std::endl;
     msg << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
-              << std::endl;
+        << std::endl;
 //    msg << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
 //    msg << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
 //    msg << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
 //              << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
     msg << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
-              << std::endl;
+        << std::endl;
     msg << "Current sides = " << "\n" << currSides << std::endl;
     msg << "faceNormal = " << "\n" << faceNormal << std::endl;
     msg << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
@@ -91,7 +91,7 @@ Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals() {
     return triangleEdgeNormals;
 }
 
-Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row) {
+Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d &normalDerivatives, int row) {
     Eigen::Matrix<double, 2, 2> secFFDerivPreFacMat;
 
     secFFDerivPreFacMat(0, 0) = matForPatchSecDerivs(row, 0);
@@ -129,7 +129,7 @@ void Triangle::updateGeometricProperties() {
     faceNormal.noalias() = currSides.col(0).cross(currSides.col(1));
     defGradient.noalias() = currSides * invInitSidesMat;
 
-    met.noalias()= defGradient.transpose() * defGradient;
+    met.noalias() = defGradient.transpose() * defGradient;
     metInv.noalias() = met.inverse();
     metInvDet = metInv.determinant();
 
@@ -241,7 +241,8 @@ void Triangle::updateProgrammedTensorsDynamically(int stage_counter, double dial
     Eigen::Vector3d metric_current = interpolate(programmed_metric_infos[stage_counter],
                                                  programmed_metric_infos[stage_counter + 1], dial_in_factor);
     Eigen::Matrix<double, 2, 2> bend_programmed = interpolate(programmed_second_fundamental_form[stage_counter],
-                                                  programmed_second_fundamental_form[stage_counter+1], dial_in_factor);
+                                                              programmed_second_fundamental_form[stage_counter + 1],
+                                                              dial_in_factor);
 
     double dirAng = metric_current(0);
     double lambda = metric_current(1);
@@ -368,9 +369,9 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
               });
 
     Eigen::Matrix<double, 6, 6> patchNodeDataMatrix;
-    double raw_path_size_factor = (nodes[vertexLabels(0)].pos - refCentroid).squaredNorm() +
-                                  (nodes[vertexLabels(1)].pos - refCentroid).squaredNorm() +
-                                  (nodes[vertexLabels(2)].pos - refCentroid).squaredNorm();
+    double inner_patch_size = (nodes[vertexLabels(0)].pos - refCentroid).squaredNorm() +
+                              (nodes[vertexLabels(1)].pos - refCentroid).squaredNorm() +
+                              (nodes[vertexLabels(2)].pos - refCentroid).squaredNorm();
 
     for (int n = 0; n < 3; ++n) {
         Eigen::Vector3d candidatePatchNode;
@@ -378,11 +379,11 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
         patchNodeDataMatrix.col(n) = patchColumn(candidatePatchNode, refCentroid);
     }
 
-    std::set<std::vector<unsigned int>> candidate_trios;
+    std::set<std::vector<int>> candidate_trios;
     for (unsigned int p: possiblePatchNodeLabels) {
         for (unsigned int q: possiblePatchNodeLabels) {
             for (unsigned int r: possiblePatchNodeLabels) {
-                candidate_trios.insert({p, q, r});
+                candidate_trios.insert({(int)p, (int)q, (int)r});
             }
         }
     }
@@ -392,37 +393,36 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
         patchNodeDataMatrix.col(3) = patchColumn(nodes[candidateIndices[0]].pos, refCentroid);
         patchNodeDataMatrix.col(4) = patchColumn(nodes[candidateIndices[1]].pos, refCentroid);
         patchNodeDataMatrix.col(5) = patchColumn(nodes[candidateIndices[2]].pos, refCentroid);
-        double patch_size = sqrt(
-                (raw_path_size_factor +
-                 (nodes[candidateIndices[0]].pos - refCentroid).squaredNorm() +
-                 (nodes[candidateIndices[1]].pos - refCentroid).squaredNorm() +
-                 (nodes[candidateIndices[2]].pos - refCentroid).squaredNorm()) / 6);
 
-        Eigen::FullPivLU<Eigen::Matrix<double, 6, 6>> tempPatchNodeDataMatrixDecomp;
-        tempPatchNodeDataMatrixDecomp.compute(patchNodeDataMatrix);
-        bool isMatReversible = tempPatchNodeDataMatrixDecomp.isInvertible();
+        Eigen::FullPivLU<Eigen::Matrix<double, 6, 6>> patchNodeDecomposition;
+        patchNodeDecomposition.compute(patchNodeDataMatrix);
+        if (!patchNodeDecomposition.isInvertible()) { continue; }
 
-        if (isMatReversible) {
-            Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
-            Eigen::Matrix<double, 6, 3> candidatePatchDiv;
-            candidatePatchDiv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
+        double outer_patch_size = (nodes[candidateIndices[0]].pos - refCentroid).squaredNorm() +
+                                  (nodes[candidateIndices[1]].pos - refCentroid).squaredNorm() +
+                                  (nodes[candidateIndices[2]].pos - refCentroid).squaredNorm();
 
-            Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
-            secDerivMatTempSVD.compute(candidatePatchDiv);
+        double patch_size = sqrt((inner_patch_size + outer_patch_size) / 6);
+        Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
+        Eigen::Matrix<double, 6, 3> candidatePatchDiv;
+        candidatePatchDiv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
 
-            double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
-            double current_condition_number = singular_values * pow(patch_size, 2);
+        Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
+        secDerivMatTempSVD.compute(candidatePatchDiv);
 
-            if (current_condition_number < patch_condition_number) {
-                patch_condition_number = current_condition_number;
-                nonVertexPatchNodesLabels = {candidateIndices[0], candidateIndices[1], candidateIndices[2]};
+        double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
+        double current_condition_number = singular_values * pow(patch_size, 2);
 
-                patch_nodes_pos[0] = &nodes[candidateIndices[0]].pos;
-                patch_nodes_pos[1] = &nodes[candidateIndices[1]].pos;
-                patch_nodes_pos[2] = &nodes[candidateIndices[2]].pos;
+        if (current_condition_number < patch_condition_number) {
+            patch_condition_number = current_condition_number;
+            nonVertexPatchNodesLabels = {candidateIndices[0], candidateIndices[1], candidateIndices[2]};
 
-                matForPatchSecDerivs = candidatePatchDiv;
-            }
+            patch_nodes_pos[0] = &nodes[candidateIndices[0]].pos;
+            patch_nodes_pos[1] = &nodes[candidateIndices[1]].pos;
+            patch_nodes_pos[2] = &nodes[candidateIndices[2]].pos;
+
+            matForPatchSecDerivs = candidatePatchDiv;
+
         }
     }
     return patch_condition_number;

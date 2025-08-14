@@ -298,19 +298,32 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
     other triangles. More checks would be possible here; some are better than
     none.*/
     for (int i = 0; i < triangles.size(); ++i) {
-        if (
-                static_cast<int>(edges.size()) != e
-                || triangles[i].edgeLabels.size() != 3
-                || triangles[i].edgeSharingTriLabels.size() < 1
-                || triangles[i].edgeSharingTriLabels.size() > 3
-                || (triangles[i].isOnBoundary && triangles[i].edgeSharingTriLabels.size() >= 3)
+        try {
+            if (edges.size() != e) { throw std::runtime_error("incorrect edge size"); }
+            if (triangles[i].edgeLabels.size() != 3) {
+                throw std::runtime_error(
+                        "has " + std::to_string(triangles[i].edgeLabels.size()) + " edges instead of 3.");
+            }
+            if (triangles[i].edgeSharingTriLabels.size() < 1 || triangles[i].edgeSharingTriLabels.size() > 3) {
+                std::string neighbouring_triangle_labels;
+                for (auto &label : triangles[i].edgeSharingTriLabels) {
+                    neighbouring_triangle_labels += std::to_string(label) + " ";
+                }
+                throw std::runtime_error(
+                        "shares edges with " + std::to_string(triangles[i].edgeSharingTriLabels.size()) +
+                        " other triangles: " + neighbouring_triangle_labels + ".");
+            }
+            if ((triangles[i].isOnBoundary && triangles[i].edgeSharingTriLabels.size() >= 3)
                 || (!triangles[i].isOnBoundary &&
                     (edges[triangles[i].edgeLabels(0)].isOnBoundary ||
                      edges[triangles[i].edgeLabels(1)].isOnBoundary ||
                      edges[triangles[i].edgeLabels(2)].isOnBoundary))
-                ) {
-            throw std::runtime_error(
-                    "Error: Problem with triangle (edge-sharing) at triangle " + std::to_string(i) + " - adjacencies or edges setup. Either there is a bug, or some mesh pathology; investigate further!");
+                    ) {
+                throw std::runtime_error("boundary inconsistency.");
+            }
+        }
+        catch (std::runtime_error &err) {
+            throw std::runtime_error("Error: T" + std::to_string(i) + " " + err.what());
         }
     }
     // If no problems have been spotted, store the total number of edges
