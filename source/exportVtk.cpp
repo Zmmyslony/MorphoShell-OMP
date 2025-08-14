@@ -47,6 +47,7 @@ The directory the files are put in is created in main().
 #include <iomanip> //for setting output precision etc
 #include <vector>
 #include <stdexcept>
+#include <chrono>
 
 #include "exportVtk.hpp"
 #include "Node.hpp"
