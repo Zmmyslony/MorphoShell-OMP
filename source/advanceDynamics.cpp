@@ -35,37 +35,35 @@ The forces are also checked, to catch code crashed in which the forces usually
 #include "advanceDynamics.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "Settings.hpp"
-#include "CustomOutStreamClass.hpp"
 
 
-bool isForceThresholdExceeded(const Node &node, const Settings &settings) {
-    return node.force.norm() >= 1e5 * settings.char_force_scale;
+bool isForceThresholdExceeded(const Node &node, const SettingsNew &settings) {
+    return node.force.norm() >= 1e5 * settings.getForceScale();
 }
 
 
-void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, Settings &settings,
-                               CustomOutStreamClass &logStream) {
-    logStream.open();
-    logStream << " ----------------------------------------" << std::endl;
-    logStream << " ------------CRASH REPORT----------------" << std::endl;
-    logStream << " ----------------------------------------" << std::endl;
-    logStream << "Offending node and its incident triangles: " << std::endl;
-    logStream.close();
-    node.display();
+void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, const SettingsNew &settings) {
+    std::stringstream msg;
+    msg << " ----------------------------------------" << std::endl;
+    msg << " ------------CRASH REPORT----------------" << std::endl;
+    msg << " ----------------------------------------" << std::endl;
+    msg << "First offending node and its incident triangles: " << std::endl;
+
+    msg << node.display().str();
     for (int t = 0; t < node.incidentTriLabels.size(); ++t) {
-        triangles[node.incidentTriLabels(t)].display();
+        msg << triangles[node.incidentTriLabels(t)].display().str();
     }
-    throw std::runtime_error("suspiciously_high_force");
+    std::cout << msg.str();
+    throw std::runtime_error(msg.str() + "Suspiciously high force at node " + std::to_string(node.label) + std::string(" (") +
+                             std::to_string(node.force.norm() / 1e5 * settings.getForceScale()) + " of limit).");
 }
 
 
-void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, Settings &settings,
-                     CustomOutStreamClass &logStream) {
-
-    for (int i = 0; i < settings.num_nodes; ++i) {
+void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, SettingsNew &settings) {
+#pragma omp parallel for
+    for (int i = 0; i < nodes.size(); ++i) {
         if (isForceThresholdExceeded(nodes[i], settings)) {
-            logForceThresholdExceeded(nodes[i], triangles, settings, logStream);
+            logForceThresholdExceeded(nodes[i], triangles, settings);
         }
         /*  Check the force is well-behaved. If not, throw error, and
             display offending nodes and its incident triangles.
@@ -74,40 +72,28 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
 
         /* Set velocities based on either Gradient Descent (over dampened) dynamics
         or Newtonian dynamics. Then advance positions accordingly. */
-        if (settings.is_gradient_descent_dynamics_enabled) {
+        if (settings.getCore().isGradientDescentDynamics()) {
             // Gradient Descent dynamics.
-            nodes[i].vel = settings.init_density * nodes[i].force / (settings.num_damp_factor * nodes[i].mass);
+            nodes[i].vel =
+                    settings.getCore().getDensity() * nodes[i].force / (settings.getDampingFactor() * nodes[i].mass);
+
+            nodes[i].pos += settings.getTimeStepSize() * nodes[i].vel;
         } else {
+            Eigen::Vector3d acceleration = nodes[i].force / nodes[i].mass;
+            double dt = settings.getTimeStepSize();
             // Newtonian Dynamics.
             /* Advance velocity and *then* position (Semi-Implicit Euler, also
             called Symplectic Euler).*/
-            nodes[i].vel += (settings.time_step / nodes[i].mass) * nodes[i].force;
+            nodes[i].vel += dt * acceleration;
+            nodes[i].pos += dt * nodes[i].vel;
+
+            // Velocity-Verlet algorithm:
+//            Eigen::Vector3d current_pos = nodes[i].pos;
+//            nodes[i].pos = (2 * nodes[i].pos - nodes[i].prev_pos) + dt * dt * acceleration;
+//            nodes[i].prev_pos = current_pos;
+//            nodes[i].vel = (nodes[i].pos - nodes[i].prev_pos) / dt;
         }
 
         // Advance position.
-        nodes[i].pos += settings.time_step * nodes[i].vel;
-    }
-
-    if (settings.is_controlled_force_enabled) {
-        /*
-        double gravAccel = settings.ApproxMinInitElemSize / (settings.TimeStep * settings.TimeStep);// Set g to be related to a characteristic acceleration in simulation.
-        double upperSlideMass = settings.upperSlideWeight / gravAccel;
-        // Advance upper slide too, displacement and velocity taken downwards.
-        settings.upperSlideVel += (settings.TimeStep/upperSlideMass) * (settings.upperTotSlideForce + settings.upperSlideWeight);
-        settings.upperSlideDisplacement += settings.TimeStep * settings.upperSlideVel;
-        */
-
-
-        // Advance upper slide too, displacement and velocity taken downwards.
-        settings.upper_slide_vel = (settings.upper_tot_slide_force + settings.upper_slide_weight) / settings.slide_damping_param;
-
-        // If doing constant weight experiment, need spacer to avoid squashing completely flat.
-        if (settings.const_slide_weight_fac > 0 && settings.upper_slide_vel > 0 &&
-                (settings.curr_slide_z_coord_upper - settings.init_slide_z_coord_lower) <
-                settings.spacer_height * settings.sample_char_length) {
-            settings.upper_slide_vel = 0.0;
-        }
-
-        settings.upper_slide_displacement += settings.time_step * settings.upper_slide_vel;
     }
 }

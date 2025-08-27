@@ -20,17 +20,13 @@ You should have received a copy of the GNU General Public License
 along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////
 
-Header file for initialDirAndFileHandling.cpp function.
+Header file for directory_setup.cpp function.
 */
 #include <string>
+#include <boost/filesystem/path.hpp>
 
-std::string initialDirAndFileHandling(
-        const std::string &,
-        const std::string &,
-        const std::string &,
-        const std::string &,
-        const std::string &,
-        const std::string &,
-        const int &,
-        std::string &
-);
+namespace fs = boost::filesystem;
+
+fs::path
+directory_setup(std::string &initWriteToLogStr, const std::vector<fs::path> &config_paths,
+                const std::vector<fs::path> &vtk_paths);

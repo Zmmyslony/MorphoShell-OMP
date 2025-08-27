@@ -34,33 +34,28 @@ triangular element, such as vertices, area etc.*/
 #include <vector>
 #include <Eigen/Dense>
 #include "Node.hpp"
-#include "Settings.hpp"
+// #include "Settings.hpp"
 
-#include "CustomOutStreamClass.hpp"
 
 class Triangle {
+    double local_elongation = 1;
+    const Eigen::Vector3d *corner_nodes_pos[3];
+    const Eigen::Vector3d *patch_nodes_pos[3];
+    Eigen::Vector3d *node_elastic_force[6];
+
 public:
-    /* Custom output stream allowing the debugging display function to print to
-    a particular file in addition to std::cout.*/
-    CustomOutStreamClass triLogStream;
-
-    /// Label so this triangle 'knows' which it is.
     int label;
-
-    /* Boolean representing whether the triangle has a vertex on the boundary of
-    the sample (true) or not (false).*/
     bool isOnBoundary;
+    double local_magnitude = 1;
 
-    /// Initial (reference) area and 1/(current area) for this triangle.
+    // Reference area
     double initArea;
     double currAreaInv;
 
-    /* Indices (labels) of the nodes at the vertices of the triangle. These are
-    in no particular order*/
+    /* Indices (labels) of the nodes at the vertices of the triangle in no particular order*/
     Eigen::Vector3i vertexLabels;
 
-    /* Labels (and indices in the triangles' container vector) of the 3 edges of
-    this triangle.*/
+    /* Labels of the 3 edges of this triangle.*/
     Eigen::Vector3i edgeLabels;
 
     /* Vector storing, for each non-boundary edge, its initial
@@ -94,6 +89,7 @@ public:
 
     /* Position of triangle's centroid in initial (reference) x-y plane.*/
     Eigen::Vector3d refCentroid;
+    Eigen::Vector3d centroid;
 
     /* Matrix (of doubles) where each *column* is a vector describing a side of
     the triangle. We only need two sides per triangle for the algorithm
@@ -123,6 +119,11 @@ public:
 
     /* Dialled in programmed scalar 'tau' factor.*/
     double dialledProgTau;
+
+    std::vector<Eigen::Vector3d> programmed_metric_infos = {{1, 1, 1}};
+    std::vector<Eigen::Matrix<double, 2, 2>> programmed_metric_inv{Eigen::Matrix<double, 2, 2>::Identity()};
+    std::vector<Eigen::Matrix<double, 2, 2>> programmed_second_fundamental_form = {Eigen::Matrix<double, 2, 2>::Zero()};
+    std::vector<double> programmed_taus{1};
 
     /* Matrix representing the components of the *energetically* favoured
     (programmed) Second Fundamental Form in the x-y cartesian coordinate system
@@ -165,11 +166,40 @@ public:
     /* Derivative of the bending energy density with respect to the secFF.*/
     Eigen::Matrix<double, 2, 2> energyDensityDerivWRTSecFF;
 
-    /* The derivative of the bending energy density with respect to the metric.*/
-    Eigen::Matrix<double, 2, 2> bendEnergyDensityDerivWRTMetric;
 
+private:
+    void updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor);
+
+    void updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor);
+
+    void updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root);
+
+    void updateProgrammedTaus(int stage_counter, double dial_in_factor);
+
+    void updateProgrammedMetricImplicit(double dirAngle, double lambda, double nu);
+
+    void updateProgrammedTensorsDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
+                                            double min_height, double max_height);
+
+    Eigen::Matrix<double, 3, 1> getBendingForcePatch(int row);
+
+    Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row);
+
+    void updateHalfPK1Stress(double stretchingPrefactor);
+
+    Eigen::Matrix<double, 3, 3> getStretchingForces();
+
+    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals();
+
+public:
     double bendEnergyDensity;
     double stretchEnergyDensity;
+
+    void updateFirstFundamentalForm(double stretchingPreFac);
+
+    void updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio);
+
+    void updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio);
 
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
@@ -181,10 +211,10 @@ public:
     and usefulTermsForSecFFDeriv
     are left with zero size at initialisation. */
     Triangle() {
-        label = INT_MAX;
+        label = -1;
         isOnBoundary = false;
-        vertexLabels.fill(INT_MAX);
-        nonVertexPatchNodesLabels.fill(INT_MAX);
+        vertexLabels.fill(-1);
+        nonVertexPatchNodesLabels.fill(-1);
         edgeLabels.fill(INT_MAX);
         initArea = DBL_MAX;
         currAreaInv = DBL_MAX;
@@ -204,35 +234,39 @@ public:
         patchSecDerivs.fill(DBL_MAX);
         secFF.fill(DBL_MAX);
         energyDensityDerivWRTSecFF.fill(DBL_MAX);
-        bendEnergyDensityDerivWRTMetric.fill(DBL_MAX);
         matForPatchSecDerivs.fill(DBL_MAX);
         bendEnergyDensity = DBL_MAX;
         stretchEnergyDensity = DBL_MAX;
     }
 
+    Triangle(int label, int id_0, int id_1, int id_2, const std::vector<Node> &nodes);
+
     // Declare other member functions.
 
     // Debugging function to display all member data.
-    void display();
+    std::stringstream display();
 
-    Eigen::Matrix<double, 3, 2> updateHalfPK1Stress(double stretchingPrefactor);
-
-    Eigen::Matrix<double, 3, 3> getStretchingForces();
-
-    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals();
-
-    Eigen::Matrix<double, 3, 1> getBendingForce(const Eigen::Matrix<double, 3, 3> &normalDerivatives, int row);
-
-    void updateMetric(const std::vector<Node> &nodes);
-
-    void updateGeometricProperties(const std::vector<Node> &nodes);
-
-    void updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio);
+    void updateGeometricProperties();
 
     void updateAngleDeficits(std::vector<double> &angleDeficits) const;
 
-    void updateFirstFundamentalForm(double stretchingPreFac);
+    double updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes);
 
+    /**
+     * Returns the linear size of the triangle calculated as the shortest triangle altitude.
+     * @return
+     */
+    double getLinearSize() const;
+
+    double getHeight() const;
+
+    void setLocalElongation(double local_elongation);
+
+    void updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
+                                    bool is_lce_metric_used, bool is_elongation_dynamically_updated,
+                                    double transfer_coefficient, double min_height, double max_height);
+
+    void setNodeForceAddress(unsigned int index, Eigen::Vector3d *address);
 };
 
 #endif

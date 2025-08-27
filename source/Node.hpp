@@ -34,18 +34,23 @@ containing the node's position, velocity etc.*/
 #include <Eigen/Dense>
 #include <cfloat>
 
-#include "Settings.hpp"
-#include "CustomOutStreamClass.hpp"
+// #include "Settings.hpp"
+//#include "CustomOutStreamClass.hpp"
+#include "configuration/gravity_config.h"
+#include "settings_new.h"
 
 class Node {
+    /// Pointers to a field in a triangles which correspond to this node.
+    std::vector<Eigen::Vector3d *> force_pointers;
 public:
-
+    void addNodeForceAddress(Eigen::Vector3d *force_address);
+    void updateForce();
     /* Custom output stream allowing the debugging display function to print to
     a particular file in addition to std::cout.*/
-    CustomOutStreamClass nodeLogStream;
+//    CustomOutStreamClass nodeLogStream;
 
     // Label of this node, (also its index in the nodes' container vector).
-    int label;
+    int label = INT_MAX;
 
     /* Labels of the triangles with this node as a vertex ('incident triangles').
     Ordering is arbitrary.*/
@@ -57,24 +62,27 @@ public:
 
     /* Boolean representing whether the node is on a boundary of the sample
     (true) or not (false).*/
-    bool isOnBoundary;
+    bool isOnBoundary = false;
 
     /* Boolean representing whether the node's position is to be held clamped
     (true) or not (false).*/
-    bool isClamped;
+    bool is_x_clamped = false;
+    bool is_y_clamped = false;
+    bool is_z_clamped = false;
 
     // Bool indicating whether to impose a Seide displacement to this node or not.
-    bool isSeideDisplacementEnabled;
+    bool isSeideDisplacementEnabled = false;
 
     /* Bool representing whether the load force should be applied to this node
     (true) or not (false). For more general loading (multiple, spatially varying,
     non-trivial directions etc.) this will need generalising a lot.
     It would  require a major think about how to even mathematically represent
     general loading, and then how to put it in data format, code etc.*/
-    bool isLoadForceEnabled;
+    bool isLoadForceEnabled = false;
 
     // Position vector (x, y and z coordinates).
     Eigen::Vector3d pos;
+    Eigen::Vector3d prev_pos;
 
     // Velocity vector.
     Eigen::Vector3d vel;
@@ -83,7 +91,10 @@ public:
     Eigen::Vector3d force;
 
     // Mass assigned to node.
-    double mass;
+    double mass = DBL_MAX;
+
+    // Area calculated from the mass
+    double area = DBL_MAX;
 
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
@@ -93,30 +104,41 @@ public:
     incidentTriLabels and neighbourNodeLabels are left with zero size at
     initialisation. */
     Node() {
-        label = INT_MAX;
-        isSeideDisplacementEnabled = false;
-        isOnBoundary = false;
-        isClamped = false;
-        isLoadForceEnabled = false;
         pos.fill(DBL_MAX);
         vel.fill(DBL_MAX);
         force.fill(DBL_MAX);
-        mass = DBL_MAX;
+        prev_pos.fill(DBL_MAX);
+    }
+
+    explicit Node(int n_label, const double positions[3]) {
+        label = n_label;
+        pos(0) = positions[0];
+        pos(1) = positions[1];
+        pos(2) = positions[2];
+        prev_pos = pos;
+        vel.fill(DBL_MAX);
+        force.fill(DBL_MAX);
     }
 
     // Declare other member functions.
 
     // Debugging function to display all member data.
-    void display();
+    std::stringstream display();
 
     /**
      * Adds gravitational force using the multiplier from the settings file. Use multiplier = 1 for normal pulling in
      * z-direction.
-     * @param settings
+     * @param config
      */
-    void add_gravity(const Settings &settings);
+    void add_gravity(const GravityConfig &config);
 
-    void add_damping(const Settings &settings);
+    /**
+     * Adds damping force that is proportional to the velocity and numerical damping factor and returns the power loss:
+     * F = - a * v * m / rho
+     * @param settings_new
+     * @return power loss
+     */
+    double add_damping(const SettingsNew &settings_new);
 
     /** Perturbing 'prod' force, to prompt the sheet to buckle in the upward
     *  direction, and ensure evolution actually begins. The particular shape
@@ -127,12 +149,12 @@ public:
     *  ansatz is probably a better way to choose a buckling direction than a
     *  prod.
     */
-    void add_prod_force(const Settings &settings);
+//    void add_prod_force(const Settings &settings);
 
     /**
     * Adds load force to the nodes that have isLoadForceEnabled = True.
     */
-    void add_load_force(const Settings &settings, double time, double &upper_slide_force, double &lower_slide_force);
+//    void add_load_force(const Settings &settings, double time, double &upper_slide_force, double &lower_slide_force);
 
     void apply_boundary_conditions();
 
@@ -140,7 +162,7 @@ public:
      * Adds force coming from interaction with the "glass" slides. The slides can either approach from the top or the
      * bottom.
      */
-    void add_slide_force(const Settings &settings, double height, bool is_bottom_slide, double &total_slide_force);
+//    void add_slide_force(const Settings &settings, double height, bool is_bottom_slide, double &total_slide_force);
 
     /**
      * Adds force coming from the interaction with the "glass" cone. The cones can either approach from the top or the
@@ -150,7 +172,9 @@ public:
      * @param is_bottom_cone
      * @param total_cone_force
      */
-    void add_cone_force(const Settings &settings, double tip_height, bool is_bottom_cone, double &total_cone_force);
+//    void add_cone_force(const Settings &settings, double tip_height, bool is_bottom_cone, double &total_cone_force);
+
+    void clamp(const CoreConfig &config);
 };
 
 #endif

@@ -25,8 +25,6 @@ Header file for calc_nonVertexPatchNodes_and_MatForPatchDerivs.cpp function
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../Settings.hpp"
-#include "../CustomOutStreamClass.hpp"
 
-void calc_nonVertexPatchNodes_and_MatForPatchDerivs(const std::vector<Node> &, std::vector<Triangle> &,
-                                                    const Settings &, CustomOutStreamClass &);
+void createNodePatches(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+                       double patch_threshold);

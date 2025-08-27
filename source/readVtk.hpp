@@ -20,11 +20,23 @@ You should have received a copy of the GNU General Public License
 along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////
 
-Header file for readSettingsFile.cpp function.
+Header file for readVTKData.cpp function.
 */
 
-#include "Settings.hpp"
+#include <cstddef>
+#include <string>
+#include <vector>
+#include <Eigen/Dense>
 
-void readSettingsFile(Settings &, const char *);
+#include "Node.hpp"
+#include "Triangle.hpp"
 
-void readSettingsFile(Settings &settings, const std::string& settings_filename);
+void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+                 std::vector<std::vector<Eigen::Vector3d> > &sequenceOf_ProgMetricInfo,
+                 std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_InvProgMetrics,
+                 std::vector<std::vector<double> > &sequenceOf_ProgTaus,
+                 std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &sequenceOf_ProgSecFFs,
+                 bool is_lce_mode_enabled, const std::string &init_data_file_name_str,
+                 std::size_t &progTensorSequenceCounterToStartFrom, double &dialInFactorToStartFrom,
+                 std::vector<Eigen::Vector3d> &nodeAnsatzPositions, const std::string &ansatz_data_file_name_str,
+                 const CoreConfig &config);

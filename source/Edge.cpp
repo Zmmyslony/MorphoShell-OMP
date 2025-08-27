@@ -31,13 +31,11 @@ left in the header file for clarity there*/
 
 //This is a debugging tool to display the edge's data
 void Edge::display() {
-    edgeLogStream.open();
-    edgeLogStream << "-----------------------------" << std::boolalpha << std::endl;
-    edgeLogStream << "Edge " << label << ":" << std::endl;
-    edgeLogStream << "Node labels " << nodeLabels.transpose() << std::endl;
-    edgeLogStream << "Adjacent triangle labels: " << adjTriLabels.transpose() << std::endl;
-    //edgeLogStream << "Left and Right 'other' (non-edge) node labels: " << otherNodeLabel_L << ", " << otherNodeLabel_R << std::endl;
-    edgeLogStream << "Boundary indicator: " << isOnBoundary << std::endl;
-    edgeLogStream << "-----------------------------" << std::endl;
-    edgeLogStream.close();
+    std::cout << "-----------------------------" << std::boolalpha << std::endl;
+    std::cout << "Edge " << label << ":" << std::endl;
+    std::cout << "Node labels " << nodeLabels.transpose() << std::endl;
+    std::cout << "Adjacent triangle labels: " << adjTriLabels.transpose() << std::endl;
+    //std::cout << "Left and Right 'other' (non-edge) node labels: " << otherNodeLabel_L << ", " << otherNodeLabel_R << std::endl;
+    std::cout << "Boundary indicator: " << isOnBoundary << std::endl;
+    std::cout << "-----------------------------" << std::endl;
 }

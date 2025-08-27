@@ -39,17 +39,11 @@ having each triangle contribute 1/3 of its initial mass to each of its vertcies.
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
-#include "Settings.hpp"
+// #include "Settings.hpp"
+#include "settings_new.h"
 
-void setRemainingInitCond_and_NodeMasses(
-        std::vector<Node> &nodes,
-        std::vector<Triangle> &triangles,
-        std::vector<Edge> &edges,
-        std::vector<std::vector<Eigen::Vector3d> > &programmedMetricInfos,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedInvertedMetrics,
-        std::vector<std::vector<double> > &programmedTaus,
-        std::vector<std::vector<Eigen::Matrix<double, 2, 2> > > &programmedSecondFundamentalForms,
-        const Settings &settings) {
+void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+                                         std::vector<Edge> &edges, const SettingsNew &settings) {
 
     // Temp matrix used to hold initial triangle sides.
     Eigen::Matrix<double, 2, 2> initSidesMat;
@@ -57,7 +51,7 @@ void setRemainingInitCond_and_NodeMasses(
     Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > tempinitSidesMatDecomp;
 
 
-    for (int i = 0; i < settings.num_nodes; ++i) {
+    for (int i = 0; i < nodes.size(); ++i) {
         //Set all initial node velocities to zero
         nodes[i].vel.fill(0.0);
         //Set all nodes masses to zero before calculating them next
@@ -66,12 +60,8 @@ void setRemainingInitCond_and_NodeMasses(
 
     //Resize the vector to hold the first ('trivial') programmed tensors, that
     //is populated in the next loop.
-    programmedMetricInfos[0].resize(settings.num_triangles);
-    programmedInvertedMetrics[0].resize(settings.num_triangles);
-    programmedTaus[0].resize(settings.num_triangles);
-    programmedSecondFundamentalForms[0].resize(settings.num_triangles);
 
-    for (int i = 0; i < settings.num_triangles; ++i) {
+    for (int i = 0; i < triangles.size(); ++i) {
         /*set triangle sides' initial in-plane x-y basis components.*/
 //        initSidesMat(0, 0) = triangles[i].currSides(0, 0);
 //        initSidesMat(1, 0) = triangles[i].currSides(1, 0);
@@ -94,7 +84,7 @@ void setRemainingInitCond_and_NodeMasses(
         tempinitSidesMatDecomp.compute(initSidesMat);
         if (!tempinitSidesMatDecomp.isInvertible()) {
             throw std::runtime_error(
-                    "At least one triangle had a non-invertible initial sides matrix. \n"
+                    "At least one triangle [" + std::to_string(i) + "] had a non-invertible initial sides matrix. \n"
                     "This should not occur in a reasonable mesh. Aborting.");
         } else {
             triangles[i].invInitSidesMat = initSidesMat.inverse();
@@ -119,21 +109,22 @@ void setRemainingInitCond_and_NodeMasses(
         /* Add 1/3 of the mass of each triangle to each of its vertices.*/
         for (int v = 0; v < 3; ++v) {
             nodes[triangles[i].vertexLabels(v)].mass +=
-                    settings.init_density * triangles[i].initArea * settings.sheet_thickness / 3.0;
+                    settings.getCore().getDensity() * triangles[i].initArea * settings.getCore().getThickness() / 3;
+            nodes[triangles[i].vertexLabels(v)].area += triangles[i].initArea / 3;
         }
 
         /* Set first set of programmed tensors to be the trivial ones for the
         flat plane. This may be overridden later if
         settings.isDialingFromAnsatzEnabled == true. See main().*/
-        if (settings.is_lce_mode_enabled) {
-            programmedMetricInfos[0][i] << programmedMetricInfos[1][i](0), 1.0, programmedMetricInfos[1][i](
-                    2);
-            programmedTaus[0][i] = 1.0;
-            programmedSecondFundamentalForms[0][i] = Eigen::Matrix<double, 2, 2>::Zero();
+        if (settings.getCore().isLceModeEnabled()) {
+            triangles[i].programmed_metric_infos[0] << triangles[i].programmed_metric_infos[0](0), 1, triangles[i].programmed_metric_infos[0](2);
+            triangles[i].programmed_taus[0] = 1;
+            triangles[i].programmed_second_fundamental_form[0] = Eigen::Matrix<double, 2, 2>::Zero();
+
         } else {
-            programmedInvertedMetrics[0][i] = Eigen::Matrix<double, 2, 2>::Identity();
-            programmedTaus[0][i] = 1.0;
-            programmedSecondFundamentalForms[0][i] = Eigen::Matrix<double, 2, 2>::Zero();
+            triangles[i].programmed_metric_inv[0] = Eigen::Matrix<double, 2, 2>::Identity();
+            triangles[i].programmed_taus[0] = 1.0;
+            triangles[i].programmed_second_fundamental_form[0] = Eigen::Matrix<double, 2, 2>::Zero();
         }
     }
 }

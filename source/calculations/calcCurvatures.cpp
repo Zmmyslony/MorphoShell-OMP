@@ -43,6 +43,7 @@ integrated Gauss and geodesic curvature (i.e. the LHS of Gauss-Bonnet).*/
 
 #include "calcCurvatures.hpp"
 #include "../Triangle.hpp"
+#include "../configuration/core_config.h"
 
 void calcCurvatures(
         const std::vector<Node> &nodes,
@@ -52,7 +53,7 @@ void calcCurvatures(
         std::vector<double> &angleDeficits,
         std::vector<double> &interiorNodeAngleDeficits,
         std::vector<double> &boundaryNodeAngleDeficits,
-        const Settings &settings) {
+        const CoreConfig &core_config) {
 
 
     // Objects used to calculate angle deficits.
@@ -110,9 +111,9 @@ void calcCurvatures(
 
 
     // Calculate angle deficits at nodes, if specified in settings file.
-    if (settings.is_angle_deficits_printed) {
+    if (core_config.isAngleDeficitPrinted()) {
 #pragma omp parallel for
-        for (int n = 0; n < settings.num_nodes; ++n) {
+        for (int n = 0; n < nodes.size(); ++n) {
             if (!nodes[n].isOnBoundary) {
                 angleDeficits.at(n) = 2.0 * M_PI;
             } else {
@@ -130,7 +131,7 @@ void calcCurvatures(
         separately.*/
         int idxInto_interiorNodeAngleDeficits = 0;
         int idxInto_boundaryNodeAngleDeficits = 0;
-        for (int n = 0; n < settings.num_nodes; ++n) {
+        for (int n = 0; n < nodes.size(); ++n) {
 
             if (!nodes[n].isOnBoundary) {
                 interiorNodeAngleDeficits.at(idxInto_interiorNodeAngleDeficits) = angleDeficits[n];

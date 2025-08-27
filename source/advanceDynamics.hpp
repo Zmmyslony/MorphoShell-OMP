@@ -26,7 +26,6 @@ Header file for advanceDynamics.cpp
 
 #include "Node.hpp"
 #include "Triangle.hpp"
-#include "Settings.hpp"
-#include "CustomOutStreamClass.hpp"
+// #include "Settings.hpp"
 
-void advanceDynamics(std::vector<Node> &, std::vector<Triangle> &, Settings &, CustomOutStreamClass &);
+void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, SettingsNew &settings);

@@ -20,20 +20,14 @@ You should have received a copy of the GNU General Public License
 along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////
 
-Header file for calcDeformationForces.cpp
+Header file for update_elastic_forces.cpp
 */
 
 #include <vector>
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../Settings.hpp"
 
-std::vector<std::vector<std::pair<int, int>>>
-getCorrespondingTrianglesForNodes(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes);
-
-void calcDeformationForces(std::vector<Node> &nodes, std::vector<Triangle> &triangles, const Settings &settings,
-        const std::vector<std::vector<std::pair<int, int>>> &correspondingTrianglesForNodes);
-
-
+void assignForceLocationsToNodes(std::vector<Triangle> &triangles, std::vector<Node> &nodes,
+                                 std::vector<Eigen::Vector3d>  &node_forces_data);
 

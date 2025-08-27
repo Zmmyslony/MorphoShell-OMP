@@ -40,7 +40,7 @@ approximate smallest element size, to ensure the right kind of scale.*/
 #include "perturbInitialPositionsWithRandomNoise.hpp"
 #include "../Node.hpp"
 
-void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, const Settings &settings) {
+void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, double element_size) {
 
     /*Set random number generator . A simple and common one is chosen here:
     there is little point worrying about obtaining extremely 'good' random
@@ -52,12 +52,12 @@ void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, const Sett
     /*Set distribution to be symmetric about zero, and extend to a small
     distance relative to the mesh spacing. The 0.1 factor is hard coded but
     could be changed if desired.*/
-    std::uniform_real_distribution<double> distr(-settings.approx_min_init_elem_size * 0.001,
-                                                 settings.approx_min_init_elem_size * 0.001);
+    std::uniform_real_distribution<double> distr(-element_size * 0.001,
+                                                 element_size * 0.001);
 
-    for (int i = 0; i < settings.num_nodes; ++i) {
+    for (auto & node : nodes) {
         for (int c = 0; c < 3; ++c) {
-            nodes[i].pos(c) += distr(aSimpleEngine);
+            node.pos(c) += distr(aSimpleEngine);
         }
     }
 }

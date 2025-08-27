@@ -6,22 +6,83 @@
 #define SHELLOMORPH_SIMULATION_H
 
 #include <iostream>
+#include <fstream>
 
-#include "CustomOutStreamClass.hpp"
-#include "Settings.hpp"
 #include "Node.hpp"
 #include "Triangle.hpp"
 #include "Edge.hpp"
 #include "SimulationStatus.hpp"
+#include "settings_new.h"
+
+template<class CharT, class Traits = std::char_traits<CharT> >
+
+struct teestream : std::basic_streambuf<CharT, Traits> {
+
+private:
+    std::basic_streambuf<CharT, Traits> *m_rdbuf1;
+    std::basic_streambuf<CharT, Traits> *m_rdbuf2;
+
+public:
+    teestream(std::basic_streambuf<CharT, Traits> *rdbuf1, std::basic_streambuf<CharT, Traits> *rdbuf2)
+            : m_rdbuf1(rdbuf1), m_rdbuf2(rdbuf2) {}
+
+    ~teestream() {
+        m_rdbuf1->pubsync();
+        m_rdbuf2->pubsync();
+    }
+
+protected:
+    typename std::basic_streambuf<CharT, Traits>::int_type overflow(typename std::basic_streambuf<CharT, Traits>::int_type ch = Traits::eof()) override {
+        typename std::basic_streambuf<CharT, Traits>::int_type result = m_rdbuf1->sputc(ch);
+        if (result != Traits::eof()) {
+            result = m_rdbuf2->sputc(ch);
+        }
+        return result;
+    }
+
+    virtual int sync() override {
+        int result = m_rdbuf1->pubsync();
+        if (result == 0) {
+            result = m_rdbuf2->pubsync();
+        }
+        return result;
+    }
+
+};
 
 class Simulation {
-    CustomOutStreamClass log_stream;
+    std::ofstream out;
+
     std::string init_string;
-    std::string outputDirName;
-    Settings settings;
+    std::string output_dir_name;
+
+    SettingsNew settings_new;
+    std::vector<Slide> slides;
+    std::vector<Cone> cones;
+    std::streambuf *cout_buf = std::cout.rdbuf();
+    std::vector<Eigen::Vector3d> node_force_proxy;
 
     int step_count = 0;
-    int time = 0;
+    double damping_power_loss = 0;
+
+    double time_global = 0;
+    // Reset to zero every time equilibrium is checked, or every time a new DialInFactor value is reached.
+    double time_equilibriation = 0;
+    // Reset to zero every time equilibrium is reached and a new "dialling in" phase starts.
+    double time_phase = 0;
+    // Keeps track of which DialInFactor value in dial_in_phases was last dialled *from* (not held at, which is the next value along in the list)
+    std::size_t phase_counter = 0;
+    // Keeps track of current value
+    double dial_in_factor = 0;
+    // Smallest altitude of all triangles.
+    double characteristic_short_length = 0;
+    // Perimeter of the object
+    double characteristic_long_length = 0;
+    // Smallest altitude of all triangles divided over sqrt(tau)
+    double characteristic_length_over_tau = 0;
+
+    // For LCE mode.
+    double lambda = 1;
 
     std::string settings_filename;
     std::string initialisation_filename;
@@ -31,46 +92,22 @@ class Simulation {
     std::vector<Node> nodes;
     std::vector<Triangle> triangles;
     std::vector<Edge> edges;
+    int stage_count = 0;
 
     SimulationStatus simulation_status = WaitingForEquilibrium;
 
-    std::vector<std::vector<Eigen::Vector3d>> programmed_metric_infos;
-    std::vector<std::vector<Eigen::Matrix<double, 2, 2> >> inverted_programmed_metrics;
-    std::vector<std::vector<double>> programmed_taus;
-    std::vector<std::vector<Eigen::Matrix<double, 2, 2> >> programmed_second_fundamental_forms;
-    std::size_t progTensorSequenceCounterToStartFrom = 0;
-    // This is the equivalent variable for currDialInFactor.
+    std::size_t initial_stage = 0;
+    // This is the equivalent variable for dial_in_factor.
     double dialInFactorToStartFrom = 0.0;
     // Create container to store node ansatz positions, if given.
     std::vector<Eigen::Vector3d> nodeAnsatzPositions;
+    bool is_equilibrium_seeked = false;
 
-    /* Variables used to control the programmed properties' time variation.
-    This is not necessarily directly physical, especially for a fast optical
-    activation instead of slow heating; the idea here is to gradually `dial in'
-    the programmed (energetically favoured) metric and second fundamental form.
-    This prevents anything too explosive happening the code, and can be used to
-    make the simulation quasistatic (which can help avoid undesired isometries
-    for example), though it may not be necessary.
-    The range between 0, and 1 is split into a sequence of discrete values based
-    on the chosen settings.DialInResolution. The dial-in factor will then
-    evolve linearly from one such value to the next, over a chosen
-    settings.DialInStepTime. After each such step, the value is held constant
-    until equilibrium is reached (to within the chosen tolerance). In the
-    'waiting' stage, the check for equilibrium occurs at a rate determined by
-    the settings. TimeBetweenEquilChecks. The dialling in process occurs
-    between each pair of the sequence of programmed tensors, if more than one is
-    given in the input file.
-    */
+    // Vector holding which triangles correspond with which nodes.
+    std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes;
 
-    // Reset to zero every time equil is checked, or every time a new DialInFactor value is reached.
-    double timeSinceLastEquilCheck = DBL_MAX;
-    // Reset to zero every time equil is reached and a new `dialling in' phase starts.
-    double timeSinceCurrDiallingInPhaseStarted = DBL_MAX;
-    // Keeps track of which DialInFactor value in DialInFactorValuesToHoldAt was last dialled *from* (not held at, which is the next value along in the list)
-    std::size_t DialInFactorCounter = SIZE_MAX;
-    // Keeps track of current value
-    double currDialInFactor = DBL_MAX;
-    std::vector<double> DialInFactorValuesToHoldAt;
+    // Dial-in factors which divide the simulation into phases between which the equilibrium is reached.
+    std::vector<double> dial_in_phases;
 
     std::vector<double> gaussCurvatures;
     std::vector<double> meanCurvatures;
@@ -88,20 +125,20 @@ class Simulation {
     std::vector<double> boundaryNodeAngleDeficits;
 
 
-    void setup_logstream();
+    void setupLogging();
 
     void setup_filenames(int argc, char *argv[]);
 
-    void read_settings();
+//    void read_settings();
 
-    void read_vtk_data();
+    void read_vtk_data(const CoreConfig &config);
 
-    void configure_nodes();
+    void configure_nodes() const;
 
     /** Remaining geometry/topology/mesh-related things. */
     void configure_topological_properties();
 
-    void count_boundary_nodes();
+//    void count_boundary_nodes();
 
     void configure_triangles();
 
@@ -159,11 +196,11 @@ class Simulation {
     sequence.*/
     void find_smallest_element();
 
-    void print_total_load_force();
+//    void print_total_load_force();
 
     void setup_characteristic_scales();
-
     void setup_equilibrium_dial_in_factors();
+    void setInitialTriangleElongations();
 
     /* Create std::vectors (with one element for each triangle) that will be passed
     by reference to functions calculating the Gauss and mean curvatures, and
@@ -172,26 +209,24 @@ class Simulation {
 
     void run_ansatz(int counter);
 
-    void run_tensor_increment(int counter);
+    void run_tensor_increment(int stage_counter);
 
-    void impose_seide_deformation(double s, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
-
-    void update_slide_properties();
-
-    void setup_glass_cones(int highest_node, int lowest_node);
+//    void impose_seide_deformation(double s, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
+//
+//    void update_slide_properties();
+//
+//    void setup_glass_cones(int highest_node, int lowest_node);
 
     void setup_imposed_seide_deformations(double &s1, int highest_node, int lowest_node,
                                           std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
 
-    void first_step_configuration(double &seide_quotient, std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
+    void first_step_configuration();
 
-    void progress_single_step(int counter, std::pair<double, double> upperAndLowerTotSlideForces,
-                              std::vector<std::vector<std::pair<int, int>>> correspondingTrianglesForNodes);
+    long long int progress_single_step(int counter);
 
     void update_dial_in_factor();
 
-    void save_and_print_details(int counter, double duration_us,
-                                std::pair<double, double> upperAndLowerTotSlideForces);
+    void save_and_print_details(int counter, long long int duration_us);
 
     void begin_equilibrium_search(int counter);
 
@@ -201,15 +236,39 @@ class Simulation {
 
     void setup_reached_equilibrium();
 
-    std::string log_prefix();
+    std::string log_prefix() const;
 
     void init(int argc, char *argv[]);
+
+    void read_settings_new(int argc, char **argv);
+
+    void updateTriangleProperties(int counter);
+
+    void advance_time();
+
+    // Adds damping, additional physics e.g. slides, cones, and applies boundary condition.
+    void add_non_elastic_forces();
+
+    // Calculates and adds elastic forces to each
+    void add_elastic_forces();
+
+    void advance_physics();
+
+    void setup_tensor_increment(int stage_counter);
+
+    void check_if_equilibrium_search_begun(int stage_counter);
+
+    bool isDataPrinted();
+
+    long long int export_vtk(int counter);
 
 public :
 
     Simulation(int argc, char *argv[]);
 
-    void run_simulation();
+    int run_simulation();
+
+    void equilibriumTest(int stage_counter, long long int duration_us);
 };
 
 

@@ -27,14 +27,14 @@ Header file for calcCurvatures.cpp function
 
 #include "../Node.hpp"
 #include "../Triangle.hpp"
-#include "../Settings.hpp"
+#include "../configuration/core_config.h"
 
 void calcCurvatures(
-        const std::vector<Node> &,
-        const std::vector<Triangle> &,
-        std::vector<double> &,
-        std::vector<double> &,
-        std::vector<double> &,
-        std::vector<double> &,
-        std::vector<double> &,
-        const Settings &);
+        const std::vector<Node> &nodes,
+        const std::vector<Triangle> &triangles,
+        std::vector<double> &gaussCurvatures,
+        std::vector<double> &meanCurvatures,
+        std::vector<double> &angleDeficits,
+        std::vector<double> &interiorNodeAngleDeficits,
+        std::vector<double> &boundaryNodeAngleDeficits,
+        const CoreConfig &core_config);

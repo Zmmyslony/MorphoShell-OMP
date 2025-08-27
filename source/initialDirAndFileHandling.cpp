@@ -29,86 +29,42 @@ this 'previous output' directory is deleted. */
 #include <iostream>
 
 #include <string>
-#include <filesystem> // Note this requires g++ version >=8
+#include <boost/filesystem/operations.hpp>
 #include "initialDirAndFileHandling.hpp"
 
-std::string initialDirAndFileHandling(
-        const std::string &settings_file_name_str,
-        const std::string &settings_file_name_str_final_piece,
-        const std::string &initial_data_file_name_str,
-        const std::string &initial_data_file_name_str_final_piece,
-        const std::string &ansatz_data_file_name_str,
-        const std::string &ansatz_data_file_name_str_final_piece,
-        const int &argc,
-        std::string &initWriteToLogStr
-) {
-
-    // Get full path of current working directory.
-    std::filesystem::path cwd = std::filesystem::current_path();
+fs::path
+directory_setup(std::string &initWriteToLogStr, const std::vector<fs::path> &config_paths,
+                const std::vector<fs::path> &vtk_paths) {
+    
+    fs::path cwd = fs::current_path();
     initWriteToLogStr += "Current working directory: " + cwd.string() + "\n";
+    
+    fs::path simulation_vtk = vtk_paths.front();
+    fs::path output_directory = cwd / (simulation_vtk.stem().string() + "_output");
+    
+    if (fs::exists(output_directory)) {
+        fs::path prev_output_directory = cwd / (simulation_vtk.stem().string() + "_previous_output");
+        fs::remove_all(prev_output_directory);
+        fs::rename(output_directory, prev_output_directory);
+    }
 
-    /* Create strings containing names for the output directory, and a potential
-    backup for the previous one. */
-    std::string outputDirName("outputfiles_using_" + settings_file_name_str_final_piece);
-    std::string prevOutputDirName("prev_outputfiles_using_" + settings_file_name_str_final_piece);
+    fs::path input_files_dir(output_directory / "input_files");
 
-    /* If previous version of outputfiles_using... directory exists for the
-    current settings file name, save (rename) it as prev_outputfiles...
-    (**OVERWRITTEN EVERY TIME THIS IS DONE!**).*/
-    std::filesystem::path toRename(cwd / outputDirName);
+    if (!fs::create_directory(output_directory)) {throw std::runtime_error("Error creating the output directory.");}
+    if (!fs::create_directory(input_files_dir)) {throw std::runtime_error("Error creating the input files directory.");}
 
-    if (std::filesystem::exists(toRename)) {
-
-        /* Delete any existing prev_outputfiles_using_... directory corresponding to
-        the current settings file (i.e. if the code saved you from accidentally
-        overwriting outputfiles_using_... the first time, but you forgot to rename
-        the prev_outputfiles_using_... directory that saved you: unlucky!).*/
-        std::filesystem::path toDelete(cwd / prevOutputDirName); // '/' means append.
-        if (std::filesystem::exists(toDelete)) {
-            std::uintmax_t numObjDeleted = std::filesystem::remove_all(toDelete);
-            if (numObjDeleted) {}; // Stops compiler complaining about unused variable.
-            initWriteToLogStr +=
-                    "Deleted existing output directory from run-before-last: " + prevOutputDirName + "\n";
+    for (auto config : config_paths) {
+        if (!fs::exists(config)) {throw (std::runtime_error(config.string() + " does not exist."));}
+        if (!fs::copy_file(config, input_files_dir / config.filename())) {
+            throw std::runtime_error("Error while copying " + config.string());
         }
-
-        // Do renaming of outputfiles_using...
-        std::filesystem::rename(toRename, cwd / prevOutputDirName);
-        initWriteToLogStr += "Previous outputfiles directory still present.\n";
-        initWriteToLogStr +=
-                "The previous version was saved this time, but you may want to move it "
-                "out of the working directory, because it will be overwritten next time "
-                "the code is run with this settings file.\n";
-    } else {
-        initWriteToLogStr += "No previous outputfiles directory was found that needed saving.\n";
     }
 
-
-    /* Create new directory to hold output .vtk files, and copy settings and data
-    files into a subdirectory of that directory.*/
-    std::filesystem::path outputDir(cwd / outputDirName);
-    std::filesystem::path inputFilesDir(outputDir / "input_files_used");
-    std::filesystem::path settingsFile(cwd / settings_file_name_str);
-    std::filesystem::path initDataFile(cwd / initial_data_file_name_str);
-    std::filesystem::path ansatzDataFile(cwd / ansatz_data_file_name_str);
-
-
-    bool isOutputDirMade = std::filesystem::create_directory(outputDir);
-    bool isInputDirMade = std::filesystem::create_directory(inputFilesDir);
-
-    bool isSettingsCopied = std::filesystem::copy_file(settingsFile,
-                                                       inputFilesDir / settings_file_name_str_final_piece);
-    bool isInitCopied = std::filesystem::copy_file(initDataFile,
-                                                   inputFilesDir / initial_data_file_name_str_final_piece);
-    bool isAnsatzCopied = true; // Default true so no error thrown if no ansatz given.
-    if (argc == 4) {
-        isAnsatzCopied = std::filesystem::copy_file(ansatzDataFile,
-                                                    inputFilesDir / ansatz_data_file_name_str_final_piece);
+    for (auto vtk : vtk_paths) {
+        if (!fs::exists(vtk)) {throw (std::runtime_error(vtk.string() + " does not exist."));}
+        if (!fs::copy_file(vtk, input_files_dir / vtk.filename())) {
+            throw std::runtime_error("Error while copying " + vtk.string());
+        }
     }
-
-    if (!(isOutputDirMade && isInputDirMade && isSettingsCopied && isInitCopied && isAnsatzCopied)) {
-        // This exception on top of the std::filesystem ones may be overkill.
-        throw std::runtime_error("Error: setting up output files directory failed");
-    }
-
-    return outputDirName;
+    return output_directory;
 }
