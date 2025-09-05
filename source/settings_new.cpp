@@ -17,8 +17,8 @@ std::map<std::string, int> config_map{
         {"core",             0},
         {"gravity",          1},
         {"slide",            2},
-        {"cone",             3}
-
+        {"cone",             3},
+        {"magnetic",         4}
 };
 
 
@@ -49,6 +49,10 @@ SettingsNew::SettingsNew(const std::vector<fs::path> &config_paths) {
                 break;
             case 3:
                 cones.emplace_back(config);
+                break;
+            case 4:
+                if (!magnetic_field.empty()) { throw std::runtime_error("Repetition of magnetic field config."); }
+                magnetic_field.emplace_back(config);
                 break;
             default:
                 throw std::runtime_error("Unknown configuration file provided.");
@@ -215,6 +219,10 @@ double SettingsNew::getTimeBetweenEquilibriumChecks() const {
 
 const std::vector<Cone> &SettingsNew::getCones() const {
     return cones;
+}
+
+const std::vector<MagneticField> &SettingsNew::getMagneticField() const {
+    return magnetic_field;
 }
 
 SettingsNew::SettingsNew() = default;

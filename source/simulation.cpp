@@ -576,6 +576,19 @@ void Simulation::add_non_elastic_forces() {
         cone.setInteractionLoad(interaction_force);
     }
 
+    for (auto &field: settings_new.getMagneticField()) {
+        Eigen::Vector3d magnetic_field = field.magnetic_field;
+#pragma omp parallel for
+        for (int i = 0; i < triangles.size(); i++) {
+            triangles[i].updateMagneticForce(magnetic_field);
+        }
+#pragma omp for
+        // Applies forces to each node.
+        for (int i = 0; i < nodes.size(); i++) {
+            nodes[i].addForce();
+        }
+    }
+
 #pragma omp parallel for
     for (int i = 0; i < nodes.size(); i++) {
         nodes[i].apply_boundary_conditions();

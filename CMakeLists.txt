@@ -37,14 +37,13 @@ set(SOURCE_FILES
         source/configuration/slide_configuration.h
         source/physics/slide.cpp
         source/physics/slide.h
-        source/configuration/derived_configuration.cpp
-        source/configuration/derived_configuration.h
         source/physics/cone.cpp
         source/physics/cone.h
         source/physics/rigid_body.cpp
         source/physics/rigid_body.h
-        source/physics/dynamic_curvature_control.cpp
-        source/physics/dynamic_curvature_control.h)
+        source/physics/magnetic_field.cpp
+        source/physics/magnetic_field.h
+)
 
 add_executable(Morphoshell ${SOURCE_FILES})
 

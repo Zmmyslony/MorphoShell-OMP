@@ -45,6 +45,9 @@ class Node {
 public:
     void addNodeForceAddress(Eigen::Vector3d *force_address);
     void updateForce();
+
+    void addForce();
+
     /* Custom output stream allowing the debugging display function to print to
     a particular file in addition to std::cout.*/
 //    CustomOutStreamClass nodeLogStream;

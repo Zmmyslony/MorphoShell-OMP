@@ -41,7 +41,11 @@ class Triangle {
     double local_elongation = 1;
     const Eigen::Vector3d *corner_nodes_pos[3];
     const Eigen::Vector3d *patch_nodes_pos[3];
-    Eigen::Vector3d *node_elastic_force[6];
+    // Forces exerted by this triangle on nodes associated with it
+    Eigen::Vector3d *node_triangle_force[6];
+    // Magnetisation density expressed in the reference system coordinates.
+    Eigen::Vector3d reference_magnetisation_density = {0, 0, 0};
+    Eigen::Vector3d reference_node_positions[3];
 
 public:
     int label;
@@ -267,6 +271,10 @@ public:
                                     double transfer_coefficient, double min_height, double max_height);
 
     void setNodeForceAddress(unsigned int index, Eigen::Vector3d *address);
+
+    void updateMagneticForce(const Eigen::Vector3d &magnetic_field);
+
+    void setReferenceMagnetisationDensity(const Eigen::Vector3d &magnetisation);
 };
 
 #endif

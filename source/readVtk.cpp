@@ -85,7 +85,6 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                  std::size_t &progTensorSequenceCounterToStartFrom, double &dialInFactorToStartFrom,
                  std::vector<Eigen::Vector3d> &nodeAnsatzPositions, const std::string &ansatz_data_file_name_str,
                  const CoreConfig &config) {
-
     auto main_vtk_data = ReadPolyData((const char *) init_data_file_name_str.c_str());
     vtkSmartPointer<vtkPolyData> ansatz_vtk_data;
     if (ansatz_data_file_name_str != "no_ansatz_file") {
@@ -108,7 +107,7 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         if (vertex_count != ansatz_vtk_data->GetNumberOfPoints() ||
             triangle_count != ansatz_vtk_data->GetNumberOfCells()) {
             throw std::runtime_error(
-                    "VTK files for programmed quantities and ansatz have different count of vertices or polygons.");
+                "VTK files for programmed quantities and ansatz have different count of vertices or polygons.");
         }
 
         nodeAnsatzPositions.reserve(vertex_count);
@@ -133,12 +132,25 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
 
     // Read in the programmed quantities which are defined as cell data.
     auto cell_data = main_vtk_data->GetCellData();
-    if (cell_data->GetNumberOfArrays() % 3 != 0) {
+    int metric_information_array_count = cell_data->GetNumberOfArrays();
+    if (auto magnetisation_array = cell_data->GetArray("reference_magnetisation_density"); magnetisation_array != nullptr) {
+        metric_information_array_count -= 1;
+        for (int  i =0; i < triangle_count; i++ ) {
+            triangles[i].setReferenceMagnetisationDensity({
+                magnetisation_array->GetTuple(i)[0],
+                magnetisation_array->GetTuple(i)[1],
+                magnetisation_array->GetTuple(i)[2]
+            });
+        }
+   }
+
+    if (metric_information_array_count % 3 != 0) {
         throw std::runtime_error(
-                "VTK: too many fields defining the deformation (" + std::to_string(cell_data->GetNumberOfArrays()) +
-                ")- they should be provided in triplets"
-                "(programmed_metric_info_i, programmed_bend_info_i, programmed_taus_i), with i starting at 0.");
-    } else if (cell_data->GetNumberOfArrays() == 0) {
+            "VTK: too many fields defining the deformation (" + std::to_string(metric_information_array_count) +
+            ")- they should be provided in triplets"
+            "(programmed_metric_info_i, programmed_bend_info_i, programmed_taus_i), with i starting at 0.");
+    }
+    if (metric_information_array_count == 0) {
         throw std::runtime_error("VTK: no fields defining the deformation are present in the input file.");
     }
 
@@ -170,29 +182,31 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
 
         Eigen::Vector3d tempProgMetricInfo;
         for (unsigned int j = 0; j < triangle_count; j++) {
-            tempProgMetricInfo = {metric_info->GetTuple(j)[0],
-                                  metric_info->GetTuple(j)[1],
-                                  metric_info->GetTuple(j)[2]};
+            tempProgMetricInfo = {
+                metric_info->GetTuple(j)[0],
+                metric_info->GetTuple(j)[1],
+                metric_info->GetTuple(j)[2]
+            };
             if (is_lce_mode_enabled) {
                 sequenceOf_ProgMetricInfo[i][j] = tempProgMetricInfo;
                 // TODO - CHECK IF WE NEED TO ALSO INCLUDE THE INVERSE OF THE METRIC.
-//                /* In case the metric components will be dialled, rather than lambda directly,
-//                set the corresponding programmed inverse metric components accordingly.*/
-//                double dirAng = tempProgMetricInfo(0);
-//                double cosDirAng = cos(dirAng);
-//                double sinDirAng = sin(dirAng);
-//                double lambda = tempProgMetricInfo(1);
-//                double nu = tempProgMetricInfo(2);
-//                double lambdaToTheMinus2 = 1.0 / (lambda * lambda);
-//                double lambdaToThe2Nu = pow(lambda, 2.0 * nu);
-//
-//                sequenceOf_InvProgMetrics[i][j](0, 0) =
-//                        lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
-//                sequenceOf_InvProgMetrics[i][j](0, 1) =
-//                        (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
-//                sequenceOf_InvProgMetrics[i][j](1, 0) = sequenceOf_InvProgMetrics.at([i][j](0, 1);
-//                sequenceOf_InvProgMetrics[i][j](1, 1) =
-//                        lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
+                //                /* In case the metric components will be dialled, rather than lambda directly,
+                //                set the corresponding programmed inverse metric components accordingly.*/
+                //                double dirAng = tempProgMetricInfo(0);
+                //                double cosDirAng = cos(dirAng);
+                //                double sinDirAng = sin(dirAng);
+                //                double lambda = tempProgMetricInfo(1);
+                //                double nu = tempProgMetricInfo(2);
+                //                double lambdaToTheMinus2 = 1.0 / (lambda * lambda);
+                //                double lambdaToThe2Nu = pow(lambda, 2.0 * nu);
+                //
+                //                sequenceOf_InvProgMetrics[i][j](0, 0) =
+                //                        lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
+                //                sequenceOf_InvProgMetrics[i][j](0, 1) =
+                //                        (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
+                //                sequenceOf_InvProgMetrics[i][j](1, 0) = sequenceOf_InvProgMetrics.at([i][j](0, 1);
+                //                sequenceOf_InvProgMetrics[i][j](1, 1) =
+                //                        lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
             } else {
                 Eigen::Matrix<double, 2, 2> tempProgMetric;
                 Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > lu;
@@ -207,7 +221,7 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                 lu.compute(tempProgMetric);
                 if (!lu.isInvertible()) {
                     throw std::runtime_error(
-                            "Error: One of the programmed metrics that was read in was not invertible. Aborting.");
+                        "Error: One of the programmed metrics that was read in was not invertible. Aborting.");
                 }
                 sequenceOf_InvProgMetrics[i][j] = tempProgMetric.inverse();
             }
@@ -235,7 +249,6 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
 
     // Read in the dial-in factor and programmed quantity counter.
     if (ansatz_data_file_name_str != "no_ansatz_file") {
-
         /* Temp variable used to check a value is non-negative
         while assigning it to a std::size_t which is unsigned.*/
         int tempProgTensorSequenceCounter;
@@ -255,6 +268,5 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         ansatz_DataFile >> tempProgTensorSequenceCounter;
         // Adjust offset so a single set of programmed tensors means dialling starts from the trivial '_0' tensors etc.
         progTensorSequenceCounterToStartFrom = tempProgTensorSequenceCounter - 1;
-
     }
 }

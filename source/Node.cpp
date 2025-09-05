@@ -134,9 +134,18 @@ double Node::add_damping(const SettingsNew &settings_new) {
 //}
 
 void Node::apply_boundary_conditions() {
-    if (is_x_clamped) { force(0) = 0; }
-    if (is_y_clamped) { force(1) = 0; }
-    if (is_z_clamped) { force(2) = 0; }
+    if (is_x_clamped) {
+        force(0) = 0;
+        vel(0) = 0;
+    }
+    if (is_y_clamped) {
+        force(1) = 0;
+        vel(1) = 0;
+    }
+    if (is_z_clamped) {
+        force(2) = 0;
+        vel(2) = 0;
+    }
 }
 
 void Node::clamp(const CoreConfig &config) {
@@ -151,6 +160,12 @@ void Node::addNodeForceAddress(Eigen::Vector3d *force_address) {
 
 void Node::updateForce() {
     force = {0, 0, 0};
+    for (auto &pt: force_pointers) {
+        force.noalias() += *pt;
+    }
+}
+
+void Node::addForce() {
     for (auto &pt: force_pointers) {
         force.noalias() += *pt;
     }

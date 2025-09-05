@@ -11,6 +11,7 @@
 #include "configuration/gravity_config.h"
 #include "physics/slide.h"
 #include "physics/cone.h"
+#include "physics/magnetic_field.h"
 
 namespace fs = boost::filesystem;
 
@@ -19,6 +20,7 @@ class SettingsNew {
     GravityConfig gravity;
     std::vector<Slide> slides;
     std::vector<Cone> cones;
+    std::vector<MagneticField> magnetic_field;
 
     double time_step_size = 0;
     double duration_phase = 0;
@@ -44,6 +46,8 @@ public:
     [[nodiscard]] const std::vector<Slide> &getSlides() const;
 
     const std::vector<Cone> &getCones() const;
+
+    const std::vector<MagneticField> &getMagneticField() const;
 
     void SetupPrintFrequency();
 

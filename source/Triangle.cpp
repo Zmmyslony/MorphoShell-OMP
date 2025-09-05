@@ -44,13 +44,13 @@ std::stringstream Triangle::display() {
     msg << "Labels of vertices: " << vertexLabels.transpose() << std::endl;
     msg << "Labels of edges: " << edgeLabels.transpose() << std::endl;
     msg << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
-        << std::endl;
-//    msg << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
-//    msg << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
-//    msg << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
-//              << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
+            << std::endl;
+    //    msg << "Labels of adjacent (edge-sharing) triangles: " << edgeSharingTriLabels.transpose() << std::endl;
+    //    msg << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
+    //    msg << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
+    //              << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
     msg << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
-        << std::endl;
+            << std::endl;
     msg << "Current sides = " << "\n" << currSides << std::endl;
     msg << "faceNormal = " << "\n" << faceNormal << std::endl;
     msg << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
@@ -256,7 +256,7 @@ void Triangle::updateProgrammedTensorsDynamically(int stage_counter, double dial
 
     updateProgrammedMetricImplicit(dirAng, local_elongation, nu);
     programmedSecFF = bend_programmed * (1 - local_magnitude);
-//    programmedSecFF = bend_programmed * local_magnitude;
+    //    programmedSecFF = bend_programmed * local_magnitude;
 }
 
 void Triangle::updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor) {
@@ -327,10 +327,10 @@ std::vector<unsigned int> getNeighbouringNodes(const Triangle &current_triangle,
     return v_node_indices;
 }
 
-std::vector<std::pair<unsigned int, double>>
+std::vector<std::pair<unsigned int, double> >
 assignDistanceFromCentroid(const std::vector<unsigned int> &node_indices, const std::vector<Node> &nodes,
                            const Eigen::Vector3d &position) {
-    std::vector<std::pair<unsigned int, double>> index_distance_pair;
+    std::vector<std::pair<unsigned int, double> > index_distance_pair;
     for (unsigned int index: node_indices) {
         double distance = (nodes[index].pos - position).norm();
         index_distance_pair.emplace_back(index, distance);
@@ -359,8 +359,8 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
                    nodes[vertexLabels(2)].pos) / 3;
 
     std::vector<unsigned int> possiblePatchNodeLabels = getNeighbouringNodes(*this, triangles, nodes);
-    std::vector<std::pair<unsigned int, double>> indexDistancePairs = assignDistanceFromCentroid(
-            possiblePatchNodeLabels, nodes, refCentroid);
+    std::vector<std::pair<unsigned int, double> > indexDistancePairs = assignDistanceFromCentroid(
+        possiblePatchNodeLabels, nodes, refCentroid);
 
     std::sort(std::begin(indexDistancePairs), std::end(indexDistancePairs),
               [](const std::pair<unsigned int, double> &p1,
@@ -379,11 +379,11 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
         patchNodeDataMatrix.col(n) = patchColumn(candidatePatchNode, refCentroid);
     }
 
-    std::set<std::vector<int>> candidate_trios;
+    std::set<std::vector<int> > candidate_trios;
     for (unsigned int p: possiblePatchNodeLabels) {
         for (unsigned int q: possiblePatchNodeLabels) {
             for (unsigned int r: possiblePatchNodeLabels) {
-                candidate_trios.insert({(int)p, (int)q, (int)r});
+                candidate_trios.insert({(int) p, (int) q, (int) r});
             }
         }
     }
@@ -394,7 +394,7 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
         patchNodeDataMatrix.col(4) = patchColumn(nodes[candidateIndices[1]].pos, refCentroid);
         patchNodeDataMatrix.col(5) = patchColumn(nodes[candidateIndices[2]].pos, refCentroid);
 
-        Eigen::FullPivLU<Eigen::Matrix<double, 6, 6>> patchNodeDecomposition;
+        Eigen::FullPivLU<Eigen::Matrix<double, 6, 6> > patchNodeDecomposition;
         patchNodeDecomposition.compute(patchNodeDataMatrix);
         if (!patchNodeDecomposition.isInvertible()) { continue; }
 
@@ -407,7 +407,7 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
         Eigen::Matrix<double, 6, 3> candidatePatchDiv;
         candidatePatchDiv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
 
-        Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
+        Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3> > secDerivMatTempSVD;
         secDerivMatTempSVD.compute(candidatePatchDiv);
 
         double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
@@ -422,7 +422,6 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
             patch_nodes_pos[2] = &nodes[candidateIndices[2]].pos;
 
             matForPatchSecDerivs = candidatePatchDiv;
-
         }
     }
     return patch_condition_number;
@@ -441,6 +440,9 @@ Triangle::Triangle(int label, int id_0, int id_1, int id_2, const std::vector<No
     corner_nodes_pos[0] = &nodes[id_0].pos;
     corner_nodes_pos[1] = &nodes[id_1].pos;
     corner_nodes_pos[2] = &nodes[id_2].pos;
+    reference_node_positions[0] = nodes[id_0].pos;
+    reference_node_positions[1] = nodes[id_1].pos;
+    reference_node_positions[2] = nodes[id_2].pos;
 }
 
 void
@@ -454,11 +456,52 @@ Triangle::updateElasticForce(double bendingPreFac, double JPreFactor, double str
             0.5 * currAreaInv * (patchSecDerivs.transpose() * triangleEdgeNormals);
 
     for (int n = 0; n < 3; ++n) {
-        node_elastic_force[n]->noalias() = getBendingForceNode(normalDerivPiece.col(n), n) + stretchForces.col(n);
-        node_elastic_force[n + 3]->noalias() = getBendingForcePatch(n + 3);
+        node_triangle_force[n]->noalias() = getBendingForceNode(normalDerivPiece.col(n), n) + stretchForces.col(n);
+        node_triangle_force[n + 3]->noalias() = getBendingForcePatch(n + 3);
     }
 }
 
+void Triangle::updateMagneticForce(const Eigen::Vector3d &magnetic_field) {
+    for (int i = 0; i < 3; i++) {
+        Eigen::Vector3d magnetic_force = {0, 0, 0};
+        magnetic_force[0] = magnetic_field[0] * reference_magnetisation_density[1] * (
+                                reference_node_positions[(i + 1) % 3](0) - reference_node_positions[(i + 2) % 3](0)) -
+                            magnetic_field[0] * reference_magnetisation_density[0] * (
+                                reference_node_positions[(i + 1) % 3](1) - reference_node_positions[(i + 2) % 3](1)) +
+                            magnetic_field[1] * reference_magnetisation_density[2] * (
+                                (*corner_nodes_pos[(i + 1) % 3])(2) - (*corner_nodes_pos[(i + 2) % 3])(2)) -
+                            magnetic_field[2] * reference_magnetisation_density[2] * (
+                                (*corner_nodes_pos[(i + 1) % 3])(1) - (*corner_nodes_pos[(i + 2) % 3])(1));
+
+        magnetic_force[1] = magnetic_field[1] * reference_magnetisation_density[1] * (
+                                reference_node_positions[(i + 1) % 3](0) - reference_node_positions[(i + 2) % 3](0)) -
+                            magnetic_field[1] * reference_magnetisation_density[0] * (
+                                reference_node_positions[(i + 1) % 3](1) - reference_node_positions[(i + 2) % 3](1)) +
+                            magnetic_field[2] * reference_magnetisation_density[2] * (
+                                (*corner_nodes_pos[(i + 1) % 3])(0) - (*corner_nodes_pos[(i + 2) % 3])(0)) -
+                            magnetic_field[0] * reference_magnetisation_density[2] * (
+                                (*corner_nodes_pos[(i + 1) % 3])(2) - (*corner_nodes_pos[(i + 2) % 3])(2));
+
+        magnetic_force[2] = magnetic_field[2] * reference_magnetisation_density[1] * (
+                                reference_node_positions[(i + 1) % 3](0) - reference_node_positions[(i + 2) % 3](0)) -
+                            magnetic_field[2] * reference_magnetisation_density[0] * (
+                                reference_node_positions[(i + 1) % 3](1) - reference_node_positions[(i + 2) % 3](1)) +
+                            magnetic_field[0] * reference_magnetisation_density[2] * (
+                                (*corner_nodes_pos[(i + 1) % 3])(1) - (*corner_nodes_pos[(i + 2) % 3])(1)) -
+                            magnetic_field[1] * reference_magnetisation_density[2] * (
+                                (*corner_nodes_pos[(i + 1) % 3])(0) - (*corner_nodes_pos[(i + 2) % 3])(0));
+
+        node_triangle_force[i]->noalias() = -magnetic_force;
+    }
+    for (int i = 3; i < 6; i++) {
+        node_triangle_force[i]->noalias() = Eigen::Vector3d({0, 0, 0});
+    }
+}
+
+void Triangle::setReferenceMagnetisationDensity(const Eigen::Vector3d &magnetisation) {
+    reference_magnetisation_density = magnetisation;
+}
+
 void Triangle::setNodeForceAddress(unsigned int index, Eigen::Vector3d *address) {
-    node_elastic_force[index] = address;
+    node_triangle_force[index] = address;
 }
