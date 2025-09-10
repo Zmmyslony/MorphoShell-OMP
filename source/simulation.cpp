@@ -561,7 +561,7 @@ void Simulation::add_non_elastic_forces() {
                                                            settings_new.getCore().getThickness(),
                                                            nodes[i].area);
         }
-        slide.setInteractionLoad(interaction_force);
+        slide.setTotalInteractionForce(interaction_force);
     }
 
     for (auto &cone: cones) {
@@ -573,7 +573,7 @@ void Simulation::add_non_elastic_forces() {
                                                           settings_new.getCore().getShearModulus(),
                                                           settings_new.getCore().getThickness());
         }
-        cone.setInteractionLoad(interaction_force);
+        cone.setTotalInteractionForce(interaction_force);
     }
 
     for (auto &field: settings_new.getMagneticField()) {

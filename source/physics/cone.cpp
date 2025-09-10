@@ -66,16 +66,18 @@ double Cone::addInteractionForce(const Eigen::Vector3d &pos, Eigen::Vector3d &no
     double normal_response_force = -distance_v * force_prefactor * shear_modulus * thickness;
 
     Eigen::Vector3d normal_force = node_force.dot(cone_normal) * cone_normal;
-    Eigen::Vector3d tangent_force = node_force - normal_force;
+    if (friction_coefficient != 0) {
+        Eigen::Vector3d tangent_force = node_force - normal_force;
+        double friction_force = normal_force.norm() * friction_coefficient;
+        double tangent_force_v = tangent_force.norm();
 
-    double friction_force = normal_force.norm() * friction_coefficient;
-    double tangent_force_v = tangent_force.norm();
-
-    if (tangent_force_v <= friction_force) {
-        node_force -= tangent_force;
-    } else {
-        node_force -= tangent_force.normalized() * friction_force;
+        if (tangent_force_v <= friction_force) {
+            node_force -= tangent_force;
+        } else {
+            node_force -= tangent_force.normalized() * friction_force;
+        }
     }
+
     node_force += normal_response_force * cone_normal;
     return normal_response_force;
 }
