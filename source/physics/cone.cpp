@@ -20,7 +20,7 @@ Eigen::Vector3d Cone::coneNormal(const Eigen::Vector3d &pos) const {
     Eigen::Vector3d height_vector = normal * height;
     Eigen::Vector3d radial_vector = relative_position - height_vector;
 
-    Eigen::Vector3d cone_normal = normal * sin(cone_angle) - radial_vector.normalized() * cos(cone_angle);
+    Eigen::Vector3d cone_normal = normal * sin(cone_angle) + radial_vector.normalized() * cos(cone_angle);
     return cone_normal;
 }
 
