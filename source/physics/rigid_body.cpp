@@ -105,6 +105,6 @@ double RigidBody::getLoad() const {
     return load;
 }
 
-void RigidBody::setInteractionLoad(double interaction_load) {
+void RigidBody::setTotalInteractionForce(double interaction_load) {
     RigidBody::interaction_load = interaction_load;
 }

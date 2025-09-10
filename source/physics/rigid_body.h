@@ -53,7 +53,7 @@ public:
 
     void update(double time_step_size, bool is_dialling_in);
 
-    void setInteractionLoad(double interaction_load);
+    void setTotalInteractionForce(double interaction_load);
 };
 
 
