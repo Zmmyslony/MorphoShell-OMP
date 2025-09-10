@@ -7,18 +7,30 @@
 
 
 void RigidBody::loadNormals(const ConfigBase &config) {
-    bool is_normals_provided = config.get("x_normal", normal[0]) &&
-                               config.get("y_normal", normal[1]) &&
-                               config.get("z_normal", normal[2]);
-    if (!is_normals_provided) { throw std::runtime_error("RigidBody normals are missing from config file."); }
-    if (normal.norm() == 0) {throw std::runtime_error("Norm of RigidBody normals is equal to zero.");}
+    std::vector<double> normal_v;
+    bool is_normals_provided = config.get("normal", normal_v);
+
+    if (!is_normals_provided) {
+        config.print();
+        throw std::runtime_error("RigidBody key \"normal\" are missing from config file.");
+    } else {
+        normal[0] = normal_v[0];
+        normal[1] = normal_v[1];
+        normal[2] = normal_v[2];
+    }
+
+    if (normal.norm() == 0) { throw std::runtime_error("Norm of RigidBody normals is equal to zero."); }
     normal.normalize();
 }
 
 void RigidBody::loadPositions(const ConfigBase &config) {
-    is_origin_provided = config.get("x_position", position[0]) ||
-                         config.get("y_position", position[1]) ||
-                         config.get("z_position", position[2]);
+    std::vector<double> pos;
+    is_origin_provided = config.get("position", pos);
+    if (is_origin_provided) {
+        position[0] = pos[0];
+        position[1] = pos[1];
+        position[2] = pos[2];
+    }
 }
 
 void RigidBody::loadType(const ConfigBase &config) {
@@ -39,8 +51,8 @@ void RigidBody::loadType(const ConfigBase &config) {
         }
     } else {
         throw std::runtime_error(
-                "Unknown type of RigidBody. Possible options are 'fixed', 'load_controlled' or "
-                "'displacement_controlled'.");
+            "Unknown type of RigidBody. Possible options are 'fixed', 'load_controlled' or "
+            "'displacement_controlled'.");
     }
 }
 
@@ -50,7 +62,6 @@ void RigidBody::loadInteractionScales(const ConfigBase &config) {
     config.get("weight", weight);
     config.get("force_prefactor", force_prefactor);
     config.get("friction_coefficient", friction_coefficient);
-
 }
 
 void RigidBody::validate() const {
@@ -72,7 +83,8 @@ RigidBody::RigidBody(const ConfigBase &config) {
 }
 
 
-RigidBody::RigidBody(const fs::path &config_path) : RigidBody(ConfigBase(config_path)) {}
+RigidBody::RigidBody(const fs::path &config_path) : RigidBody(ConfigBase(config_path)) {
+}
 
 void RigidBody::update(double time_step_size, bool is_dialling_in) {
     switch (type) {
