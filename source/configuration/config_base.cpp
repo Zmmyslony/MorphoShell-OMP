@@ -28,7 +28,7 @@ bool is_comment(const std::string &option) {
     if (option.empty() ||
         option[0] == '#' ||
         option.size() > 2 && option[0] == '/' && option[1] == '/'
-            ) {
+    ) {
         return true;
     }
     return false;
@@ -54,13 +54,19 @@ ConfigBase::ConfigBase(const fs::path &config_path) {
         }
         if (row.size() > 2) {
             std::cerr << "Too many entries for " << row[0] << " in " << config_path.string() <<
-                                       ".\nUsing only the first read value:" << row[1] << std::endl;
+                    ".\nUsing only the first read value:" << row[1] << std::endl;
         } else if (row.size() < 2) {
             std::cerr << "Too few entries for " << row[0] << " in " << config_path.string() << "." << std::endl;
-
         }
 
         config_options[row[0]] = row[1];
+    }
+}
+
+void ConfigBase::print() const {
+    std::cout << "Available keys:" << std::endl;
+    for (auto &key: config_options) {
+        std::cout << "\t" << key.first << ": " << key.second << std::endl;
     }
 }
 
@@ -105,7 +111,7 @@ bool ConfigBase::get(const std::string &name, std::vector<std::string> &target) 
     std::vector<std::string> string_vector;
     if (is_in_config) {
         std::string element;
-        std::stringstream stream (read_value);
+        std::stringstream stream(read_value);
         while (std::getline(stream, element, ',')) {
             string_vector.push_back(element);
         }
@@ -121,7 +127,7 @@ bool ConfigBase::get(const std::string &name, std::vector<double> &target) const
 
     std::vector<double> result;
     if (is_in_config) {
-        for (auto &element : read_vector) {
+        for (auto &element: read_vector) {
             result.push_back(std::stod(element));
         }
 
@@ -137,7 +143,7 @@ bool ConfigBase::get(const std::string &name, std::vector<int> &target) const {
 
     std::vector<int> result;
     if (is_in_config) {
-        for (auto &element : read_vector) {
+        for (auto &element: read_vector) {
             result.push_back(std::stoi(element));
         }
 
@@ -153,7 +159,7 @@ bool ConfigBase::get(const std::string &name, std::vector<bool> &target) const {
 
     std::vector<bool> result;
     if (is_in_config) {
-        for (auto &element : read_vector) {
+        for (auto &element: read_vector) {
             bool element_b;
             std::istringstream(element) >> std::boolalpha >> element_b;
             result.push_back(element_b);
@@ -172,6 +178,3 @@ bool ConfigBase::isEqual(const std::string &name, const std::string &test_string
     std::string cleaned_string = clean_line(test_string);
     return target == cleaned_string;
 }
-
-
-

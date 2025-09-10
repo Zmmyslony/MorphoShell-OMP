@@ -22,6 +22,8 @@ public:
     ConfigBase();
     explicit ConfigBase(const fs::path &config_path);
 
+    void print() const;
+
     /**
      * Reads option into target address. If option is not found, the value remains unchanged.
      * @param name String name of the option
