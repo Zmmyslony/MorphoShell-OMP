@@ -34,7 +34,8 @@ left in the header file for clarity there.*/
 #define GRAVITY_MAGNITUDE (9.80665 * 1e3)
 
 //This is a debugging tool to display the node's data
-std::stringstream Node::display() {
+std::stringstream Node::display()
+{
     std::stringstream msg;
     msg << "-----------------------------" << std::setprecision(15) << std::boolalpha << std::endl;
     msg << "Node " << label << ":" << std::endl;
@@ -51,8 +52,10 @@ std::stringstream Node::display() {
     return msg;
 }
 
-void Node::add_gravity(const GravityConfig &config) {
-    if (config.isGravityEnabled()) {
+void Node::add_gravity(const GravityConfig& config)
+{
+    if (config.isGravityEnabled())
+    {
         force(0) += config.getXGravityComponent() * mass * GRAVITY_MAGNITUDE;
         force(1) += config.getYGravityComponent() * mass * GRAVITY_MAGNITUDE;
         force(2) += config.getZGravityComponent() * mass * GRAVITY_MAGNITUDE;
@@ -60,11 +63,12 @@ void Node::add_gravity(const GravityConfig &config) {
 }
 
 
-double Node::add_damping(const SettingsNew &settings_new) {
+double Node::add_damping(const SettingsNew& settings_new)
+{
     if (settings_new.getCore().isGradientDescentDynamics()) { return 0; }
 
     force += -settings_new.getDampingFactor() * mass * vel /
-             settings_new.getCore().getDensity();
+        settings_new.getCore().getDensity();
     return settings_new.getDampingFactor() * mass * pow(vel.norm(), 2) / settings_new.getCore().getDensity();
 }
 
@@ -133,40 +137,52 @@ double Node::add_damping(const SettingsNew &settings_new) {
 //    }
 //}
 
-void Node::apply_boundary_conditions() {
-    if (is_x_clamped) {
+void Node::apply_boundary_conditions()
+{
+    if (is_x_clamped)
+    {
         force(0) = 0;
         vel(0) = 0;
     }
-    if (is_y_clamped) {
+    if (is_y_clamped)
+    {
         force(1) = 0;
         vel(1) = 0;
     }
-    if (is_z_clamped) {
+    if (is_z_clamped)
+    {
         force(2) = 0;
         vel(2) = 0;
     }
 }
 
-void Node::clamp(const CoreConfig &config) {
+void Node::clamp(const CoreConfig& config)
+{
     is_x_clamped = config.isXFixedBc();
     is_y_clamped = config.isYFixedBc();
     is_z_clamped = config.isZFixedBc();
 }
 
-void Node::addNodeForceAddress(Eigen::Vector3d *force_address) {
+void Node::addNodeForceAddress(Eigen::Vector3d* force_address)
+{
     force_pointers.push_back(force_address);
 }
 
-void Node::updateForce() {
+void Node::updateForce()
+{
     force = {0, 0, 0};
-    for (auto &pt: force_pointers) {
+    for (auto& pt : force_pointers)
+    {
         force.noalias() += *pt;
+        *pt = {0, 0, 0};
     }
 }
 
-void Node::addForce() {
-    for (auto &pt: force_pointers) {
+void Node::addForce()
+{
+    for (auto& pt : force_pointers)
+    {
         force.noalias() += *pt;
+        *pt = {0, 0, 0};
     }
 }
