@@ -216,7 +216,8 @@ void Simulation::set_node_patches() {
 
 
 void Simulation::orient_node_labels() {
-    updateTriangleProperties(-10);
+    double shared_value;
+    updateTriangleProperties(-10, shared_value);
     Eigen::Vector3d tempZAxisVec;
     tempZAxisVec << 0.0, 0.0, 1.0;
     for (int i = 0; i < triangles.size(); ++i) {
@@ -226,7 +227,7 @@ void Simulation::orient_node_labels() {
             triangles[i].vertexLabels(1) = tempLabel;
         }
     }
-    updateTriangleProperties(-10);
+    updateTriangleProperties(-10, shared_value);
 }
 
 
@@ -351,7 +352,8 @@ void Simulation::run_ansatz(int counter) {
         time_phase = 0.0;
 
         // Calculate all necessary geometry for the ansatz state.
-        updateTriangleProperties(counter);
+        double shared_value;
+        updateTriangleProperties(counter, shared_value);
         updateFirstFundamentalForms(triangles, settings_new.getCore());
         updateSecondFundamentalForms(triangles, settings_new.getCore());
 
@@ -502,7 +504,8 @@ void Simulation::first_step_configuration() {
 
 void Simulation::begin_equilibrium_search(int counter) {
     dial_in_factor = dial_in_phases[phase_counter + 1];
-    updateTriangleProperties(counter);
+    double shared_value;
+    updateTriangleProperties(counter, shared_value);
     simulation_status = WaitingForEquilibrium;
     // NB an EquilCheck has not actually just occurred, but this has the
     // desired effect of ensuring that each DialInFactor value is held
@@ -523,8 +526,7 @@ Simulation::add_elastic_forces() {
             0.5 * pow(settings_new.getCore().getThickness(), 3) * settings_new.getCore().getShearModulus() / 12;
     double j_pre_factor = settings_new.getCore().getGentFactor() / pow(settings_new.getCore().getThickness(), 2);
     double poisson_ratio = settings_new.getCore().getPoissonRatio();
-#pragma omp parallel
-    {
+
 #pragma omp for
         // Calculates forces experienced by nodes coming from each triangle.
         for (int i = 0; i < triangles.size(); i++) {
@@ -537,48 +539,45 @@ Simulation::add_elastic_forces() {
             nodes[i].updateForce();
         }
     }
-};
+;
 
 
-void Simulation::add_non_elastic_forces() {
-    double local_damping_power_loss = 0;
-#pragma omp parallel for reduction (+ : local_damping_power_loss)
-    for (int i = 0; i < nodes.size(); i++) {
-        local_damping_power_loss += nodes[i].add_damping(settings_new);
-        nodes[i].add_gravity(settings_new.getGravity());
-//        nodes[i].add_prod_force(settings_new);
-//        nodes[i].add_load_force();
-    }
-    damping_power_loss = local_damping_power_loss;
+void Simulation::add_non_elastic_forces(double& shared_interaction_force) {
+    #pragma omp for reduction (+ : shared_interaction_force)
+        for (int i = 0; i < nodes.size(); i++) {
+            shared_interaction_force += nodes[i].add_damping(settings_new);
+            nodes[i].add_gravity(settings_new.getGravity());
+        }
+        damping_power_loss = shared_interaction_force;
 
     for (auto &slide: slides) {
-        double interaction_force = 0;
-#pragma omp parallel for reduction (+ : interaction_force)
+        shared_interaction_force = 0;
+#pragma omp for reduction (+ : shared_interaction_force)
         for (int i = 0; i < nodes.size(); i++) {
-            interaction_force += slide.addInteractionForce(nodes[i].pos,
+            shared_interaction_force += slide.addInteractionForce(nodes[i].pos,
                                                            nodes[i].force,
                                                            settings_new.getCore().getShearModulus(),
                                                            settings_new.getCore().getThickness(),
                                                            nodes[i].area);
         }
-        slide.setTotalInteractionForce(interaction_force);
+        slide.setTotalInteractionForce(shared_interaction_force);
     }
 
     for (auto &cone: cones) {
-        double interaction_force = 0;
-#pragma omp parallel for reduction (+ : interaction_force)
+        shared_interaction_force = 0;
+#pragma omp for reduction (+ : shared_interaction_force)
         for (int i = 0; i < nodes.size(); i++) {
-            interaction_force += cone.addInteractionForce(nodes[i].pos,
+            shared_interaction_force += cone.addInteractionForce(nodes[i].pos,
                                                           nodes[i].force,
                                                           settings_new.getCore().getShearModulus(),
                                                           settings_new.getCore().getThickness());
         }
-        cone.setTotalInteractionForce(interaction_force);
+        cone.setTotalInteractionForce(shared_interaction_force);
     }
 
     for (auto &field: settings_new.getMagneticField()) {
         Eigen::Vector3d magnetic_field = field.magnetic_field;
-#pragma omp parallel for
+#pragma omp for
         for (int i = 0; i < triangles.size(); i++) {
             triangles[i].updateMagneticForce(magnetic_field);
         }
@@ -589,40 +588,46 @@ void Simulation::add_non_elastic_forces() {
         }
     }
 
-#pragma omp parallel for
+#pragma omp for
     for (int i = 0; i < nodes.size(); i++) {
         nodes[i].apply_boundary_conditions();
     }
 }
 
+
 // Gets the height of the lowest triangle
-double getMinimumTriangleHeight(std::vector<Triangle> &triangles) {
-    Triangle lowest_triangle = *std::min_element(triangles.begin(), triangles.end(),
-                                                 [](const auto &one, const auto &two) {
-                                                     return one.getHeight() < two.getHeight();
-                                                 });
-    return lowest_triangle.getHeight();
+double getMinimumTriangleHeight(std::vector<Triangle> &triangles, double& min) {
+    min = DBL_MAX;
+#pragma omp for reduction(min: min)
+    for (int i = 0; i < triangles.size(); i++)
+    {
+        min = triangles[i].getHeight() ? (triangles[i].getHeight() < min) : min;
+    }
+
+    return min;
 }
 
 // Gets the height of the highest triangle
-double getMaximumTriangleHeight(std::vector<Triangle> &triangles) {
-    Triangle highest_triangle = *std::max_element(triangles.begin(), triangles.end(),
-                                                  [](const auto &one, const auto &two) {
-                                                      return one.getHeight() < two.getHeight();
-                                                  });
-    return highest_triangle.getHeight();
+double getMaximumTriangleHeight(std::vector<Triangle> &triangles, double& max) {
+    max = DBL_MIN;
+#pragma omp for reduction(max: max)
+    for (int i = 0; i < triangles.size(); i++)
+    {
+        max = triangles[i].getHeight() ? (triangles[i].getHeight() < max) : max;
+    }
+    return max;
 }
 
 
-void Simulation::updateTriangleProperties(int counter) {
+void Simulation::updateTriangleProperties(int counter, double& shared_value) {
     const double dial_in_factor_root = sqrt(dial_in_factor);
     bool is_LCE_metric_used = settings_new.getCore().isLceModeEnabled();
     bool is_stimulation_modulated = settings_new.getCore().isStimulationModulated();
 
-    double min_height = getMinimumTriangleHeight(triangles);
-    double max_height = getMaximumTriangleHeight(triangles);
+    double min_height = getMinimumTriangleHeight(triangles, shared_value);
+    double max_height = getMaximumTriangleHeight(triangles, shared_value);
 
-#pragma omp parallel for
+#pragma omp for
     for (int i = 0; i < triangles.size(); i++) {
         if (simulation_status == Dialling) {
             triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used,
@@ -634,10 +639,14 @@ void Simulation::updateTriangleProperties(int counter) {
 
 long long int Simulation::progress_single_step(int counter) {
     auto begin = std::chrono::high_resolution_clock::now();
+    double shared_value = 0;
+#pragma omp parallel shared(shared_value)
+    {
+        updateTriangleProperties(counter, shared_value);
+        add_elastic_forces();
+        add_non_elastic_forces(shared_value);
+    }
 
-    updateTriangleProperties(counter);
-    add_elastic_forces();
-    add_non_elastic_forces();
 
     auto duration = std::chrono::high_resolution_clock::now() - begin;
     long long duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
