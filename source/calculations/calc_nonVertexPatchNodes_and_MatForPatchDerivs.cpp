@@ -28,15 +28,6 @@ that are not vertices of t are also calculated and stored, and are also used
 later.
 */
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
-#ifndef EIGEN_DONT_PARALLELIZE
-#define EIGEN_DONT_PARALLELIZE
-#endif
-
 #include <cstddef>
 #include <vector>
 #include <Eigen/Dense>

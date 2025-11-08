@@ -23,15 +23,6 @@ along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 Function to determine the labels of the triangles incident on each node (i.e.
 having it as a vertex), and store these as node member data.*/
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
-#ifndef EIGEN_DONT_PARALLELIZE
-#define EIGEN_DONT_PARALLELIZE
-#endif
-
 #include <cstddef>
 #include <vector>
 

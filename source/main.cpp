@@ -65,6 +65,10 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #define EIGEN_NO_DEBUG
 #endif
 
+#ifndef EIGEN_DONT_PARALLELIZE
+#define EIGEN_DONT_PARALLELIZE
+#endif
+
 #define _USE_MATH_DEFINES
 
 #include "simulation.h"

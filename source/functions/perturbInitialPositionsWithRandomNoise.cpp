@@ -28,11 +28,6 @@ components in the node positions, allowing the simulation to 'break out' of the
 plane. The size of the disturbance is chosen to be small relative to the
 approximate smallest element size, to ensure the right kind of scale.*/
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #include <vector>
 #include <random>
 #include <ctime>

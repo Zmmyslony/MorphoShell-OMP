@@ -23,11 +23,6 @@ along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 Header file for writeVTKDataOutput.cpp function.
 */
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #include <Eigen/Dense>
 #include <cstddef>
 #include <string>

@@ -25,11 +25,6 @@ current state.
 This is necessary as these are calculated with a '+=' procedure
 at each timestep.*/
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #include <Eigen/Dense>
 
 #include "zeroForces.hpp"

@@ -32,11 +32,6 @@ lambda_Dynamic.
 The directory the files are put in is created in main().
 */
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #define BINARY_EXPORT
 
 #include <Eigen/Dense>

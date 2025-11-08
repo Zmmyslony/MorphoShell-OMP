@@ -24,11 +24,6 @@ This is the header file for the class that will correspond to each edge,
 containing the labels of the nodes on the edge and at the other corners of the
 two triangles sharing the edge, and the labels of those triangles.*/
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #ifndef _EDGE_CLASS_TAG_
 #define _EDGE_CLASS_TAG_
 

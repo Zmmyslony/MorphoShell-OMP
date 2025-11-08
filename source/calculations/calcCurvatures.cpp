@@ -27,13 +27,6 @@ angle deficit for each node is also calculated, which is a measure of
 integrated Gauss and geodesic curvature (i.e. the LHS of Gauss-Bonnet).*/
 
 //Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
-#ifndef EIGEN_DONT_PARALLELIZE
-#define EIGEN_DONT_PARALLELIZE
-#endif
 
 #define _USE_MATH_DEFINES
 

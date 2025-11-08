@@ -23,11 +23,6 @@ along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 This is the header file for the class that will contain data for each
 triangular element, such as vertices, area etc.*/
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #ifndef _TRIANGLE_CLASS_TAG_
 #define _TRIANGLE_CLASS_TAG_
 

@@ -29,14 +29,6 @@ stress stuff.
 */
 
 //Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
-#ifndef EIGEN_DONT_PARALLELIZE
-#define EIGEN_DONT_PARALLELIZE
-#endif
-
 #include <Eigen/Dense>
 #include <vector>
 #include <cmath>

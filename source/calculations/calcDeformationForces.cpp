@@ -24,13 +24,7 @@ Function to calculate the current force due to strain and bending on each
 *node*.*/
 
 //Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
 
-#ifndef EIGEN_DONT_PARALLELIZE
-#define EIGEN_DONT_PARALLELIZE
-#endif
 
 #include <vector>
 

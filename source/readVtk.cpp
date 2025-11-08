@@ -46,11 +46,6 @@ init_DataFile >> teststring;
 std::cout << teststring << std::endl;
 */
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #include <iostream>
 #include <vector>
 #include <limits>

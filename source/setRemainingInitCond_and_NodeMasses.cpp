@@ -27,11 +27,6 @@ initial areas are also calculated and stored. Also, calculate node masses by
 having each triangle contribute 1/3 of its initial mass to each of its vertcies.
 */
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #include <vector>
 #include <Eigen/Dense>
 

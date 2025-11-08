@@ -27,11 +27,6 @@ by shear modulus * smallest initial element size * SheetThickness.
 2) The largest value of the ratio of node velocity to a typical local velocity
 scale - the (stretching) sound speed.*/
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #include <Eigen/Dense>
 #include <vector>
 #include <cmath>

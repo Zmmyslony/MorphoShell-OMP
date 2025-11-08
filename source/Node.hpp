@@ -23,11 +23,6 @@ along with Shellmorph.  If not, see <https://www.gnu.org/licenses/>.
 This is the header file for the class that will be placed at each node,
 containing the node's position, velocity etc.*/
 
-//Turn Eigen bounds checking off for speed (after running with checks naturally)
-#ifndef EIGEN_NO_DEBUG
-#define EIGEN_NO_DEBUG
-#endif
-
 #ifndef _NODE_CLASS_TAG_
 #define _NODE_CLASS_TAG_
 
