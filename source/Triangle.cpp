@@ -49,8 +49,8 @@ std::stringstream Triangle::display() {
     //    msg << "edgeAdjTriLabelSelectors: " << edgeAdjTriLabelSelectors.transpose() << std::endl;
     //    msg << "indicesIntoEdgeSharingTriLabelsOfNeighbours: "
     //              << indicesIntoEdgeSharingTriLabelsOfNeighbours.transpose() << std::endl;
-    msg << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
-            << std::endl;
+    // msg << "Labels of non-vertex nodes in this triangle's patch: " << nonVertexPatchNodesLabels.transpose()
+    //         << std::endl;
     msg << "Current sides = " << "\n" << currSides << std::endl;
     msg << "faceNormal = " << "\n" << faceNormal << std::endl;
     msg << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
@@ -415,7 +415,9 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle> &triangles,
 
         if (current_condition_number < patch_condition_number) {
             patch_condition_number = current_condition_number;
-            nonVertexPatchNodesLabels = {candidateIndices[0], candidateIndices[1], candidateIndices[2]};
+            nonVertexPatchNodesLabels[0] = candidateIndices[0];
+            nonVertexPatchNodesLabels[1] = candidateIndices[1];
+            nonVertexPatchNodesLabels[2] = candidateIndices[2];
 
             patch_nodes_pos[0] = &nodes[candidateIndices[0]].pos;
             patch_nodes_pos[1] = &nodes[candidateIndices[1]].pos;

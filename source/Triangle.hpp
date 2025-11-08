@@ -73,18 +73,13 @@ public:
     -1.0 implies adjTriLabels(1) similarly. */
     Eigen::VectorXi edgeAdjTriLabelSelectors;
 
-    /* Vector where the i'th element is the index corresponding to this triangle
-    in the edgeSharingTriLabels vector of the i'th edge-sharing triangle
-    (neighbour) of THIS triangle.*/
-    Eigen::VectorXi indicesIntoEdgeSharingTriLabelsOfNeighbours;
-
     /* Indices (labels) of the 3 nodes that are not vertices of the triangle, but
     are part of the estimation of the 2nd F.F. for each triangle. For
     non-boundary triangles these are the non-shared-edge nodes from each of the
     triangles sharing an edge with this triangle. For boundary triangles one or
     two of these are missing, and different nodes are chosen based on proximity
     to this triangle's centroid. There is again no particular order.*/
-    Eigen::Vector3i nonVertexPatchNodesLabels;
+    uint32_t nonVertexPatchNodesLabels[3];
 
     /* Position of triangle's centroid in initial (reference) x-y plane.*/
     Eigen::Vector3d refCentroid;
@@ -213,7 +208,7 @@ public:
         label = -1;
         isOnBoundary = false;
         vertexLabels.fill(-1);
-        nonVertexPatchNodesLabels.fill(-1);
+        // nonVertexPatchNodesLabels = (-1, -1, -1);
         edgeLabels.fill(INT_MAX);
         initArea = DBL_MAX;
         currAreaInv = DBL_MAX;

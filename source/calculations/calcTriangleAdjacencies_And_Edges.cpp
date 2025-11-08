@@ -203,7 +203,6 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
     for (int i = 0; i < triangles.size(); ++i) {
 
         triangles[i].edgeSharingTriLabels.resize(tempAdjTriLabels[i].size());
-        triangles[i].indicesIntoEdgeSharingTriLabelsOfNeighbours.resize(tempAdjTriLabels[i].size());
 
         for (std::size_t j = 0; j < tempAdjTriLabels[i].size(); ++j) {
             triangles[i].edgeSharingTriLabels(j) = tempAdjTriLabels[i][j];
@@ -227,25 +226,8 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
                 for (int n = 0; n < edges[triangles[i].edgeLabels(ed)].adjTriLabels.size(); ++n) {
 
                     if (edges[triangles[i].edgeLabels(ed)].adjTriLabels(n) == neighbourTri) {
-
                         newEdgeLabels.emplace_back(triangles[i].edgeLabels(ed));
                     }
-                }
-            }
-
-            /* Now calculate indicesIntoEdgeSharingTriLabelsOfNeighbours for
-            triangle i.*/
-            for (std::size_t u = 0; u < tempAdjTriLabels[neighbourTri].size(); ++u) {
-
-                if (tempAdjTriLabels[neighbourTri][u] == i) {
-
-                    // Catch error if overflow occurs converting size_t to int.
-                    if (u > INT_MAX) {
-                        throw std::overflow_error(
-                                "std::size_t loop variable u overflowed upon conversion to int (i.e. u was larger than INT_MAX)");
-                    }
-
-                    triangles[i].indicesIntoEdgeSharingTriLabelsOfNeighbours(t) = static_cast<int>(u);
                 }
             }
         }
