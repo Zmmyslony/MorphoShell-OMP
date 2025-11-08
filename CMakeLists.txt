@@ -7,6 +7,7 @@ find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(VTK REQUIRED )
+find_package(MKL)
 
 
 set(SOURCE_FILES
@@ -51,6 +52,7 @@ target_link_libraries(Morphoshell PRIVATE ${Boost_LIBRARIES})
 target_link_libraries(Morphoshell PRIVATE OpenMP::OpenMP_CXX)
 target_link_libraries(Morphoshell PRIVATE Eigen3::Eigen)
 target_link_libraries(Morphoshell PRIVATE ${VTK_LIBRARIES})
+target_link_libraries(Morphoshell PRIVATE MKL::MKL)
 
 vtk_module_autoinit(
         TARGETS Morphoshell
