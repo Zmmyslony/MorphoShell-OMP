@@ -67,18 +67,18 @@ std::stringstream Triangle::display() {
     msg << "patchSecDerivs = " << "\n" << patchSecDerivs << std::endl;
     msg << "Second fundamental form = " << "\n" << secFF << std::endl;
     msg << "Bending energy density deriv wrt secFF = " << "\n" << energyDensityDerivWRTSecFF << std::endl;
-    msg << "halfPK1Stress = " << "\n" << halfPK1Stress << std::endl;
+    msg << "halfPK1Stress = " << "\n" << getHalfPK1Stress(1) << std::endl;
     msg << "-----------------------------" << std::endl;
     return msg;
 }
 
-void Triangle::updateHalfPK1Stress(double stretchingPrefactor) {
-    halfPK1Stress.noalias() = defGradient * (stretchingPrefactor * dialledProgTau *
+Eigen::Matrix<double, 3, 2> Triangle::getHalfPK1Stress(double stretchingPrefactor) const {
+    return defGradient * (stretchingPrefactor * dialledProgTau *
                                              (programmedMetInv - (metInvDet / programmedMetInvDet) * metInv));
 }
 
-Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces() {
-    return halfPK1Stress * initOutwardSideNormals;
+Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces(double stretchingPrefactor) const {
+    return getHalfPK1Stress(stretchingPrefactor) * initOutwardSideNormals;
 }
 
 // Returns vectors that normal to triangle edges and point outward
@@ -120,9 +120,9 @@ Eigen::Matrix<double, 3, 1> Triangle::getBendingForcePatch(int row) {
 }
 
 void Triangle::updateGeometricProperties() {
-    Eigen::Vector3d p0 = *corner_nodes_pos[0];
-    Eigen::Vector3d p1 = *corner_nodes_pos[1];
-    Eigen::Vector3d p2 = *corner_nodes_pos[2];
+    const Eigen::Vector3d p0 = *corner_nodes_pos[0];
+    const Eigen::Vector3d p1 = *corner_nodes_pos[1];
+    const Eigen::Vector3d p2 = *corner_nodes_pos[2];
 
     currSides.col(0).noalias() = p1 - p0;
     currSides.col(1).noalias() = p2 - p0;
@@ -160,7 +160,7 @@ void Triangle::updateSecondFundamentalForm(double bendingPreFac, double JPreFact
 
     double J = areaMultiplier * JPreFactor;
 
-    // Now calculate bending energy density for this 
+    // Now calculate bending energy density for this
     double preGentBendEnergyDensity = areaMultiplier * ((1 - poissonRatio) * (relativeSecFF * relativeSecFF).trace() +
                                                         poissonRatio * relativeSecFF.trace() * relativeSecFF.trace());
     double gentDerivFac = (1 + 2 * preGentBendEnergyDensity / J);
@@ -448,8 +448,7 @@ Triangle::Triangle(int label, int id_0, int id_1, int id_2, const std::vector<No
 void
 Triangle::updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio) {
     updateSecondFundamentalForm(bendingPreFac, JPreFactor, poisson_ratio);
-    updateHalfPK1Stress(stretchingPreFac);
-    Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces();
+    Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces(stretchingPreFac);
 
     Eigen::Matrix<double, 3, 3> triangleEdgeNormals = getTriangleEdgeNormals();
     Eigen::Matrix<double, 3, 3> normalDerivPiece =

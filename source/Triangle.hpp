@@ -150,7 +150,7 @@ public:
     double metInvDet;
 
     /* Matrix representing (1st Piola-Kirchoff stress tensor)/2 for this triangle.*/
-    Eigen::Matrix<double, 3, 2> halfPK1Stress;
+    // Eigen::Matrix<double, 3, 2> halfPK1Stress;
 
     /*Matrix that is pre-calculated and then used repeatedly in finding the
     components of the second fundamental form estimated for this triangle. */
@@ -189,9 +189,7 @@ private:
 
     Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row);
 
-    void updateHalfPK1Stress(double stretchingPrefactor);
-
-    Eigen::Matrix<double, 3, 3> getStretchingForces();
+    Eigen::Matrix<double, 3, 3> getStretchingForces(double stretchingPrefactor) const;
 
     Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals();
 
@@ -200,6 +198,8 @@ public:
     double stretchEnergyDensity;
 
     void updateFirstFundamentalForm(double stretchingPreFac);
+
+    Eigen::Matrix<double, 3, 2> getHalfPK1Stress(double stretchingPrefactor) const;
 
     void updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio);
 
@@ -234,7 +234,7 @@ public:
         met.fill(DBL_MAX);
         metInvDet = DBL_MAX;
         metInv.fill(DBL_MAX);
-        halfPK1Stress.fill(DBL_MAX);
+        // halfPK1Stress.fill(DBL_MAX);
         patchSecDerivs.fill(DBL_MAX);
         secFF.fill(DBL_MAX);
         energyDensityDerivWRTSecFF.fill(DBL_MAX);
