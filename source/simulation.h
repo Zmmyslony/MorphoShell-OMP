@@ -252,7 +252,7 @@ class Simulation
 
     void read_settings_new(int argc, char** argv);
 
-    void updateTriangleProperties(int counter, double& shared_value);
+    void updateTriangleProperties(int counter);
 
     void advance_time();
 
