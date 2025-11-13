@@ -28,7 +28,7 @@ Header file for calcEnergiesAndStresses.cpp function
 
 #include "../Triangle.hpp"
 #include "../Node.hpp"
-#include "../settings_new.h"
+#include "../settings.h"
 
 void updateFirstFundamentalForms(std::vector<Triangle> &triangles, const CoreConfig &core_config);
 

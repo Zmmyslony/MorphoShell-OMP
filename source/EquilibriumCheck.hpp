@@ -29,7 +29,7 @@ Header file for equilibriumCheck.cpp function.
 #include "Triangle.hpp"
 #include "SimulationStatus.hpp"
 #include "configuration/core_config.h"
-#include "settings_new.h"
+#include "settings.h"
 
 SimulationStatus
-equilibriumCheck(const std::vector<Node> &nodes, const SettingsNew &settings, const std::vector<Triangle> &triangles);
+equilibriumCheck(const std::vector<Node> &nodes, const Settings &settings, const std::vector<Triangle> &triangles);

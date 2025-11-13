@@ -171,7 +171,7 @@ public:
     double getUnits() const;
 
     bool isStimulationModulated() const;
-
+    void setThreads(unsigned int threads);
 };
 
 

@@ -37,12 +37,12 @@ The forces are also checked, to catch code crashed in which the forces usually
 #include "Triangle.hpp"
 
 
-bool isForceThresholdExceeded(const Node &node, const SettingsNew &settings) {
+bool isForceThresholdExceeded(const Node &node, const Settings &settings) {
     return node.force.norm() >= 1e5 * settings.getForceScale();
 }
 
 
-void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, const SettingsNew &settings) {
+void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, const Settings &settings) {
     std::stringstream msg;
     msg << " ----------------------------------------" << std::endl;
     msg << " ------------CRASH REPORT----------------" << std::endl;
@@ -59,7 +59,7 @@ void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, con
 }
 
 
-void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, SettingsNew &settings) {
+void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, Settings &settings) {
 #pragma omp parallel for
     for (int i = 0; i < nodes.size(); ++i) {
         if (isForceThresholdExceeded(nodes[i], settings)) {

@@ -4,7 +4,7 @@
 
 #define _USE_MATH_DEFINES
 
-#include "settings_new.h"
+#include "settings.h"
 #include <map>
 #include <cstdlib>
 
@@ -22,7 +22,7 @@ std::map<std::string, int> config_map{
 };
 
 
-SettingsNew::SettingsNew(const std::vector<fs::path> &config_paths) {
+Settings::Settings(const std::vector<fs::path> &config_paths) {
     bool is_core_read = false;
     bool is_gravity_read = false;
 
@@ -63,19 +63,27 @@ SettingsNew::SettingsNew(const std::vector<fs::path> &config_paths) {
 
 }
 
-const CoreConfig &SettingsNew::getCore() const {
+const CoreConfig& Settings::getCore() const {
     return core;
 }
 
-const GravityConfig &SettingsNew::getGravity() const {
+void Settings::setThreads(int threads)
+{
+    if (threads > 0)
+    {
+        core.setThreads(threads);
+    }
+}
+
+const GravityConfig &Settings::getGravity() const {
     return gravity;
 }
 
-const std::vector<Slide> &SettingsNew::getSlides() const {
+const std::vector<Slide> &Settings::getSlides() const {
     return slides;
 }
 
-void SettingsNew::SetupDialInTime(double size_factor) {
+void Settings::SetupDialInTime(double size_factor) {
     /* Calculate 'dialling in' time and damping coefficient based on toy model
     stretching and bending analyses. The 'Long times' are approximate characteristic
     times for the longest-wavelength modes in the system for stretching and bending.
@@ -99,7 +107,7 @@ void SettingsNew::SetupDialInTime(double size_factor) {
 }
 
 
-void SettingsNew::SetupStepTime(double size_factor) {
+void Settings::SetupStepTime(double size_factor) {
     /* Calculate time step based on toy model stretching and bending analyses (take
     whichever gives shortest characteristic time), and print. */
 
@@ -139,7 +147,7 @@ void SettingsNew::SetupStepTime(double size_factor) {
 }
 
 
-void SettingsNew::SetupPrintFrequency() {
+void Settings::SetupPrintFrequency() {
     /* Calculate print frequency based on DialInStepTime / TimeStep, tuned by a
 dimensionless parameter in the setting file and rounded to the nearest integer.
 This rounding should work fine as long as the PrintFrequency isn't ridiculously
@@ -168,7 +176,7 @@ written at all.
     }
 }
 
-void SettingsNew::SetupCharacteristicSizes(double total_area, double size_factor) {
+void Settings::SetupCharacteristicSizes(double total_area, double size_factor) {
     interval_equilibrium_check = core.getTimeBetweenEquilibriumChecks() * duration_phase;
     force_scale = core.getShearModulus() * size_factor * core.getThickness();
     stretch_energy_density_scale = core.getShearModulus() * core.getThickness();
@@ -177,55 +185,55 @@ void SettingsNew::SetupCharacteristicSizes(double total_area, double size_factor
 // settings.charBendEnergyScale = settings.charBendEnergyDensityScale * totInitArea;
 }
 
-void SettingsNew::useEquilibriumDamping() {
+void Settings::useEquilibriumDamping() {
     damping_factor = num_damping_prefactor * core.getEquilibrationDamping();
 }
 
-void SettingsNew::useDiallingDamping() {
+void Settings::useDiallingDamping() {
     damping_factor = num_damping_prefactor * core.getDialInDamping();
 }
 
-double SettingsNew::getTimeStepSize() const {
+double Settings::getTimeStepSize() const {
     return time_step_size;
 }
 
-double SettingsNew::getDurationPhase() const {
+double Settings::getDurationPhase() const {
     return duration_phase;
 }
 
-double SettingsNew::getDampingFactor() const {
+double Settings::getDampingFactor() const {
     return damping_factor;
 }
 
-double SettingsNew::getForceScale() const {
+double Settings::getForceScale() const {
     return force_scale;
 }
 
-int SettingsNew::getStepPrintInterval() const {
+int Settings::getStepPrintInterval() const {
     return interval_print_step;
 }
 
-double SettingsNew::getStretchEnergyDensityScale() const {
+double Settings::getStretchEnergyDensityScale() const {
     return stretch_energy_density_scale;
 }
 
-double SettingsNew::getStretchEnergyScale() const {
+double Settings::getStretchEnergyScale() const {
     return stretch_energy_scale;
 }
 
-double SettingsNew::getTimeBetweenEquilibriumChecks() const {
+double Settings::getTimeBetweenEquilibriumChecks() const {
     return interval_equilibrium_check;
 }
 
-const std::vector<Cone> &SettingsNew::getCones() const {
+const std::vector<Cone> &Settings::getCones() const {
     return cones;
 }
 
-const std::vector<MagneticField> &SettingsNew::getMagneticField() const {
+const std::vector<MagneticField> &Settings::getMagneticField() const {
     return magnetic_field;
 }
 
-SettingsNew::SettingsNew() = default;
+Settings::Settings() = default;
 
 
 

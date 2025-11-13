@@ -15,7 +15,7 @@
 
 namespace fs = boost::filesystem;
 
-class SettingsNew {
+class Settings {
     CoreConfig core;
     GravityConfig gravity;
     std::vector<Slide> slides;
@@ -35,11 +35,12 @@ class SettingsNew {
     double stretch_energy_scale = 0;
 
 public:
-    SettingsNew();
+    Settings();
 
-    explicit SettingsNew(const std::vector<fs::path> &config_paths);
+    explicit Settings(const std::vector<fs::path> &config_paths);
 
-    [[nodiscard]] const CoreConfig &getCore() const;
+    [[nodiscard]] const CoreConfig& getCore() const;
+    void SetThreads(int threads);
 
     [[nodiscard]] const GravityConfig &getGravity() const;
 
@@ -74,6 +75,7 @@ public:
     double getStretchEnergyScale() const;
 
     double getTimeBetweenEquilibriumChecks() const;
+    void setThreads(int threads);
 };
 
 

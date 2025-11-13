@@ -63,7 +63,7 @@ void Node::add_gravity(const GravityConfig& config)
 }
 
 
-double Node::add_damping(const SettingsNew& settings_new)
+double Node::add_damping(const Settings& settings_new)
 {
     if (settings_new.getCore().isGradientDescentDynamics()) { return 0; }
 

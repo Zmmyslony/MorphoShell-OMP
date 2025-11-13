@@ -39,7 +39,7 @@ scale - the (stretching) sound speed.*/
 #include "configuration/core_config.h"
 
 SimulationStatus
-equilibriumCheck(const std::vector<Node> &nodes, const SettingsNew &settings, const std::vector<Triangle> &triangles) {
+equilibriumCheck(const std::vector<Node> &nodes, const Settings &settings, const std::vector<Triangle> &triangles) {
 
     std::vector<double> nodeNonDampingForce(nodes.size());
     std::vector<double> incidentProgTau(nodes.size());

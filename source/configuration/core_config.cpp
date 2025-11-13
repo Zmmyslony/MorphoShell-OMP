@@ -261,3 +261,8 @@ bool CoreConfig::isStimulationModulated() const {
     return is_stimulation_modulated;
 }
 
+void CoreConfig::setThreads(unsigned int threads)
+{
+    core_number = threads;
+    omp_set_num_threads(threads);
+}

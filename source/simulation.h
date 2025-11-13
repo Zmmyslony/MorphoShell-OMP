@@ -12,54 +12,62 @@
 #include "Triangle.hpp"
 #include "Edge.hpp"
 #include "SimulationStatus.hpp"
-#include "settings_new.h"
+#include "settings.h"
 
-template<class CharT, class Traits = std::char_traits<CharT> >
+template <class CharT, class Traits = std::char_traits<CharT>>
 
-struct teestream : std::basic_streambuf<CharT, Traits> {
-
+struct teestream : std::basic_streambuf<CharT, Traits>
+{
 private:
-    std::basic_streambuf<CharT, Traits> *m_rdbuf1;
-    std::basic_streambuf<CharT, Traits> *m_rdbuf2;
+    std::basic_streambuf<CharT, Traits>* m_rdbuf1;
+    std::basic_streambuf<CharT, Traits>* m_rdbuf2;
 
 public:
-    teestream(std::basic_streambuf<CharT, Traits> *rdbuf1, std::basic_streambuf<CharT, Traits> *rdbuf2)
-            : m_rdbuf1(rdbuf1), m_rdbuf2(rdbuf2) {}
+    teestream(std::basic_streambuf<CharT, Traits>* rdbuf1, std::basic_streambuf<CharT, Traits>* rdbuf2)
+        : m_rdbuf1(rdbuf1), m_rdbuf2(rdbuf2)
+    {
+    }
 
-    ~teestream() {
+    ~teestream()
+    {
         m_rdbuf1->pubsync();
         m_rdbuf2->pubsync();
     }
 
 protected:
-    typename std::basic_streambuf<CharT, Traits>::int_type overflow(typename std::basic_streambuf<CharT, Traits>::int_type ch = Traits::eof()) override {
+    typename std::basic_streambuf<CharT, Traits>::int_type overflow(
+        typename std::basic_streambuf<CharT, Traits>::int_type ch = Traits::eof()) override
+    {
         typename std::basic_streambuf<CharT, Traits>::int_type result = m_rdbuf1->sputc(ch);
-        if (result != Traits::eof()) {
+        if (result != Traits::eof())
+        {
             result = m_rdbuf2->sputc(ch);
         }
         return result;
     }
 
-    virtual int sync() override {
+    virtual int sync() override
+    {
         int result = m_rdbuf1->pubsync();
-        if (result == 0) {
+        if (result == 0)
+        {
             result = m_rdbuf2->pubsync();
         }
         return result;
     }
-
 };
 
-class Simulation {
+class Simulation
+{
     std::ofstream out;
 
     std::string init_string;
     std::string output_dir_name;
 
-    SettingsNew settings_new;
+    Settings settings;
     std::vector<Slide> slides;
     std::vector<Cone> cones;
-    std::streambuf *cout_buf = std::cout.rdbuf();
+    std::streambuf* cout_buf = std::cout.rdbuf();
     std::vector<Eigen::Vector3d> node_force_proxy;
 
     int step_count = 0;
@@ -83,6 +91,8 @@ class Simulation {
 
     // For LCE mode.
     double lambda = 1;
+
+    std::chrono::system_clock::time_point start_time;
 
     std::string settings_filename;
     std::string initialisation_filename;
@@ -127,18 +137,18 @@ class Simulation {
 
     void setupLogging();
 
-    void setup_filenames(int argc, char *argv[]);
+    void setup_filenames(int argc, char* argv[]);
 
-//    void read_settings();
+    //    void read_settings();
 
-    void read_vtk_data(const CoreConfig &config);
+    void read_vtk_data(const CoreConfig& config);
 
     void configure_nodes() const;
 
     /** Remaining geometry/topology/mesh-related things. */
     void configure_topological_properties();
 
-//    void count_boundary_nodes();
+    //    void count_boundary_nodes();
 
     void configure_triangles();
 
@@ -196,7 +206,7 @@ class Simulation {
     sequence.*/
     void find_smallest_element();
 
-//    void print_total_load_force();
+    //    void print_total_load_force();
 
     void setup_characteristic_scales();
     void setup_equilibrium_dial_in_factors();
@@ -211,14 +221,14 @@ class Simulation {
 
     void run_tensor_increment(int stage_counter);
 
-//    void impose_seide_deformation(double s, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
-//
-//    void update_slide_properties();
-//
-//    void setup_glass_cones(int highest_node, int lowest_node);
+    //    void impose_seide_deformation(double s, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
+    //
+    //    void update_slide_properties();
+    //
+    //    void setup_glass_cones(int highest_node, int lowest_node);
 
-    void setup_imposed_seide_deformations(double &s1, int highest_node, int lowest_node,
-                                          std::vector<Eigen::Vector3d> &nodeUnstressedConePosits);
+    void setup_imposed_seide_deformations(double& s1, int highest_node, int lowest_node,
+                                          std::vector<Eigen::Vector3d>& nodeUnstressedConePosits);
 
     void first_step_configuration();
 
@@ -238,9 +248,9 @@ class Simulation {
 
     std::string log_prefix() const;
 
-    void init(int argc, char *argv[]);
+    void init(int argc, char* argv[], int threads);
 
-    void read_settings_new(int argc, char **argv);
+    void read_settings_new(int argc, char** argv);
 
     void updateTriangleProperties(int counter, double& shared_value);
 
@@ -263,12 +273,14 @@ class Simulation {
     long long int export_vtk(int counter);
 
 public :
-
-    Simulation(int argc, char *argv[]);
+    Simulation(int argc, char* argv[], int threads);
 
     int run_simulation();
 
     void equilibriumTest(int stage_counter, long long int duration_us);
+    long long benchmarking_mechanics_duration = 0;
+    long long benchmarking_export_duration = 0;
+    long long benchmarking_full_duration = 0;
 };
 
 

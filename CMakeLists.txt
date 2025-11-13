@@ -32,8 +32,8 @@ set(SOURCE_FILES
         source/configuration/config_base.h
         source/configuration/core_config.cpp
         source/configuration/core_config.h
-        source/settings_new.cpp
-        source/settings_new.h
+        source/settings.cpp
+        source/settings.h
         source/configuration/slide_configuration.cpp
         source/configuration/slide_configuration.h
         source/physics/slide.cpp

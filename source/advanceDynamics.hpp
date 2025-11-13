@@ -28,4 +28,4 @@ Header file for advanceDynamics.cpp
 #include "Triangle.hpp"
 // #include "Settings.hpp"
 
-void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, SettingsNew &settings);
+void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, Settings &settings);

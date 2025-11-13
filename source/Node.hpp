@@ -32,7 +32,7 @@ containing the node's position, velocity etc.*/
 // #include "Settings.hpp"
 //#include "CustomOutStreamClass.hpp"
 #include "configuration/gravity_config.h"
-#include "settings_new.h"
+#include "settings.h"
 
 class Node {
     /// Pointers to a field in a triangles which correspond to this node.
@@ -47,9 +47,6 @@ public:
     a particular file in addition to std::cout.*/
 //    CustomOutStreamClass nodeLogStream;
 
-    // Label of this node, (also its index in the nodes' container vector).
-    int label = INT_MAX;
-
     /* Labels of the triangles with this node as a vertex ('incident triangles').
     Ordering is arbitrary.*/
     Eigen::VectorXi incidentTriLabels;
@@ -57,6 +54,9 @@ public:
     /* Labels of this node's neighbours, i.e. those nodes connected to this node
     by triangle edges. Ordering is arbitrary.*/
     Eigen::VectorXi neighbourNodeLabels;
+
+    // Label of this node, (also its index in the nodes' container vector).
+    int label = INT_MAX;
 
     /* Boolean representing whether the node is on a boundary of the sample
     (true) or not (false).*/
@@ -80,7 +80,6 @@ public:
 
     // Position vector (x, y and z coordinates).
     Eigen::Vector3d pos;
-    Eigen::Vector3d prev_pos;
 
     // Velocity vector.
     Eigen::Vector3d vel;
@@ -105,7 +104,6 @@ public:
         pos.fill(DBL_MAX);
         vel.fill(DBL_MAX);
         force.fill(DBL_MAX);
-        prev_pos.fill(DBL_MAX);
     }
 
     explicit Node(int n_label, const double positions[3]) {
@@ -113,7 +111,6 @@ public:
         pos(0) = positions[0];
         pos(1) = positions[1];
         pos(2) = positions[2];
-        prev_pos = pos;
         vel.fill(DBL_MAX);
         force.fill(DBL_MAX);
     }
@@ -136,7 +133,7 @@ public:
      * @param settings_new
      * @return power loss
      */
-    double add_damping(const SettingsNew &settings_new);
+    double add_damping(const Settings &settings_new);
 
     /** Perturbing 'prod' force, to prompt the sheet to buckle in the upward
     *  direction, and ensure evolution actually begins. The particular shape
