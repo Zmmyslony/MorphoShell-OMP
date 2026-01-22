@@ -112,14 +112,14 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
         flat plane. This may be overridden later if
         settings.isDialingFromAnsatzEnabled == true. See main().*/
         if (settings.getCore().isLceModeEnabled()) {
-            triangles[i].programmed_metric_infos[0] << triangles[i].programmed_metric_infos[0](0), 1, triangles[i].programmed_metric_infos[0](2);
+            triangles[i].programmed_metric_info << triangles[i].programmed_metric_info(0), 1, triangles[i].programmed_metric_info(2);
             triangles[i].programmed_taus[0] = 1;
-            triangles[i].programmed_second_fundamental_form[0] = Eigen::Matrix<double, 2, 2>::Zero();
+            triangles[i].programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Zero();
 
         } else {
-            triangles[i].programmed_metric_inv[0] = Eigen::Matrix<double, 2, 2>::Identity();
+            triangles[i].programmed_metric_inv = Eigen::Matrix<double, 2, 2>::Identity();
             triangles[i].programmed_taus[0] = 1.0;
-            triangles[i].programmed_second_fundamental_form[0] = Eigen::Matrix<double, 2, 2>::Zero();
+            triangles[i].programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Zero();
         }
     }
 }

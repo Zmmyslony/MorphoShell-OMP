@@ -114,9 +114,18 @@ public:
     /* Dialled in programmed scalar 'tau' factor.*/
     double dialledProgTau;
 
-    std::vector<Eigen::Vector3d> programmed_metric_infos = {{1, 1, 1}};
-    std::vector<Eigen::Matrix<double, 2, 2>> programmed_metric_inv{Eigen::Matrix<double, 2, 2>::Identity()};
-    std::vector<Eigen::Matrix<double, 2, 2>> programmed_second_fundamental_form = {Eigen::Matrix<double, 2, 2>::Zero()};
+    Eigen::Vector3d programmed_metric_info = {1, 1, 1};
+    Eigen::Vector3d next_programmed_metric_info = {1, 1, 1};
+
+    Eigen::Matrix2d programmed_metric_inv = Eigen::Matrix<double, 2, 2>::Identity();
+    Eigen::Matrix2d next_programmed_metric_inv = Eigen::Matrix<double, 2, 2>::Identity();
+
+    Eigen::Matrix2d programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Identity();
+    Eigen::Matrix2d next_programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Identity();
+
+    // std::vector<Eigen::Vector3d> programmed_metric_infos = {{1, 1, 1}};
+    // std::vector<Eigen::Matrix<double, 2, 2>> programmed_metric_inv{Eigen::Matrix<double, 2, 2>::Identity()};
+    // std::vector<Eigen::Matrix<double, 2, 2>> programmed_second_fundamental_form = {Eigen::Matrix<double, 2, 2>::Zero()};
     std::vector<double> programmed_taus{1};
 
     /* Matrix representing the components of the *energetically* favoured
