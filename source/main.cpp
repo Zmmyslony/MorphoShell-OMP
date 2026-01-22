@@ -152,7 +152,7 @@ void benchmark_multithreading(int argc, char* argv[], unsigned short max_thread_
 
 int main(int argc, char* argv[])
 {
-    // Simulation simulation(argc, argv, -1);
-    // return simulation.run_simulation();
-    benchmark_multithreading(argc, argv, 8);
+    Simulation simulation(argc, argv, -1);
+    return simulation.run_simulation();
+    // benchmark_multithreading(argc, argv, 8);
 }

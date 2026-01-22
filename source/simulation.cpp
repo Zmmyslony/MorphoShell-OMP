@@ -10,6 +10,7 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <numeric>
 
 #include "functions/getRealTime.hpp"
 #include "functions/extract_Just_Filename.hpp"
@@ -31,8 +32,22 @@
 #include "functions/zeroForces.hpp"
 #include "physics/cone.h"
 
+#ifndef TIMING
+#define TIMING
+#endif
+
 
 typedef teestream<char, std::char_traits<char>> basic_teestream;
+
+std::pair<double, double> mean_dev(const std::vector<int> &times) {
+    double mean = double(std::accumulate(times.begin(), times.end(), 0.0)) / double(times.size());
+    double dev = 0;
+    for (const auto & el : times) {
+        dev += std::pow(el - mean, 2);
+    }
+    dev /= double(times.size());
+    return {mean, std::sqrt(dev)};
+}
 
 //   Redirection of std::cout to both console and file following
 //   https://stackoverflow.com/a/41834129/9204102
@@ -569,39 +584,42 @@ void Simulation::add_non_elastic_forces() {
 
 // Gets the height of the lowest triangle
 double getMinimumTriangleHeight(const std::vector<Triangle>& triangles) {
-    double min = DBL_MAX;
-#pragma omp parallel for reduction(min: min)
+    double min_value = DBL_MAX;
+#pragma omp parallel for reduction(min: min_value)
     for (int i = 0; i < triangles.size(); i++) {
-        min = triangles[i].getHeight() ? (triangles[i].getHeight() < min) : min;
+        min_value = triangles[i].getHeight() ? (triangles[i].getHeight() < min_value) : min_value;
     }
 
-    return min;
+    return min_value;
 }
 
 // Gets the height of the highest triangle
 double getMaximumTriangleHeight(const std::vector<Triangle>& triangles) {
-    double max = DBL_MIN;
-#pragma omp parallel for reduction(max: max)
+    double max_value = DBL_MIN;
+#pragma omp parallel for reduction(max: max_value)
     for (int i = 0; i < triangles.size(); i++) {
-        max = triangles[i].getHeight() ? (triangles[i].getHeight() < max) : max;
+        max_value = triangles[i].getHeight() ? (triangles[i].getHeight() < max_value) : max_value;
     }
-    return max;
+    return max_value;
 }
 
 
 void Simulation::updateTriangleProperties(int counter) {
     const double dial_in_factor_root = sqrt(dial_in_factor);
-    bool is_LCE_metric_used = settings.getCore().isLceModeEnabled();
-    bool is_stimulation_modulated = settings.getCore().isStimulationModulated();
+    const bool is_LCE_metric_used = settings.getCore().isLceModeEnabled();
+    const bool is_stimulation_modulated = settings.getCore().isStimulationModulated();
+    const double transfer_coefficient = 25 * settings.getTimeStepSize() / settings.getDurationPhase();
 
-    double min_height = getMinimumTriangleHeight(triangles);
-    double max_height = getMaximumTriangleHeight(triangles);
+    // const double min_height = getMinimumTriangleHeight(triangles);
+    // const double max_height = getMaximumTriangleHeight(triangles);
+    const double min_height = -1;
+    const double max_height = 1;
 
     if (simulation_status == Dialling) {
 #pragma omp parallel for
         for (int i = 0; i < triangles.size(); i++) {
             triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used,
-                                                    is_stimulation_modulated, 0.01, min_height, max_height);
+                                                    is_stimulation_modulated, transfer_coefficient, min_height, max_height);
         }
     }
 
@@ -612,10 +630,10 @@ void Simulation::updateTriangleProperties(int counter) {
 long long int Simulation::progress_single_step(int counter) {
     auto begin = std::chrono::high_resolution_clock::now();
     updateTriangleProperties(counter);
-    auto duration = std::chrono::high_resolution_clock::now() - begin;
     add_elastic_forces();
     add_non_elastic_forces();
 
+    auto duration = std::chrono::high_resolution_clock::now() - begin;
     long long duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
     benchmarking_mechanics_duration += duration_us;
     return duration_us;
@@ -655,6 +673,9 @@ void Simulation::save_and_print_details(int counter, long long int duration_us) 
     std::cout << log_prefix()
         << "Last step's execution time " << duration_us << " us. Export time " << prep_us + export_us << " us ("
         << prep_us << "/" << export_us << " us prep/write)" << std::endl;
+    mechanics_times.push_back(duration_us);
+    pre_export_times.push_back(prep_us);
+    export_times.push_back(export_us);
 }
 
 std::string Simulation::log_prefix() const {
@@ -833,6 +854,23 @@ int Simulation::run_simulation() {
 
     std::cout << "Reached simulation time = " << time_global << " using " << step_count << " time steps" << std::endl;
     std::cout << "Simulation finished successfully." << std::endl;
+
+#ifdef TIMING
+    std::cout << std::endl;
+    std::cout << "Timing results below." << std::endl;
+
+    int timings_count = mechanics_times.size();
+    std::pair<double, double> timings_mechanics = mean_dev(mechanics_times);
+    std::pair<double, double> timings_export_prep = mean_dev(pre_export_times);
+    std::pair<double, double> timings_export = mean_dev(export_times);
+
+    std::cout << "Average timings for " << timings_count << " exports and " << nodes.size() << " nodes." << std::endl;
+    std::cout << "Mechanics: " << static_cast<int>(timings_mechanics.first) << " +- " << static_cast<int>(timings_mechanics.second) << "us." << std::endl;
+    std::cout << "Export preparation: " << static_cast<int>(timings_export_prep.first) << " +- " << static_cast<int>(timings_export_prep.second) << "us." << std::endl;
+    std::cout << "Export writing: " << static_cast<int>(timings_export.first) << " +- " << static_cast<int>(timings_export.second) << "us." << std::endl;
+#endif
+    std::cout.flush();
+
     std::cout.rdbuf(cout_buf);
 
     auto duration = std::chrono::high_resolution_clock::now() - start_time;

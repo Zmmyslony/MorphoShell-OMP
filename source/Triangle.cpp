@@ -271,9 +271,9 @@ void Triangle::updateProgrammedTaus(int stage_counter, double dial_in_factor) {
     dialledProgTau = interpolate(programmed_taus[stage_counter], programmed_taus[stage_counter + 1], dial_in_factor);
 }
 
-void Triangle::updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
-                                          bool is_lce_metric_used, bool is_elongation_dynamically_updated,
-                                          double transfer_coefficient, double min_height, double max_height) {
+void Triangle::updateProgrammedQuantities(const int stage_counter, const double dial_in_factor, const double dial_in_factor_root,
+                                          const bool is_lce_metric_used, const bool is_elongation_dynamically_updated,
+                                          const double transfer_coefficient, const double min_height, const double max_height) {
     if (!is_lce_metric_used) {
         updateProgrammedMetricExplicit(stage_counter, dial_in_factor);
         updateProgrammedSecondFundamentalForm(stage_counter, dial_in_factor_root);

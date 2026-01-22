@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 project(Morphoshell)
 set(CMAKE_CXX_STANDARD 17)
+#set(CMAKE_CXX_FLAGS_RELEASE_INIT "-fno-math-errno -march=native -mfma")
 
 find_package(OpenMP REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)

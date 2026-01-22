@@ -134,6 +134,9 @@ class Simulation
     std::vector<double> interiorNodeAngleDeficits;
     std::vector<double> boundaryNodeAngleDeficits;
 
+    std::vector<int> mechanics_times;
+    std::vector<int> pre_export_times;
+    std::vector<int> export_times;
 
     void setupLogging();
 

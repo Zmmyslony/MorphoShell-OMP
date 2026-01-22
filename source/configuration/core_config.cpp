@@ -38,6 +38,7 @@ CoreConfig::CoreConfig(const ConfigBase &config_base) {
         }
     }
     omp_set_num_threads(core_number);
+    // omp_set_schedule(omp_sched_static, 1);
 
     // Optional fields that have defined defaults.
     config_base.get("equilibrium_force_scale", equilibrium_force_scale);
