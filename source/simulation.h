@@ -155,6 +155,12 @@ class Simulation
 
     void configure_triangles();
 
+    std::vector<std::vector<Eigen::Vector3d>> programmed_metric_infos;
+    std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> inverted_programmed_metrics;
+    std::vector<std::vector<double>> programmed_taus;
+    std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> programmed_second_fundamental_forms;
+    void updateProgrammedValues(int stage_count);
+
     /* Now calculate a 3x6 matrix for each triangle that can be stored and used
     repeatedly to obtain the elements of the Second Fundamental Form for each
     triangle during the simulation. The 2nd F.F. is an important extrinsic geometric

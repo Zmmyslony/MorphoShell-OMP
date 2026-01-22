@@ -108,27 +108,23 @@ void Simulation::read_settings_new(int argc, char* argv[]) {
 
 
 void Simulation::read_vtk_data(const CoreConfig& config) {
-    std::vector<std::vector<Eigen::Vector3d>> programmed_metric_infos;
-    std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> inverted_programmed_metrics;
-    std::vector<std::vector<double>> programmed_taus;
-    std::vector<std::vector<Eigen::Matrix<double, 2, 2>>> programmed_second_fundamental_forms;
-
     readVTKData(nodes, triangles, programmed_metric_infos, inverted_programmed_metrics, programmed_taus,
                 programmed_second_fundamental_forms, settings.getCore().isLceModeEnabled(),
                 initialisation_filename, initial_stage, dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename,
                 config);
 
     stage_count = (int)inverted_programmed_metrics.size();
+    updateProgrammedValues(1);
+}
 
-    // The first set of tensors are populated separately
-    for (int i = 1; i < inverted_programmed_metrics.size(); i++) {
+void Simulation::updateProgrammedValues(int current_stage) {
+    int i = current_stage;
 #pragma omp parallel for
-        for (int j = 0; j < triangles.size(); j++) {
-            triangles[j].programmed_metric_infos.emplace_back(programmed_metric_infos[i][j]);
-            triangles[j].programmed_metric_inv.emplace_back(inverted_programmed_metrics[i][j]);
-            triangles[j].programmed_taus.emplace_back(programmed_taus[i][j]);
-            triangles[j].programmed_second_fundamental_form.emplace_back(programmed_second_fundamental_forms[i][j]);
-        }
+    for (int j = 0; j < triangles.size(); j++) {
+        triangles[j].next_programmed_metric_info = programmed_metric_infos[i][j];
+        triangles[j].next_programmed_metric_inv = inverted_programmed_metrics[i][j];
+        triangles[j].next_programmed_tau = programmed_taus[i][j];
+        triangles[j].next_programmed_second_fundamental_form =programmed_second_fundamental_forms[i][j];
     }
 }
 
@@ -255,8 +251,8 @@ void Simulation::find_smallest_element() {
     // smallest ratio of size to tau, though it is just erring on the side of caution.
     std::vector<double> largest_tau_vector(stage_count);
     auto largest_tau = DBL_MIN;
-    for (auto& triangle : triangles) {
-        for (auto& tau : triangle.programmed_taus) { if (tau < largest_tau) { largest_tau = tau; } }
+    for (auto& triangle_taus : programmed_taus) {
+        for (auto& tau : triangle_taus) { if (tau < largest_tau) { largest_tau = tau; } }
     }
     characteristic_length_over_tau = characteristic_short_length / sqrt(largest_tau);
 
@@ -381,9 +377,9 @@ void Simulation::run_ansatz(int counter) {
             }
             size_t stage = initial_stage;
             if (settings.getCore().isFirstTensorSkipped()) { stage++; }
-            triangles[i].programmed_metric_inv[stage] = metric.inverse();
-            triangles[i].programmed_taus[stage] = triangles[i].programmed_taus[stage];
-            triangles[i].programmed_second_fundamental_form[stage] = triangles[i].secFF;
+            triangles[i].programmed_metric_inv = metric.inverse();
+            triangles[i].programmed_tau = programmed_taus[i][initial_stage];
+            triangles[i].programmed_second_fundamental_form = triangles[i].secFF;
         }
     } else {
         dial_in_factor = dialInFactorToStartFrom;
@@ -397,14 +393,8 @@ void Simulation::run_ansatz(int counter) {
 
         if (settings.getCore().isFirstTensorSkipped()) {
             for (int i = 0; i < triangles.size(); ++i) {
-                triangles[i].programmed_metric_infos[initial_stage] =
-                    triangles[i].programmed_metric_infos[initial_stage + 1];
-                triangles[i].programmed_second_fundamental_form[initial_stage] =
-                    triangles[i].programmed_second_fundamental_form[initial_stage + 1];
-                //                programmed_second_fundamental_forms[initial_stage][i] =
-                //                        programmed_second_fundamental_forms[initial_stage + 1][i];
-                //                programmed_metric_infos[initial_stage][i] =
-                //                        programmed_metric_infos[initial_stage + 1][i];
+                triangles[i].programmed_metric_info = programmed_metric_infos[i][initial_stage + 1];
+                triangles[i].programmed_second_fundamental_form = programmed_second_fundamental_forms[i][initial_stage + 1];
             }
         }
     }
@@ -512,6 +502,12 @@ void Simulation::begin_equilibrium_search(int counter) {
 
 
 void Simulation::add_interaction_forces() {
+    if (slides.size() == 0 &&
+        cones.size() == 0 &&
+        settings.getMagneticField().size() == 0) {
+        return;
+    }
+
     double shared_interaction_force = 0;
 #pragma omp parallel for  reduction (+ : shared_interaction_force)
     for (auto& slide : slides) {
@@ -614,6 +610,7 @@ void Simulation::add_node_forces() {
         nodes[i].updateForce();
         shared_interaction_force += nodes[i].add_damping(settings);
         nodes[i].add_gravity(settings.getGravity());
+        nodes[i].apply_boundary_conditions();
     }
     damping_power_loss = shared_interaction_force;
 }
@@ -786,6 +783,7 @@ void Simulation::equilibriumTest(int stage_counter, long long duration_us) {
  */
 void Simulation::run_tensor_increment(int stage_counter) {
     setup_tensor_increment(stage_counter);
+    updateProgrammedValues(stage_counter + 1);
 
     std::cout << "\nBeginning dynamical evolution.\n" << std::endl;
 
@@ -823,7 +821,7 @@ void Simulation::advance_time() {
 void Simulation::setInitialTriangleElongations() {
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].setLocalElongation(triangles[i].programmed_metric_infos[1](1));
+        triangles[i].setLocalElongation(triangles[i].next_programmed_metric_info(1));
     }
 }
 

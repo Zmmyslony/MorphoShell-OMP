@@ -223,8 +223,8 @@ void Triangle::updateProgrammedMetricImplicit(double dirAngle, double lambda, do
 }
 
 void Triangle::updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor) {
-    Eigen::Vector3d metric_current = interpolate(programmed_metric_infos[stage_counter],
-                                                 programmed_metric_infos[stage_counter + 1], dial_in_factor);
+    Eigen::Vector3d metric_current =
+        interpolate(programmed_metric_info, next_programmed_metric_info, dial_in_factor);
 
     double dirAng = metric_current(0);
     double lambda = metric_current(1);
@@ -235,11 +235,11 @@ void Triangle::updateProgrammedMetricImplicit(int stage_counter, double dial_in_
 
 void Triangle::updateProgrammedTensorsDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
                                                   double min_height, double max_height) {
-    Eigen::Vector3d metric_current = interpolate(programmed_metric_infos[stage_counter],
-                                                 programmed_metric_infos[stage_counter + 1], dial_in_factor);
-    Eigen::Matrix<double, 2, 2> bend_programmed = interpolate(programmed_second_fundamental_form[stage_counter],
-                                                              programmed_second_fundamental_form[stage_counter + 1],
-                                                              dial_in_factor);
+    Eigen::Vector3d metric_current =
+        interpolate(programmed_metric_info, next_programmed_metric_info, dial_in_factor);
+    Eigen::Matrix<double, 2, 2> bend_programmed =
+        interpolate(programmed_second_fundamental_form, next_programmed_second_fundamental_form,
+                    dial_in_factor);
 
     double dirAng = metric_current(0);
     double lambda = metric_current(1);
@@ -257,23 +257,24 @@ void Triangle::updateProgrammedTensorsDynamically(int stage_counter, double dial
 }
 
 void Triangle::updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor) {
-    programmedMetInv = interpolate(programmed_metric_inv[stage_counter], programmed_metric_inv[stage_counter + 1],
-                                   dial_in_factor);
+    programmedMetInv = interpolate(programmed_metric_inv, next_programmed_metric_inv, dial_in_factor);
     programmedMetInvDet = programmedMetInv.determinant();
 }
 
 void Triangle::updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root) {
-    programmedSecFF = interpolate(programmed_second_fundamental_form[stage_counter],
-                                  programmed_second_fundamental_form[stage_counter + 1], dial_in_factor_root);
+    programmedSecFF = interpolate(programmed_second_fundamental_form,
+                                  next_programmed_second_fundamental_form, dial_in_factor_root);
 }
 
 void Triangle::updateProgrammedTaus(int stage_counter, double dial_in_factor) {
-    dialledProgTau = interpolate(programmed_taus[stage_counter], programmed_taus[stage_counter + 1], dial_in_factor);
+    dialledProgTau = interpolate(programmed_tau, next_programmed_tau, dial_in_factor);
 }
 
-void Triangle::updateProgrammedQuantities(const int stage_counter, const double dial_in_factor, const double dial_in_factor_root,
+void Triangle::updateProgrammedQuantities(const int stage_counter, const double dial_in_factor,
+                                          const double dial_in_factor_root,
                                           const bool is_lce_metric_used, const bool is_elongation_dynamically_updated,
-                                          const double transfer_coefficient, const double min_height, const double max_height) {
+                                          const double transfer_coefficient, const double min_height,
+                                          const double max_height) {
     if (!is_lce_metric_used) {
         updateProgrammedMetricExplicit(stage_counter, dial_in_factor);
         updateProgrammedSecondFundamentalForm(stage_counter, dial_in_factor_root);
