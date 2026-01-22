@@ -82,7 +82,7 @@ Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces(double stretchingPrefa
 }
 
 // Returns vectors that normal to triangle edges and point outward
-Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals() {
+Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals() const {
     Eigen::Matrix<double, 3, 3> triangleEdgeNormals;
 
     triangleEdgeNormals.col(1).noalias() = faceNormal.cross(currSides.col(1));
@@ -91,7 +91,7 @@ Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals() {
     return triangleEdgeNormals;
 }
 
-Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row) {
+Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row) const {
     Eigen::Matrix<double, 2, 2> secFFDerivPreFacMat;
 
     secFFDerivPreFacMat(0, 0) = matForPatchSecDerivs(row, 0);
@@ -107,7 +107,7 @@ Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d&
     return -initArea * (energyDensityDerivWRTSecFF * secFFDerivPreFacMat).trace() * faceNormal;
 }
 
-Eigen::Matrix<double, 3, 1> Triangle::getBendingForcePatch(int row) {
+Eigen::Matrix<double, 3, 1> Triangle::getBendingForcePatch(int row) const {
     Eigen::Matrix<double, 2, 2> secFFDerivPreFacMat;
 
     secFFDerivPreFacMat(0, 0) = matForPatchSecDerivs(row, 0);
@@ -428,8 +428,8 @@ Triangle::Triangle(int label, int id_0, int id_1, int id_2, const std::vector<No
     reference_node_positions[2] = nodes[id_2].pos;
 }
 
-void Triangle::updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac,
-                                  double poisson_ratio) {
+void Triangle::updateElasticForce(const double bendingPreFac, const double JPreFactor, const double stretchingPreFac,
+                                  const double poisson_ratio) {
     updateSecondFundamentalForm(bendingPreFac, JPreFactor, poisson_ratio);
     Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces(stretchingPreFac);
 

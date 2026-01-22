@@ -175,13 +175,13 @@ private:
     void updateProgrammedTensorsDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
                                             double min_height, double max_height);
 
-    Eigen::Matrix<double, 3, 1> getBendingForcePatch(int row);
+    Eigen::Matrix<double, 3, 1> getBendingForcePatch(int row) const;
 
-    Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row);
+    Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row) const;
 
     Eigen::Matrix<double, 3, 3> getStretchingForces(double stretchingPrefactor) const;
 
-    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals();
+    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals() const;
 
 public:
     double bendEnergyDensity;

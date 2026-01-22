@@ -29,7 +29,6 @@
 #include "advanceDynamics.hpp"
 #include "exportVtk.hpp"
 #include "calculations/calcDeformationForces.hpp"
-#include "functions/zeroForces.hpp"
 #include "physics/cone.h"
 
 #ifndef TIMING
@@ -39,12 +38,10 @@
 
 typedef teestream<char, std::char_traits<char>> basic_teestream;
 
-std::pair<double, double> mean_dev(const std::vector<int> &times) {
+std::pair<double, double> mean_dev(const std::vector<int>& times) {
     double mean = double(std::accumulate(times.begin(), times.end(), 0.0)) / double(times.size());
     double dev = 0;
-    for (const auto & el : times) {
-        dev += std::pow(el - mean, 2);
-    }
+    for (const auto& el : times) { dev += std::pow(el - mean, 2); }
     dev /= double(times.size());
     return {mean, std::sqrt(dev)};
 }
@@ -322,13 +319,13 @@ void Simulation::init(int argc, char* argv[], int threads) {
     configure_triangles();
     configureNodeAdjacency(nodes, edges);
     set_node_patches();
+
+    node_force_proxy = std::vector<Eigen::Vector3d>(triangles.size() * 6);
+    assignForceLocationsToNodes(triangles, nodes, node_force_proxy);
     orient_node_labels();
 
     set_initial_conditions();
     find_smallest_element();
-
-    node_force_proxy = std::vector<Eigen::Vector3d>(triangles.size() * 6);
-    assignForceLocationsToNodes(triangles, nodes, node_force_proxy);
 
     settings.SetupDialInTime(characteristic_long_length);
     settings.SetupStepTime(characteristic_short_length);
@@ -513,36 +510,10 @@ void Simulation::begin_equilibrium_search(int counter) {
         << ". Waiting for equilibrium." << std::endl;
 }
 
-void Simulation::add_elastic_forces() {
-    double stretching_pre_factor =
-        0.5 * settings.getCore().getThickness() * settings.getCore().getShearModulus();
-    double bending_pre_factor =
-        0.5 * pow(settings.getCore().getThickness(), 3) * settings.getCore().getShearModulus() / 12;
-    double j_pre_factor = settings.getCore().getGentFactor() / pow(settings.getCore().getThickness(), 2);
-    double poisson_ratio = settings.getCore().getPoissonRatio();
 
-#pragma omp parallel for
-    // Calculates forces experienced by nodes coming from each triangle.
-    for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].updateElasticForce(bending_pre_factor, j_pre_factor, stretching_pre_factor, poisson_ratio);
-    }
-
-#pragma omp parallel for
-    // Applies forces to each node.
-    for (int i = 0; i < nodes.size(); i++) { nodes[i].updateForce(); }
-}
-;
-
-
-void Simulation::add_non_elastic_forces() {
+void Simulation::add_interaction_forces() {
     double shared_interaction_force = 0;
 #pragma omp parallel for  reduction (+ : shared_interaction_force)
-    for (int i = 0; i < nodes.size(); i++) {
-        shared_interaction_force += nodes[i].add_damping(settings);
-        nodes[i].add_gravity(settings.getGravity());
-    }
-    damping_power_loss = shared_interaction_force;
-
     for (auto& slide : slides) {
         shared_interaction_force = 0;
 #pragma omp parallel for reduction (+ : shared_interaction_force)
@@ -583,6 +554,7 @@ void Simulation::add_non_elastic_forces() {
 
 
 // Gets the height of the lowest triangle
+
 double getMinimumTriangleHeight(const std::vector<Triangle>& triangles) {
     double min_value = DBL_MAX;
 #pragma omp parallel for reduction(min: min_value)
@@ -594,6 +566,7 @@ double getMinimumTriangleHeight(const std::vector<Triangle>& triangles) {
 }
 
 // Gets the height of the highest triangle
+
 double getMaximumTriangleHeight(const std::vector<Triangle>& triangles) {
     double max_value = DBL_MIN;
 #pragma omp parallel for reduction(max: max_value)
@@ -615,23 +588,41 @@ void Simulation::updateTriangleProperties(int counter) {
     const double min_height = -1;
     const double max_height = 1;
 
-    if (simulation_status == Dialling) {
-#pragma omp parallel for
-        for (int i = 0; i < triangles.size(); i++) {
-            triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used,
-                                                    is_stimulation_modulated, transfer_coefficient, min_height, max_height);
-        }
-    }
+    const double stretching_pre_factor =
+        0.5 * settings.getCore().getThickness() * settings.getCore().getShearModulus();
+    const double bending_pre_factor =
+        0.5 * pow(settings.getCore().getThickness(), 3) * settings.getCore().getShearModulus() / 12;
+    const double j_pre_factor = settings.getCore().getGentFactor() / pow(settings.getCore().getThickness(), 2);
+    const double poisson_ratio = settings.getCore().getPoissonRatio();
 
 #pragma omp parallel for
-    for (int i = 0; i < triangles.size(); i++) { triangles[i].updateGeometricProperties(); }
+    for (int i = 0; i < triangles.size(); i++) {
+        if (simulation_status == Dialling) {
+            triangles[i].updateProgrammedQuantities(counter, dial_in_factor, dial_in_factor_root, is_LCE_metric_used,
+                                                    is_stimulation_modulated, transfer_coefficient, min_height,
+                                                    max_height);
+        }
+        triangles[i].updateGeometricProperties();
+        triangles[i].updateElasticForce(bending_pre_factor, j_pre_factor, stretching_pre_factor, poisson_ratio);
+    }
+}
+
+void Simulation::add_node_forces() {
+    double shared_interaction_force = 0;
+#pragma omp parallel for  reduction (+ : shared_interaction_force)
+    for (int i = 0; i < nodes.size(); i++) {
+        nodes[i].updateForce();
+        shared_interaction_force += nodes[i].add_damping(settings);
+        nodes[i].add_gravity(settings.getGravity());
+    }
+    damping_power_loss = shared_interaction_force;
 }
 
 long long int Simulation::progress_single_step(int counter) {
     auto begin = std::chrono::high_resolution_clock::now();
     updateTriangleProperties(counter);
-    add_elastic_forces();
-    add_non_elastic_forces();
+    add_node_forces();
+    add_interaction_forces();
 
     auto duration = std::chrono::high_resolution_clock::now() - begin;
     long long duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
@@ -865,9 +856,12 @@ int Simulation::run_simulation() {
     std::pair<double, double> timings_export = mean_dev(export_times);
 
     std::cout << "Average timings for " << timings_count << " exports and " << nodes.size() << " nodes." << std::endl;
-    std::cout << "Mechanics: " << static_cast<int>(timings_mechanics.first) << " +- " << static_cast<int>(timings_mechanics.second) << "us." << std::endl;
-    std::cout << "Export preparation: " << static_cast<int>(timings_export_prep.first) << " +- " << static_cast<int>(timings_export_prep.second) << "us." << std::endl;
-    std::cout << "Export writing: " << static_cast<int>(timings_export.first) << " +- " << static_cast<int>(timings_export.second) << "us." << std::endl;
+    std::cout << "Mechanics: " << static_cast<int>(timings_mechanics.first) << " +- " << static_cast<int>(
+        timings_mechanics.second) << "us." << std::endl;
+    std::cout << "Export preparation: " << static_cast<int>(timings_export_prep.first) << " +- " << static_cast<int>(
+        timings_export_prep.second) << "us." << std::endl;
+    std::cout << "Export writing: " << static_cast<int>(timings_export.first) << " +- " << static_cast<int>(
+        timings_export.second) << "us." << std::endl;
 #endif
     std::cout.flush();
 

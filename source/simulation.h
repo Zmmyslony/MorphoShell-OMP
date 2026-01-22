@@ -260,10 +260,10 @@ class Simulation
     void advance_time();
 
     // Adds damping, additional physics e.g. slides, cones, and applies boundary condition.
-    void add_non_elastic_forces();
+    void add_interaction_forces();
 
     // Calculates and adds elastic forces to each
-    void add_elastic_forces();
+    void add_node_forces();
 
     void advance_physics();
 
