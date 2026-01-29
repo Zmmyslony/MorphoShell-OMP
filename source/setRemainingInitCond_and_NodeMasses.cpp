@@ -58,11 +58,7 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
 
     for (int i = 0; i < triangles.size(); ++i) {
         /*set triangle sides' initial in-plane x-y basis components.*/
-//        initSidesMat(0, 0) = triangles[i].currSides(0, 0);
-//        initSidesMat(1, 0) = triangles[i].currSides(1, 0);
-//        initSidesMat(0, 1) = triangles[i].currSides(0, 1);
-//        initSidesMat(1, 1) = triangles[i].currSides(1, 1);
-        initSidesMat = triangles[i].currSides.block<2, 2>(0, 0);
+        initSidesMat = triangles[i].getCurrentSides().block<2, 2>(0, 0);
 
         //Store initial (reference) area
         triangles[i].initArea = 0.5 * initSidesMat.determinant();
@@ -81,25 +77,9 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
             throw std::runtime_error(
                     "At least one triangle [" + std::to_string(i) + "] had a non-invertible initial sides matrix. \n"
                     "This should not occur in a reasonable mesh. Aborting.");
-        } else {
-            triangles[i].invInitSidesMat = initSidesMat.inverse();
         }
+        triangles[i].invInitSidesMat = initSidesMat.inverse();
 
-        /* Calculate vector storing, for each non-boundary edge, its initial
-        length divided by sum of initial non-boundary edge lengths for the triangle.
-        These could in future be used to weight the least squares fit, for instance.*/
-        double initTotNonBoundaryLength = 0;
-        triangles[i].initNonBoundEdgeLengthFracs.resize(triangles[i].edgeSharingTriLabels.size());
-        for (int e = 0; e < 3; ++e) {
-            if (!edges[triangles[i].edgeLabels(e)].isOnBoundary) {
-                triangles[i].initNonBoundEdgeLengthFracs(e) = (
-                        nodes[edges[triangles[i].edgeLabels(e)].nodeLabels(0)].pos -
-                        nodes[edges[triangles[i].edgeLabels(e)].nodeLabels(1)].pos).norm();
-                initTotNonBoundaryLength += triangles[i].initNonBoundEdgeLengthFracs(e);
-            }
-        }
-        // Convert these initial edge lengths to fractions of the sum.
-        triangles[i].initNonBoundEdgeLengthFracs = triangles[i].initNonBoundEdgeLengthFracs / initTotNonBoundaryLength;
 
         /* Add 1/3 of the mass of each triangle to each of its vertices.*/
         for (int v = 0; v < 3; ++v) {

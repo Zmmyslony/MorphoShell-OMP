@@ -65,7 +65,7 @@ void calcEnergiesAndStresses(const std::vector<Node> &nodes, std::vector<Triangl
         strainMeasures[i] = sqrt((myStrainTensor.transpose() * myStrainTensor).trace() / 2.0);
 
         Eigen::Matrix<double, 3, 3> cauchyStress =
-                sqrt(triangle->metInvDet) * (2 * triangle->getHalfPK1Stress(stretchingPreFac)) *
+                sqrt(triangle->metInvDet) * (2 * triangle->getHalfPK1Stress(stretchingPreFac, triangle->met.inverse())) *
                 triangle->defGradient.transpose();
 
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 3, 3>> eigenSolver(cauchyStress);

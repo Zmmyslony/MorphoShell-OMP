@@ -36,7 +36,6 @@ class Triangle {
 public:
     const Eigen::Vector3d *corner_nodes_pos[3];
     Eigen::Vector3d centroid;
-    Eigen::Matrix<double, 3, 2> currSides; // Array of sides
     const Eigen::Vector3d *patch_nodes_pos[3];
     double programmedMetInvDet;     // Determinant of the programmed metric inverse .
 
@@ -66,20 +65,18 @@ public:
     Eigen::Matrix2d programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Identity();
     Eigen::Matrix2d next_programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Identity();
 
-    double programmed_tau = 1;;
+    double programmed_tau = 1;
     double next_programmed_tau = 1;
 
     Eigen::Matrix<double, 2, 2> programmedSecFF;
     Eigen::Matrix<double, 3, 2> defGradient;
     Eigen::Matrix<double, 2, 2> met;
-    Eigen::Matrix<double, 2, 2> metInv;
 
     /*Matrix that is pre-calculated and then used repeatedly in finding the
     components of the second fundamental form estimated for this triangle. */
     Eigen::Matrix<double, 6, 3> matForPatchSecDerivs;
 
-    /* Matrix of the second position derivatives, used in calculating the
-    secFF estimate. */
+
     /* Determinant of the inverse of the metric.*/
     double metInvDet;
 
@@ -88,7 +85,6 @@ public:
     coordinate system, i.e. the coordinate chart that used to be the (x,y)
     cartesians of the flat initial state, and then deformed with the sheet. This
     is a 2x2 symmetric matrix. */
-    Eigen::Matrix<double, 2, 2> secFF;
 
     // Forces exerted by this triangle on nodes associated with it
     Eigen::Vector3d *node_triangle_force[6];
@@ -107,12 +103,6 @@ public:
     Eigen::Vector3i edgeLabels;
     uint32_t nonVertexPatchNodesLabels[3];
     int label;
-
-    /* Vector storing, for each non-boundary edge, its initial
-    length divided by sum of initial non-boundary edge lengths for the triangle.
-    These fractions are used for weighting the edge normals used in the secFF
-    calculation.*/
-    Eigen::VectorXd initNonBoundEdgeLengthFracs;
 
     /* Labels (and indices in the triangles' container vector) of the other
     triangles that share an edge with this triangle.*/
@@ -133,6 +123,7 @@ public:
     to this triangle's centroid. There is again no particular order.*/
 
 private:
+
     void updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor);
 
     void updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor);
@@ -151,12 +142,13 @@ private:
     Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row, const Eigen::Vector3d& faceNormal, const Eigen::Matrix<double, 2, 2>
                                                     & energyDensityDerivWRTSecFF) const;
 
-    Eigen::Matrix<double, 3, 3> getStretchingForces(double stretchingPrefactor) const;
+    Eigen::Matrix<double, 3, 3> getStretchingForces(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv) const;
 
     Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals(const Eigen::Matrix<double, 3, 2>& current_sides, const Eigen::Vector3d& face_normal) const;
 
 public:
-    Eigen::Matrix<double, 3, 2> getHalfPK1Stress(double stretchingPrefactor) const;
+    Eigen::Matrix<double, 3, 2> getCurrentSides() const;
+    Eigen::Matrix<double, 3, 2> getHalfPK1Stress(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv) const;
 
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
@@ -174,7 +166,6 @@ public:
         edgeLabels.fill(INT_MAX);
         initArea = DBL_MAX;
         currAreaInv = DBL_MAX;
-        currSides.fill(DBL_MAX);
         initOutwardSideNormals.fill(DBL_MAX);
         invInitSidesMat.fill(DBL_MAX);
         programmedMetInv.fill(DBL_MAX);
@@ -184,8 +175,6 @@ public:
         defGradient.fill(DBL_MAX);
         met.fill(DBL_MAX);
         metInvDet = DBL_MAX;
-        metInv.fill(DBL_MAX);
-        secFF.fill(DBL_MAX);
         matForPatchSecDerivs.fill(DBL_MAX);
         bendEnergyDensity = DBL_MAX;
         stretchEnergyDensity = DBL_MAX;
@@ -197,6 +186,7 @@ public:
 
     // Debugging function to display all member data.
     std::stringstream display();
+    Eigen::Matrix2d getSecondFundamentalForm() const ;
 
     void updateGeometricProperties(double bending_pre_factor, double j_pre_factor, double poisson_ratio, double stretching_prefactor);
 

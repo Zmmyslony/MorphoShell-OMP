@@ -43,10 +43,6 @@ std::stringstream Triangle::display() {
     msg << "invCurrArea = " << currAreaInv << std::endl;
     msg << "Labels of vertices: " << vertexLabels.transpose() << std::endl;
     msg << "Labels of edges: " << edgeLabels.transpose() << std::endl;
-    msg << "Initial non-boundary edge length fractions: " << initNonBoundEdgeLengthFracs.transpose()
-        << std::endl;
-
-    msg << "Current sides = " << "\n" << currSides << std::endl;
     msg << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
     msg << "invInitInPlaneSidesMat = " << "\n" << invInitSidesMat << std::endl;
     msg << "Dialled in inverse of programmed metric = " << "\n" << programmedMetInv << std::endl;
@@ -55,22 +51,19 @@ std::stringstream Triangle::display() {
     msg << "Dialled in programmed second fundamental form = " << "\n" << programmedSecFF << std::endl;
     msg << "Deformation gradient = " << "\n" << defGradient << std::endl;
     msg << "metric = " << "\n" << met << std::endl;
-    msg << "Inverse of Metric = " << "\n" << metInv << std::endl;
     msg << "Det of inverse of Metric = " << "\n" << metInvDet << std::endl;
     msg << "matForPatchSecDerivs = " << "\n" << matForPatchSecDerivs << std::endl;
-    msg << "Second fundamental form = " << "\n" << secFF << std::endl;
-    msg << "halfPK1Stress = " << "\n" << getHalfPK1Stress(1) << std::endl;
     msg << "-----------------------------" << std::endl;
     return msg;
 }
 
-Eigen::Matrix<double, 3, 2> Triangle::getHalfPK1Stress(double stretchingPrefactor) const {
+Eigen::Matrix<double, 3, 2> Triangle::getHalfPK1Stress(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv) const {
     return defGradient * (stretchingPrefactor * dialledProgTau *
         (programmedMetInv - (metInvDet / programmedMetInvDet) * metInv));
 }
 
-Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces(double stretchingPrefactor) const {
-    return getHalfPK1Stress(stretchingPrefactor) * initOutwardSideNormals;
+Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv) const {
+    return getHalfPK1Stress(stretchingPrefactor, metInv) * initOutwardSideNormals;
 }
 
 // Returns vectors that normal to triangle edges and point outward
@@ -112,34 +105,75 @@ Eigen::Matrix<double, 3, 1> Triangle::getBendingForcePatch(int row, const Eigen:
     return -initArea * (energyDensityDerivWRTSecFF * secFFDerivPreFacMat).trace() * faceNormal;
 }
 
-void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre_factor, double poisson_ratio, double stretching_prefactor) {
+Eigen::Matrix<double, 3, 2> Triangle::getCurrentSides() const{
     const Eigen::Vector3d p0 = *corner_nodes_pos[0];
     const Eigen::Vector3d p1 = *corner_nodes_pos[1];
     const Eigen::Vector3d p2 = *corner_nodes_pos[2];
 
+    Eigen::Matrix<double, 3, 2> currSides;
+    currSides.col(0).noalias() = p1 - p0;
+    currSides.col(1).noalias() = p2 - p0;
+    return currSides;
+}
+
+
+Eigen::Matrix2d Triangle::getSecondFundamentalForm() const  {
+    const Eigen::Vector3d p0 = *corner_nodes_pos[0];
+    const Eigen::Vector3d p1 = *corner_nodes_pos[1];
+    const Eigen::Vector3d p2 = *corner_nodes_pos[2];
+
+    Eigen::Matrix<double, 3, 2> currSides;
+    currSides.col(0).noalias() = p1 - p0;
+    currSides.col(1).noalias() = p2 - p0;
+    Eigen::Vector3d faceNormal = currSides.col(0).cross(currSides.col(1));
+    faceNormal *= faceNormal.norm(); // Normalising
+
+    Eigen::Matrix<double, 3, 3> patchSecDerivs = p0 * matForPatchSecDerivs.row(0)
+    + p1 * matForPatchSecDerivs.row(1)
+    + p2 * matForPatchSecDerivs.row(2)
+    + *patch_nodes_pos[0] * matForPatchSecDerivs.row(3)
+    + *patch_nodes_pos[1] * matForPatchSecDerivs.row(4)
+    + *patch_nodes_pos[2] * matForPatchSecDerivs.row(5);
+
+    Eigen::Vector3d vectorOfSecFFComps = patchSecDerivs.transpose() * faceNormal;
+    Eigen::Matrix<double, 2, 2> secFF;
+    secFF(0, 0) = vectorOfSecFFComps(0);
+    secFF(0, 1) = vectorOfSecFFComps(1);
+    secFF(1, 0) = vectorOfSecFFComps(1);
+    secFF(1, 1) = vectorOfSecFFComps(2);
+    return secFF;
+}
+
+void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre_factor, double poisson_ratio, double stretching_prefactor) {
+/**
+ * THIS FUNCTION IS INTENTIONALLY MESSY TO PREVENT
+ **/
+    const Eigen::Vector3d p0 = *corner_nodes_pos[0];
+    const Eigen::Vector3d p1 = *corner_nodes_pos[1];
+    const Eigen::Vector3d p2 = *corner_nodes_pos[2];
+
+    Eigen::Matrix<double, 3, 2> currSides;
     currSides.col(0).noalias() = p1 - p0;
     currSides.col(1).noalias() = p2 - p0;
     Eigen::Vector3d faceNormal = currSides.col(0).cross(currSides.col(1));
     defGradient.noalias() = currSides * invInitSidesMat;
-
-    met.noalias() = defGradient.transpose() * defGradient;
-    metInv.noalias() = met.inverse();
-    metInvDet = metInv.determinant();
-
     currAreaInv = 2 / faceNormal.norm();
+    centroid.noalias() = (p0 + p1 + p2) / 3;
     faceNormal *= 0.5 * currAreaInv; // Normalising
 
-    Eigen::Matrix<double, 3, 3> patchSecDerivs = p0 * matForPatchSecDerivs.row(0)
-        + p1 * matForPatchSecDerivs.row(1)
-        + p2 * matForPatchSecDerivs.row(2)
-        + *patch_nodes_pos[0] * matForPatchSecDerivs.row(3)
-        + *patch_nodes_pos[1] * matForPatchSecDerivs.row(4)
-        + *patch_nodes_pos[2] * matForPatchSecDerivs.row(5);
+    met.noalias() = defGradient.transpose() * defGradient;
+    Eigen::Matrix<double, 2, 2> metInv = met.inverse();
+    metInvDet = metInv.determinant();
 
-    centroid.noalias() = (p0 + p1 + p2) / 3;
+    Eigen::Matrix<double, 3, 3> patchSecDerivs = p0 * matForPatchSecDerivs.row(0)
+     + p1 * matForPatchSecDerivs.row(1)
+     + p2 * matForPatchSecDerivs.row(2)
+     + *patch_nodes_pos[0] * matForPatchSecDerivs.row(3)
+     + *patch_nodes_pos[1] * matForPatchSecDerivs.row(4)
+     + *patch_nodes_pos[2] * matForPatchSecDerivs.row(5);
 
     Eigen::Vector3d vectorOfSecFFComps = patchSecDerivs.transpose() * faceNormal;
-
+    Eigen::Matrix<double, 2, 2> secFF;
     secFF(0, 0) = vectorOfSecFFComps(0);
     secFF(0, 1) = vectorOfSecFFComps(1);
     secFF(1, 0) = vectorOfSecFFComps(1);
@@ -160,7 +194,7 @@ void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre
         poisson_ratio * relativeSecFF.trace() * programmedMetInv);
     bendEnergyDensity = gentDerivFac * preGentBendEnergyDensity;
 
-    Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces(stretching_prefactor);
+    Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces(stretching_prefactor, metInv);
 
     Eigen::Matrix<double, 3, 3> triangleEdgeNormals = getTriangleEdgeNormals(currSides, faceNormal);
     Eigen::Matrix<double, 3, 3> normalDerivPiece =
@@ -174,6 +208,7 @@ void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre
 
 
 void Triangle::updateAngleDeficits(std::vector<double>& angleDeficits) const {
+    Eigen::Matrix<double, 3, 2> currSides = getCurrentSides();
     std::vector<Eigen::Vector3d> sides;
     sides.emplace_back(currSides.col(0));
     sides.emplace_back(currSides.col(1));
@@ -188,6 +223,7 @@ void Triangle::updateAngleDeficits(std::vector<double>& angleDeficits) const {
 }
 
 double Triangle::getLinearSize() const {
+    Eigen::Matrix<double, 3, 2> currSides = getCurrentSides();
     double first_side_length = currSides.col(0).norm();
     double second_side_length = currSides.col(1).norm();
     double third_side_length = (currSides.col(0) - currSides.col(1)).norm();

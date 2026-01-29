@@ -83,7 +83,7 @@ void calcCurvatures(
         // If it's not invertible you'll notice elsewhere!
 
         Eigen::Matrix<double, 2, 2> symmetricShapeOperator =
-                stretchingPartInverse.transpose() * triangles[i].secFF * stretchingPartInverse;
+                stretchingPartInverse.transpose() * triangles[i].getSecondFundamentalForm() * stretchingPartInverse;
 
         /* In case you want principle curvatures. For principal directions too,
         you could follow eqn(8) in the 2009 paper, or maybe easier: construct

@@ -227,7 +227,8 @@ void Simulation::orient_node_labels() {
     Eigen::Vector3d tempZAxisVec;
     tempZAxisVec << 0.0, 0.0, 1.0;
     for (int i = 0; i < triangles.size(); ++i) {
-        if (tempZAxisVec.dot(triangles[i].currSides.col(0).cross(triangles[i].currSides.col(1))) < 0) {
+        auto sides = triangles[i].getCurrentSides();
+        if (tempZAxisVec.dot(sides.col(0).cross(sides.col(1))) < 0) {
             int tempLabel = triangles[i].vertexLabels(2);
             triangles[i].vertexLabels(2) = triangles[i].vertexLabels(1);
             triangles[i].vertexLabels(1) = tempLabel;
@@ -379,7 +380,7 @@ void Simulation::run_ansatz(int counter) {
             if (settings.getCore().isFirstTensorSkipped()) { stage++; }
             triangles[i].programmed_metric_inv = metric.inverse();
             // triangles[i].programmed_tau = programmed_taus[i][initial_stage];
-            triangles[i].programmed_second_fundamental_form = triangles[i].secFF;
+            triangles[i].programmed_second_fundamental_form = triangles[i].getSecondFundamentalForm();
         }
     } else {
         dial_in_factor = dialInFactorToStartFrom;
