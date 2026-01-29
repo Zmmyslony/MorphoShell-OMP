@@ -854,7 +854,7 @@ int Simulation::run_simulation() {
     std::pair<double, double> timings_export_prep = mean_dev(pre_export_times);
     std::pair<double, double> timings_export = mean_dev(export_times);
 
-    std::cout << "Average timings for " << timings_count << " exports and " << nodes.size() << " nodes." << std::endl;
+    std::cout << "Average timings for " << timings_count << " exports and " << nodes.size() << " nodes and " << triangles.size() << " triangles." << std::endl;
     std::cout << "Mechanics: " << static_cast<int>(timings_mechanics.first) << " +- " << static_cast<int>(
         timings_mechanics.second) << "us." << std::endl;
     std::cout << "Export preparation: " << static_cast<int>(timings_export_prep.first) << " +- " << static_cast<int>(
