@@ -33,65 +33,14 @@ triangular element, such as vertices, area etc.*/
 
 
 class Triangle {
-    double local_elongation = 1;
-    const Eigen::Vector3d *corner_nodes_pos[3];
-    const Eigen::Vector3d *patch_nodes_pos[3];
-    // Forces exerted by this triangle on nodes associated with it
-    Eigen::Vector3d *node_triangle_force[6];
-    // Magnetisation density expressed in the reference system coordinates.
-    Eigen::Vector3d reference_magnetisation_density = {0, 0, 0};
-    Eigen::Vector3d reference_node_positions[3];
-
 public:
-    int label;
-    bool isOnBoundary;
-    double local_magnitude = 1;
-
-    // Reference area
-    double initArea;
-    double currAreaInv;
-
-    /* Indices (labels) of the nodes at the vertices of the triangle in no particular order*/
-    Eigen::Vector3i vertexLabels;
-
-    /* Labels of the 3 edges of this triangle.*/
-    Eigen::Vector3i edgeLabels;
-
-    /* Vector storing, for each non-boundary edge, its initial
-    length divided by sum of initial non-boundary edge lengths for the triangle.
-    These fractions are used for weighting the edge normals used in the secFF
-    calculation.*/
-    Eigen::VectorXd initNonBoundEdgeLengthFracs;
-
-    /* Labels (and indices in the triangles' container vector) of the other
-    triangles that share an edge with this triangle.*/
-    Eigen::VectorXi edgeSharingTriLabels;
-
-    /* A vector with one component for each non-boundary edge of this triangle,
-    with each entry being either +1.0 or -1.0. A value of +1.0 means that
-    this triangle corresponds to adjTriLabels(0) for the corresponding edge.
-    -1.0 implies adjTriLabels(1) similarly. */
-    Eigen::VectorXi edgeAdjTriLabelSelectors;
-
-    /* Indices (labels) of the 3 nodes that are not vertices of the triangle, but
-    are part of the estimation of the 2nd F.F. for each triangle. For
-    non-boundary triangles these are the non-shared-edge nodes from each of the
-    triangles sharing an edge with this triangle. For boundary triangles one or
-    two of these are missing, and different nodes are chosen based on proximity
-    to this triangle's centroid. There is again no particular order.*/
-    uint32_t nonVertexPatchNodesLabels[3];
-
-    /* Position of triangle's centroid in initial (reference) x-y plane.*/
-    Eigen::Vector3d refCentroid;
+    const Eigen::Vector3d *corner_nodes_pos[3];
     Eigen::Vector3d centroid;
+    Eigen::Matrix<double, 3, 2> currSides; // Array of sides
+    const Eigen::Vector3d *patch_nodes_pos[3];
+    double programmedMetInvDet;     // Determinant of the programmed metric inverse .
 
-    /* Matrix (of doubles) where each *column* is a vector describing a side of
-    the triangle. We only need two sides per triangle for the algorithm
-    hence the 3x2 matrices.*/
-    Eigen::Matrix<double, 3, 2> currSides;
-
-    // Current unit normal to face.
-    Eigen::Vector3d faceNormal;
+    double dialledProgTau; // Dialled in programmed scalar 'tau' factor.
 
     /* Inverse of 2x2 matrix that has (two) initial sides of the triangle as
     columns. Those sides correspond to the two current sides stored in currSides.*/
@@ -108,12 +57,6 @@ public:
     anything too explosive happening. */
     Eigen::Matrix<double, 2, 2> programmedMetInv;
 
-    // Determinant of the above dialledInvProgMetric matrix.
-    double programmedMetInvDet;
-
-    /* Dialled in programmed scalar 'tau' factor.*/
-    double dialledProgTau;
-
     Eigen::Vector3d programmed_metric_info = {1, 1, 1};
     Eigen::Vector3d next_programmed_metric_info = {1, 1, 1};
 
@@ -126,28 +69,10 @@ public:
     double programmed_tau = 1;;
     double next_programmed_tau = 1;
 
-    /* Matrix representing the components of the *energetically* favoured
-    (programmed) Second Fundamental Form in the x-y cartesian coordinate system
-    of the initial flat state. */
     Eigen::Matrix<double, 2, 2> programmedSecFF;
-
-    /* Matrix representing the total deformation gradient of this triangle. This
-    maps the in-plane reference (initial) state (for which no z components are
-    stored) to a triangle in 3D space, so it is 3x2.*/
     Eigen::Matrix<double, 3, 2> defGradient;
-
-    /* The (1st order) approximation for the metric for this triangle, which
-    equals defGradient.transpose) * defGradient.*/
     Eigen::Matrix<double, 2, 2> met;
-
-    /* Inverse of metric.*/
     Eigen::Matrix<double, 2, 2> metInv;
-
-    /* Determinant of the inverse of the metric.*/
-    double metInvDet;
-
-    /* Matrix representing (1st Piola-Kirchoff stress tensor)/2 for this triangle.*/
-    // Eigen::Matrix<double, 3, 2> halfPK1Stress;
 
     /*Matrix that is pre-calculated and then used repeatedly in finding the
     components of the second fundamental form estimated for this triangle. */
@@ -155,7 +80,8 @@ public:
 
     /* Matrix of the second position derivatives, used in calculating the
     secFF estimate. */
-    Eigen::Matrix<double, 3, 3> patchSecDerivs;
+    /* Determinant of the inverse of the metric.*/
+    double metInvDet;
 
     /* Estimated Second Fundamental Form matrix (secFF) of the deformed surface,
     defined (as with the deformation gradient) with respect to the 'material'
@@ -164,9 +90,47 @@ public:
     is a 2x2 symmetric matrix. */
     Eigen::Matrix<double, 2, 2> secFF;
 
-    /* Derivative of the bending energy density with respect to the secFF.*/
-    Eigen::Matrix<double, 2, 2> energyDensityDerivWRTSecFF;
+    // Forces exerted by this triangle on nodes associated with it
+    Eigen::Vector3d *node_triangle_force[6];
+    // Magnetisation density expressed in the reference system coordinates.
+    Eigen::Vector3d reference_magnetisation_density = {0, 0, 0};
+    Eigen::Vector3d reference_node_positions[3];
 
+    double local_elongation = 1;
+    double local_magnitude = 1;
+    double bendEnergyDensity;
+    double stretchEnergyDensity;
+    double initArea;
+    double currAreaInv;
+
+    Eigen::Vector3i vertexLabels;
+    Eigen::Vector3i edgeLabels;
+    uint32_t nonVertexPatchNodesLabels[3];
+    int label;
+
+    /* Vector storing, for each non-boundary edge, its initial
+    length divided by sum of initial non-boundary edge lengths for the triangle.
+    These fractions are used for weighting the edge normals used in the secFF
+    calculation.*/
+    Eigen::VectorXd initNonBoundEdgeLengthFracs;
+
+    /* Labels (and indices in the triangles' container vector) of the other
+    triangles that share an edge with this triangle.*/
+    Eigen::VectorXi edgeSharingTriLabels;
+
+    /* A vector with one component for each non-boundary edge of this triangle,
+    with each entry being either +1.0 or -1.0. A value of +1.0 means that
+    this triangle corresponds to adjTriLabels(0) for the corresponding edge.
+    -1.0 implies adjTriLabels(1) similarly. */
+    Eigen::VectorXi edgeAdjTriLabelSelectors;
+    bool isOnBoundary;
+
+    /* Indices (labels) of the 3 nodes that are not vertices of the triangle, but
+    are part of the estimation of the 2nd F.F. for each triangle. For
+    non-boundary triangles these are the non-shared-edge nodes from each of the
+    triangles sharing an edge with this triangle. For boundary triangles one or
+    two of these are missing, and different nodes are chosen based on proximity
+    to this triangle's centroid. There is again no particular order.*/
 
 private:
     void updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor);
@@ -182,25 +146,17 @@ private:
     void updateProgrammedTensorsDynamically(int stage_counter, double dial_in_factor, double transfer_coefficient,
                                             double min_height, double max_height);
 
-    Eigen::Matrix<double, 3, 1> getBendingForcePatch(int row) const;
+    Eigen::Matrix<double, 3, 1> getBendingForcePatch(int row, const Eigen::Vector3d& faceNormal, const Eigen::Matrix<double, 2, 2>& energyDensityDerivWRTSecFF) const;
 
-    Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row) const;
+    Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row, const Eigen::Vector3d& faceNormal, const Eigen::Matrix<double, 2, 2>
+                                                    & energyDensityDerivWRTSecFF) const;
 
     Eigen::Matrix<double, 3, 3> getStretchingForces(double stretchingPrefactor) const;
 
-    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals() const;
+    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals(const Eigen::Matrix<double, 3, 2>& current_sides, const Eigen::Vector3d& face_normal) const;
 
 public:
-    double bendEnergyDensity;
-    double stretchEnergyDensity;
-
-    void updateFirstFundamentalForm(double stretchingPreFac);
-
     Eigen::Matrix<double, 3, 2> getHalfPK1Stress(double stretchingPrefactor) const;
-
-    void updateSecondFundamentalForm(double bendingPreFac, double JPreFactor, double poissonRatio);
-
-    void updateElasticForce(double bendingPreFac, double JPreFactor, double stretchingPreFac, double poisson_ratio);
 
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
@@ -215,12 +171,10 @@ public:
         label = -1;
         isOnBoundary = false;
         vertexLabels.fill(-1);
-        // nonVertexPatchNodesLabels = (-1, -1, -1);
         edgeLabels.fill(INT_MAX);
         initArea = DBL_MAX;
         currAreaInv = DBL_MAX;
         currSides.fill(DBL_MAX);
-        faceNormal.fill(DBL_MAX);
         initOutwardSideNormals.fill(DBL_MAX);
         invInitSidesMat.fill(DBL_MAX);
         programmedMetInv.fill(DBL_MAX);
@@ -231,10 +185,7 @@ public:
         met.fill(DBL_MAX);
         metInvDet = DBL_MAX;
         metInv.fill(DBL_MAX);
-        // halfPK1Stress.fill(DBL_MAX);
-        patchSecDerivs.fill(DBL_MAX);
         secFF.fill(DBL_MAX);
-        energyDensityDerivWRTSecFF.fill(DBL_MAX);
         matForPatchSecDerivs.fill(DBL_MAX);
         bendEnergyDensity = DBL_MAX;
         stretchEnergyDensity = DBL_MAX;
@@ -247,7 +198,7 @@ public:
     // Debugging function to display all member data.
     std::stringstream display();
 
-    void updateGeometricProperties();
+    void updateGeometricProperties(double bending_pre_factor, double j_pre_factor, double poisson_ratio, double stretching_prefactor);
 
     void updateAngleDeficits(std::vector<double> &angleDeficits) const;
 

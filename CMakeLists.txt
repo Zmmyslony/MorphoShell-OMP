@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_CXX_FLAGS_RELEASE_INIT "-fno-math-errno -march=native -mfma")
 
 find_package(OpenMP REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(Boost REQUIRED COMPONENTS system filesystem iostreams)
 include_directories(${Boost_INCLUDE_DIRS})
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(VTK REQUIRED )

@@ -29,7 +29,10 @@ this 'previous output' directory is deleted. */
 #include <iostream>
 
 #include <string>
+#include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
 #include "initialDirAndFileHandling.hpp"
 
 fs::path

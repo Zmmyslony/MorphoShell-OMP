@@ -37,30 +37,6 @@ stress stuff.
 #include "../Triangle.hpp"
 #include "../Node.hpp"
 
-void updateFirstFundamentalForms(
-        std::vector<Triangle> &triangles,
-        const CoreConfig &core_config) {
-
-    double stretchingPreFac = 0.5 * core_config.getThickness() * core_config.getShearModulus();
-#pragma omp parallel for
-    for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].updateFirstFundamentalForm(stretchingPreFac);
-    }
-}
-
-void updateSecondFundamentalForms(
-        std::vector<Triangle> &triangles,
-        const CoreConfig &core_config) {
-
-    double bendingPreFac = 0.5 * pow(core_config.getThickness(), 3) * core_config.getShearModulus() / 12;
-    double JPreFactor = core_config.getGentFactor() / pow(core_config.getThickness(), 2);
-
-#pragma omp parallel for
-    for (int i = 0; i < triangles.size(); i++) {
-        triangles[i].updateSecondFundamentalForm(bendingPreFac, JPreFactor, core_config.getPoissonRatio());
-    }
-}
-
 
 void calcEnergiesAndStresses(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                              std::vector<double> &stretchEnergies, std::vector<double> &bendEnergies,
@@ -69,15 +45,11 @@ void calcEnergiesAndStresses(const std::vector<Node> &nodes, std::vector<Triangl
                              std::vector<Eigen::Matrix<double, 3, 2> > &cauchyStressEigenvecs,
                              const CoreConfig &core_config) {
     double stretchingPreFac = 0.5 * core_config.getThickness() * core_config.getShearModulus();
-    double bendingPreFac = 0.5 * pow(core_config.getThickness(), 3) * core_config.getShearModulus() / 12;
-    double JPreFactor = core_config.getGentFactor() / pow(core_config.getThickness(), 2);
 
     // Loop over triangles and calculate potential energies and energy densities.
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); ++i) {
         Triangle *triangle = &triangles[i];
-        triangle->updateFirstFundamentalForm(stretchingPreFac);
-        triangle->updateSecondFundamentalForm(bendingPreFac, JPreFactor, core_config.getPoissonRatio());
 
         stretchEnergies[i] = triangle->initArea * triangle->stretchEnergyDensity;
         bendEnergies[i] = triangle->initArea * triangle->bendEnergyDensity;

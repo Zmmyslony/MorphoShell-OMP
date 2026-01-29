@@ -354,8 +354,8 @@ void Simulation::run_ansatz(int counter) {
 
         // Calculate all necessary geometry for the ansatz state.
         updateTriangleProperties(counter);
-        updateFirstFundamentalForms(triangles, settings.getCore());
-        updateSecondFundamentalForms(triangles, settings.getCore());
+        // updateFirstFundamentalForms(triangles, settings.getCore());
+        // updateSecondFundamentalForms(triangles, settings.getCore());
 
 
         // Temp LU decomp of triangle metric, used to check invertibility.
@@ -378,7 +378,7 @@ void Simulation::run_ansatz(int counter) {
             size_t stage = initial_stage;
             if (settings.getCore().isFirstTensorSkipped()) { stage++; }
             triangles[i].programmed_metric_inv = metric.inverse();
-            triangles[i].programmed_tau = programmed_taus[i][initial_stage];
+            // triangles[i].programmed_tau = programmed_taus[i][initial_stage];
             triangles[i].programmed_second_fundamental_form = triangles[i].secFF;
         }
     } else {
@@ -598,8 +598,8 @@ void Simulation::updateTriangleProperties(int counter) {
                                                     is_stimulation_modulated, transfer_coefficient, min_height,
                                                     max_height);
         }
-        triangles[i].updateGeometricProperties();
-        triangles[i].updateElasticForce(bending_pre_factor, j_pre_factor, stretching_pre_factor, poisson_ratio);
+        triangles[i].updateGeometricProperties(bending_pre_factor, j_pre_factor, poisson_ratio, stretching_pre_factor);
+        // triangles[i].updateElasticForce(bending_pre_factor, j_pre_factor, stretching_pre_factor, poisson_ratio);
     }
 }
 
