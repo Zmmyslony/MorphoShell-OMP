@@ -73,7 +73,7 @@ void calcCurvatures(
         don't think they have any useful meaning. But the eigenvalues are the
         principal curvatures, just like the usual shape operator.*/
         Eigen::HouseholderQR<Eigen::Matrix<double, 3, 2> > quadraticDecomposition(3, 2);
-        quadraticDecomposition.compute(triangles[i].defGradient);
+        quadraticDecomposition.compute(triangles[i].getDeformationGradient());
 
         /* Extracting the 'R' part relies on the special and under-documented
         way Eigen stores the QR-decomposed matrix, which I believe is the LAPACK

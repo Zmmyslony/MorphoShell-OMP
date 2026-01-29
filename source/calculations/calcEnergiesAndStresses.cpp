@@ -54,19 +54,22 @@ void calcEnergiesAndStresses(const std::vector<Node> &nodes, std::vector<Triangl
         stretchEnergies[i] = triangle->initArea * triangle->stretchEnergyDensity;
         bendEnergies[i] = triangle->initArea * triangle->bendEnergyDensity;
 
+        Eigen::Matrix<double, 3, 2> deformationGradient = triangles[i].getDeformationGradient();
         Eigen::Matrix<double, 2, 3> defGradPseudoInv =
-                (triangle->defGradient.transpose() * triangle->defGradient).inverse() *
-                (triangle->defGradient.transpose());
+                (deformationGradient.transpose() * deformationGradient).inverse() *
+                (deformationGradient.transpose());
 
+
+        Eigen::Matrix2d metric = triangle->getMetric();
         Eigen::Matrix<double, 3, 3> myStrainTensor =
-                0.5 * defGradPseudoInv.transpose() * (triangle->met - triangle->programmedMetInv.inverse()) *
+                0.5 * defGradPseudoInv.transpose() * (metric - triangle->programmedMetInv.inverse()) *
                 defGradPseudoInv;
 
         strainMeasures[i] = sqrt((myStrainTensor.transpose() * myStrainTensor).trace() / 2.0);
 
         Eigen::Matrix<double, 3, 3> cauchyStress =
-                sqrt(triangle->metInvDet) * (2 * triangle->getHalfPK1Stress(stretchingPreFac, triangle->met.inverse())) *
-                triangle->defGradient.transpose();
+                sqrt(triangle->metInvDet) * (2 * triangle->getHalfPK1Stress(stretchingPreFac, metric.inverse(), deformationGradient)) *
+                deformationGradient.transpose();
 
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 3, 3>> eigenSolver(cauchyStress);
 

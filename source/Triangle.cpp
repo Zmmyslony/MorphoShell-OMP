@@ -49,21 +49,29 @@ std::stringstream Triangle::display() {
     msg << "detDialledInvProgMetric = " << "\n" << programmedMetInvDet << std::endl;
     msg << "Dialled in prog tau factor = " << dialledProgTau << std::endl;
     msg << "Dialled in programmed second fundamental form = " << "\n" << programmedSecFF << std::endl;
-    msg << "Deformation gradient = " << "\n" << defGradient << std::endl;
-    msg << "metric = " << "\n" << met << std::endl;
+    msg << "Deformation gradient = " << "\n" << getDeformationGradient() << std::endl;
+    msg << "metric = " << "\n" << getMetric() << std::endl;
     msg << "Det of inverse of Metric = " << "\n" << metInvDet << std::endl;
     msg << "matForPatchSecDerivs = " << "\n" << matForPatchSecDerivs << std::endl;
     msg << "-----------------------------" << std::endl;
     return msg;
 }
 
-Eigen::Matrix<double, 3, 2> Triangle::getHalfPK1Stress(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv) const {
-    return defGradient * (stretchingPrefactor * dialledProgTau *
+Eigen::Matrix2d Triangle::getMetric() const{
+    Eigen::Matrix<double, 3, 2> deformationGradient = getDeformationGradient();
+    return deformationGradient.transpose() * deformationGradient;
+}
+
+Eigen::Matrix<double, 3, 2> Triangle::getHalfPK1Stress(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv, const Eigen::Matrix<double, 3, 2>&
+                                                       deformationGradient) const {
+    return deformationGradient * (stretchingPrefactor * dialledProgTau *
         (programmedMetInv - (metInvDet / programmedMetInvDet) * metInv));
 }
 
-Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv) const {
-    return getHalfPK1Stress(stretchingPrefactor, metInv) * initOutwardSideNormals;
+Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces(
+    double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv, const Eigen::Matrix<double, 3, 2>&
+                                                          deformationGradient) const {
+    return getHalfPK1Stress(stretchingPrefactor, metInv, deformationGradient) * initOutwardSideNormals;
 }
 
 // Returns vectors that normal to triangle edges and point outward
@@ -144,6 +152,18 @@ Eigen::Matrix2d Triangle::getSecondFundamentalForm() const  {
     return secFF;
 }
 
+Eigen::Matrix<double, 3, 2> Triangle::getDeformationGradient() const {
+    const Eigen::Vector3d p0 = *corner_nodes_pos[0];
+    const Eigen::Vector3d p1 = *corner_nodes_pos[1];
+    const Eigen::Vector3d p2 = *corner_nodes_pos[2];
+
+    Eigen::Matrix<double, 3, 2> currSides;
+    currSides.col(0).noalias() = p1 - p0;
+    currSides.col(1).noalias() = p2 - p0;
+    Eigen::Vector3d faceNormal = currSides.col(0).cross(currSides.col(1));
+    return  currSides * invInitSidesMat;
+}
+
 void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre_factor, double poisson_ratio, double stretching_prefactor) {
 /**
  * THIS FUNCTION IS INTENTIONALLY MESSY TO PREVENT
@@ -156,12 +176,12 @@ void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre
     currSides.col(0).noalias() = p1 - p0;
     currSides.col(1).noalias() = p2 - p0;
     Eigen::Vector3d faceNormal = currSides.col(0).cross(currSides.col(1));
-    defGradient.noalias() = currSides * invInitSidesMat;
+    Eigen::Matrix<double, 3, 2> defGradient = currSides * invInitSidesMat;
     currAreaInv = 2 / faceNormal.norm();
     centroid.noalias() = (p0 + p1 + p2) / 3;
     faceNormal *= 0.5 * currAreaInv; // Normalising
 
-    met.noalias() = defGradient.transpose() * defGradient;
+    Eigen::Matrix<double, 2, 2> met = defGradient.transpose() * defGradient;
     Eigen::Matrix<double, 2, 2> metInv = met.inverse();
     metInvDet = metInv.determinant();
 
@@ -194,8 +214,7 @@ void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre
         poisson_ratio * relativeSecFF.trace() * programmedMetInv);
     bendEnergyDensity = gentDerivFac * preGentBendEnergyDensity;
 
-    Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces(stretching_prefactor, metInv);
-
+    Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces(stretching_prefactor, metInv, defGradient);
     Eigen::Matrix<double, 3, 3> triangleEdgeNormals = getTriangleEdgeNormals(currSides, faceNormal);
     Eigen::Matrix<double, 3, 3> normalDerivPiece =
         0.5 * currAreaInv * (patchSecDerivs.transpose() * triangleEdgeNormals);

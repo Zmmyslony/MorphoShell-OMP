@@ -39,8 +39,6 @@ public:
     const Eigen::Vector3d *patch_nodes_pos[3];
     double programmedMetInvDet;     // Determinant of the programmed metric inverse .
 
-    double dialledProgTau; // Dialled in programmed scalar 'tau' factor.
-
     /* Inverse of 2x2 matrix that has (two) initial sides of the triangle as
     columns. Those sides correspond to the two current sides stored in currSides.*/
     Eigen::Matrix<double, 2, 2> invInitSidesMat;
@@ -69,16 +67,14 @@ public:
     double next_programmed_tau = 1;
 
     Eigen::Matrix<double, 2, 2> programmedSecFF;
-    Eigen::Matrix<double, 3, 2> defGradient;
-    Eigen::Matrix<double, 2, 2> met;
 
     /*Matrix that is pre-calculated and then used repeatedly in finding the
     components of the second fundamental form estimated for this triangle. */
     Eigen::Matrix<double, 6, 3> matForPatchSecDerivs;
 
-
     /* Determinant of the inverse of the metric.*/
     double metInvDet;
+    double dialledProgTau; // Dialled in programmed scalar 'tau' factor.
 
     /* Estimated Second Fundamental Form matrix (secFF) of the deformed surface,
     defined (as with the deformation gradient) with respect to the 'material'
@@ -108,19 +104,7 @@ public:
     triangles that share an edge with this triangle.*/
     Eigen::VectorXi edgeSharingTriLabels;
 
-    /* A vector with one component for each non-boundary edge of this triangle,
-    with each entry being either +1.0 or -1.0. A value of +1.0 means that
-    this triangle corresponds to adjTriLabels(0) for the corresponding edge.
-    -1.0 implies adjTriLabels(1) similarly. */
-    Eigen::VectorXi edgeAdjTriLabelSelectors;
     bool isOnBoundary;
-
-    /* Indices (labels) of the 3 nodes that are not vertices of the triangle, but
-    are part of the estimation of the 2nd F.F. for each triangle. For
-    non-boundary triangles these are the non-shared-edge nodes from each of the
-    triangles sharing an edge with this triangle. For boundary triangles one or
-    two of these are missing, and different nodes are chosen based on proximity
-    to this triangle's centroid. There is again no particular order.*/
 
 private:
 
@@ -142,13 +126,15 @@ private:
     Eigen::Matrix<double, 3, 1> getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row, const Eigen::Vector3d& faceNormal, const Eigen::Matrix<double, 2, 2>
                                                     & energyDensityDerivWRTSecFF) const;
 
-    Eigen::Matrix<double, 3, 3> getStretchingForces(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv) const;
+    Eigen::Matrix<double, 3, 3> getStretchingForces(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv, const Eigen::Matrix<double, 3, 2>&
+                                                    deformationGradient) const;
 
     Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals(const Eigen::Matrix<double, 3, 2>& current_sides, const Eigen::Vector3d& face_normal) const;
 
 public:
     Eigen::Matrix<double, 3, 2> getCurrentSides() const;
-    Eigen::Matrix<double, 3, 2> getHalfPK1Stress(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv) const;
+    Eigen::Matrix<double, 3, 2> getHalfPK1Stress(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv, const Eigen::Matrix<double, 3, 2>&
+                                                 deformationGradient) const;
 
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
@@ -172,8 +158,6 @@ public:
         programmedMetInvDet = DBL_MAX;
         dialledProgTau = DBL_MAX;
         programmedSecFF.fill(DBL_MAX);
-        defGradient.fill(DBL_MAX);
-        met.fill(DBL_MAX);
         metInvDet = DBL_MAX;
         matForPatchSecDerivs.fill(DBL_MAX);
         bendEnergyDensity = DBL_MAX;
@@ -181,13 +165,11 @@ public:
     }
 
     Triangle(int label, int id_0, int id_1, int id_2, const std::vector<Node> &nodes);
+    Eigen::Matrix<double, 3, 2> getDeformationGradient() const;
 
-    // Declare other member functions.
-
-    // Debugging function to display all member data.
     std::stringstream display();
     Eigen::Matrix2d getSecondFundamentalForm() const ;
-
+    Eigen::Matrix2d getMetric() const;
     void updateGeometricProperties(double bending_pre_factor, double j_pre_factor, double poisson_ratio, double stretching_prefactor);
 
     void updateAngleDeficits(std::vector<double> &angleDeficits) const;

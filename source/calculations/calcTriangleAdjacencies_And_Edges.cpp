@@ -252,21 +252,6 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
     edges.shrink_to_fit();
 
 
-    /* Calculate edgeAdjTriLabelSelectors for each triangle. See
-    Triangle.hpp for more info.*/
-    for (int i = 0; i < triangles.size(); ++i) {
-        triangles[i].edgeAdjTriLabelSelectors.resize(triangles[i].edgeSharingTriLabels.size());
-
-        for (int ed = 0; ed < triangles[i].edgeAdjTriLabelSelectors.size(); ++ed) {
-
-            if (edges[triangles[i].edgeLabels(ed)].adjTriLabels(0) == i) {
-                triangles[i].edgeAdjTriLabelSelectors(ed) = 1.0;
-            } else {
-                triangles[i].edgeAdjTriLabelSelectors(ed) = -1.0;
-            }
-        }
-    }
-
     /* Finally, do some checking of some simple things as a bug check.
     Note the third condition is not mathematically prohibited but would
     indicate a very concerning mesh where some triangles share no edges with

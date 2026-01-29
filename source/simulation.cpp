@@ -368,7 +368,8 @@ void Simulation::run_ansatz(int counter) {
 #pragma omp parallel for
         for (int i = 0; i < triangles.size(); ++i) {
             // Test for invertibility of metric before taking inverse.
-            Eigen::Matrix2d metric = triangles[i].defGradient.transpose() * triangles[i].defGradient;
+            Eigen::Matrix<double, 3, 2> deformationGradient = triangles[i].getDeformationGradient();
+            Eigen::Matrix2d metric = deformationGradient.transpose() * deformationGradient;
             tempMetricDecomp.compute(metric);
             if (!tempMetricDecomp.isInvertible()) {
                 throw std::runtime_error(triangles[i].display().str() +
@@ -431,48 +432,7 @@ void Simulation::setup_imposed_seide_deformations(double& s1, int highest_node, 
     for (int n = 0; n < nodes.size(); ++n) { nodeUnstressedConePosits[n] = nodes[n].pos; }
     s1 = sqrt(nodes[highest_node].pos(0) * nodes[highest_node].pos(0) +
         nodes[highest_node].pos(1) * nodes[highest_node].pos(1)) / sin(cone_angle);
-
-    //    Eigen::Vector3d testTriCurrCentroid;
-    //    testTriCurrCentroid = (nodes[triangles[settings.testTriangle].vertexLabels(0)].pos +
-    //                           nodes[triangles[settings.testTriangle].vertexLabels(1)].pos +
-    //                           nodes[triangles[settings.testTriangle].vertexLabels(2)].pos) / 3;
-    //sTest = sqrt(testTriCurrCentroid(0)*testTriCurrCentroid(0) + testTriCurrCentroid(1)*testTriCurrCentroid(1)) / sin(settings.ConeAngle);
 }
-
-
-//void Simulation::impose_seide_deformation(double s1, const std::vector<Eigen::Vector3d> &nodeUnstressedConePosits) {
-//    if (settings.is_seide_deformations_enabled) {
-//        double pInit = 3.0 * (settings.shear_modulus * settings.sheet_thickness *
-//                              settings.sheet_thickness); // So we don't have to start all the way from p=0, chosen based on previous sims.
-//        settings.p = pInit + time * settings.p_speed_prefactor * settings.shear_modulus * settings.sheet_thickness *
-//                             settings.sheet_thickness / settings.bending_long_time;
-//
-//        for (int n = 0; n < nodes.size(); ++n) {
-//            if (nodes[n].isSeideDisplacementEnabled || step_count == 0) {
-//
-//                double tCone = settings.sheet_thickness / sqrt(settings.lambda);
-//
-//                double polarAng = atan2(nodeUnstressedConePosits[n](1), nodeUnstressedConePosits[n](0));
-//                double s = sqrt(nodeUnstressedConePosits[n](0) * nodeUnstressedConePosits[n](0) +
-//                                nodeUnstressedConePosits[n](1) * nodeUnstressedConePosits[n](1)) /
-//                           sin(settings.cone_angle);
-//                Eigen::Vector3d uHat;
-//                uHat << sin(settings.cone_angle) * cos(polarAng), sin(settings.cone_angle) * sin(polarAng), -cos(
-//                        settings.cone_angle);
-//                Eigen::Vector3d wHat;
-//                wHat << -cos(settings.cone_angle) * cos(polarAng), -cos(settings.cone_angle) *
-//                                                                   sin(polarAng), -sin(settings.cone_angle);
-//                double u = -settings.p * log(s / s1) /
-//                           (2.0 * M_PI * settings.youngs_modulus * tCone * sin(settings.cone_angle) *
-//                            cos(settings.cone_angle));
-//                double w = -settings.p * (log(s / s1) + settings.poisson_ratio) /
-//                           (2.0 * M_PI * settings.youngs_modulus * tCone * cos(settings.cone_angle) *
-//                            cos(settings.cone_angle));
-//                nodes[n].pos = nodeUnstressedConePosits[n] + u * uHat + w * wHat;
-//            }
-//        }
-//    }
-//}
 
 
 void Simulation::first_step_configuration() {
