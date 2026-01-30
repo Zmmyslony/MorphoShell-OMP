@@ -94,12 +94,12 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
         if (settings.getCore().isLceModeEnabled()) {
             triangles[i].programmed_metric_info << triangles[i].programmed_metric_info(0), 1, triangles[i].programmed_metric_info(2);
             triangles[i].programmed_tau = 1;
-            triangles[i].programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Zero();
+            triangles[i].previous_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Zero();
 
         } else {
-            triangles[i].programmed_metric_inv = Eigen::Matrix<double, 2, 2>::Identity();
+            triangles[i].previous_metric_inverse = Eigen::Matrix<double, 2, 2>::Identity();
             triangles[i].programmed_tau = 1.0;
-            triangles[i].programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Zero();
+            triangles[i].previous_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Zero();
         }
     }
 }

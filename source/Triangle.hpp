@@ -34,58 +34,48 @@ triangular element, such as vertices, area etc.*/
 
 class Triangle {
 public:
-    const Eigen::Vector3d *corner_nodes_pos[3];
-    Eigen::Vector3d centroid;
-    const Eigen::Vector3d *patch_nodes_pos[3];
-    double programmedMetInvDet;     // Determinant of the programmed metric inverse .
-
-    /* Inverse of 2x2 matrix that has (two) initial sides of the triangle as
-    columns. Those sides correspond to the two current sides stored in currSides.*/
-    Eigen::Matrix<double, 2, 2> invInitSidesMat;
-
-    /* The reference (initial) state in-triangle-plane *outward* normals of
-    each triangle's sides (with lengths = corresponding side lengths).
-    initOutwardTriNormals.col(v) is opposite vertexLabels(v).*/
-    Eigen::Matrix<double, 2, 3> initOutwardSideNormals;
 
     /* Matrix representing the inverse of the *energetically* favoured metric for
     this triangle, induced by a programmed nematic director field, for example.
     The matrix stored here is the 'dialled in' value, which is used to prevent
     anything too explosive happening. */
-    Eigen::Matrix<double, 2, 2> programmedMetInv;
-
-    Eigen::Vector3d programmed_metric_info = {1, 1, 1};
-    Eigen::Vector3d next_programmed_metric_info = {1, 1, 1};
-
-    Eigen::Matrix2d programmed_metric_inv = Eigen::Matrix<double, 2, 2>::Identity();
+    Eigen::Matrix2d dialled_metric_inverse;
+    Eigen::Matrix2d previous_metric_inverse = Eigen::Matrix<double, 2, 2>::Identity();
     Eigen::Matrix2d next_programmed_metric_inv = Eigen::Matrix<double, 2, 2>::Identity();
 
-    Eigen::Matrix2d programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Identity();
+    Eigen::Matrix2d dialled_second_fundamental_form;
+    Eigen::Matrix2d previous_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Identity();
     Eigen::Matrix2d next_programmed_second_fundamental_form = Eigen::Matrix<double, 2, 2>::Identity();
 
-    double programmed_tau = 1;
-    double next_programmed_tau = 1;
-
-    Eigen::Matrix<double, 2, 2> programmedSecFF;
+    /* The reference (initial) state in-triangle-plane *outward* normals of
+each triangle's sides (with lengths = corresponding side lengths).
+initOutwardTriNormals.col(v) is opposite vertexLabels(v).*/
+    Eigen::Matrix<double, 2, 3> initOutwardSideNormals;
 
     /*Matrix that is pre-calculated and then used repeatedly in finding the
     components of the second fundamental form estimated for this triangle. */
     Eigen::Matrix<double, 6, 3> matForPatchSecDerivs;
+    /* Inverse of 2x2 matrix that has (two) initial sides of the triangle as
+    columns. Those sides correspond to the two current sides stored in currSides.*/
+    Eigen::Matrix2d invInitSidesMat;
+
+    Eigen::Vector3d programmed_metric_info = {1, 1, 1};
+    Eigen::Vector3d next_programmed_metric_info = {1, 1, 1};
+
+    const Eigen::Vector3d *corner_nodes_pos[3];
+    const Eigen::Vector3d *patch_nodes_pos[3];
+    Eigen::Vector3d centroid;
+
+    double programmedMetInvDet;     // Determinant of the programmed metric inverse .
+    double programmed_tau = 1;
+    double next_programmed_tau = 1;
 
     /* Determinant of the inverse of the metric.*/
     double metInvDet;
     double dialledProgTau; // Dialled in programmed scalar 'tau' factor.
 
-    /* Estimated Second Fundamental Form matrix (secFF) of the deformed surface,
-    defined (as with the deformation gradient) with respect to the 'material'
-    coordinate system, i.e. the coordinate chart that used to be the (x,y)
-    cartesians of the flat initial state, and then deformed with the sheet. This
-    is a 2x2 symmetric matrix. */
-
-    // Forces exerted by this triangle on nodes associated with it
-    Eigen::Vector3d *node_triangle_force[6];
-    // Magnetisation density expressed in the reference system coordinates.
-    Eigen::Vector3d reference_magnetisation_density = {0, 0, 0};
+    Eigen::Vector3d *node_triangle_force[6]; // Forces exerted by this triangle on nodes associated with it
+    Eigen::Vector3d reference_magnetisation_density = {0, 0, 0};   // Magnetisation density expressed in the reference system coordinates.
     Eigen::Vector3d reference_node_positions[3];
 
     double local_elongation = 1;
@@ -154,10 +144,10 @@ public:
         currAreaInv = DBL_MAX;
         initOutwardSideNormals.fill(DBL_MAX);
         invInitSidesMat.fill(DBL_MAX);
-        programmedMetInv.fill(DBL_MAX);
+        dialled_metric_inverse.fill(DBL_MAX);
         programmedMetInvDet = DBL_MAX;
         dialledProgTau = DBL_MAX;
-        programmedSecFF.fill(DBL_MAX);
+        dialled_second_fundamental_form.fill(DBL_MAX);
         metInvDet = DBL_MAX;
         matForPatchSecDerivs.fill(DBL_MAX);
         bendEnergyDensity = DBL_MAX;

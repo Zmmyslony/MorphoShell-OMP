@@ -62,7 +62,7 @@ void calcEnergiesAndStresses(const std::vector<Node> &nodes, std::vector<Triangl
 
         Eigen::Matrix2d metric = triangle->getMetric();
         Eigen::Matrix<double, 3, 3> myStrainTensor =
-                0.5 * defGradPseudoInv.transpose() * (metric - triangle->programmedMetInv.inverse()) *
+                0.5 * defGradPseudoInv.transpose() * (metric - triangle->dialled_metric_inverse.inverse()) *
                 defGradPseudoInv;
 
         strainMeasures[i] = sqrt((myStrainTensor.transpose() * myStrainTensor).trace() / 2.0);

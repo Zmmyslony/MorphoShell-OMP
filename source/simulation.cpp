@@ -379,9 +379,9 @@ void Simulation::run_ansatz(int counter) {
             }
             size_t stage = initial_stage;
             if (settings.getCore().isFirstTensorSkipped()) { stage++; }
-            triangles[i].programmed_metric_inv = metric.inverse();
+            triangles[i].previous_metric_inverse = metric.inverse();
             // triangles[i].programmed_tau = programmed_taus[i][initial_stage];
-            triangles[i].programmed_second_fundamental_form = triangles[i].getSecondFundamentalForm();
+            triangles[i].previous_second_fundamental_form = triangles[i].getSecondFundamentalForm();
         }
     } else {
         dial_in_factor = dialInFactorToStartFrom;
@@ -396,7 +396,7 @@ void Simulation::run_ansatz(int counter) {
         if (settings.getCore().isFirstTensorSkipped()) {
             for (int i = 0; i < triangles.size(); ++i) {
                 triangles[i].programmed_metric_info = programmed_metric_infos[i][initial_stage + 1];
-                triangles[i].programmed_second_fundamental_form = programmed_second_fundamental_forms[i][initial_stage + 1];
+                triangles[i].previous_second_fundamental_form = programmed_second_fundamental_forms[i][initial_stage + 1];
             }
         }
     }

@@ -45,10 +45,10 @@ std::stringstream Triangle::display() {
     msg << "Labels of edges: " << edgeLabels.transpose() << std::endl;
     msg << "Initial outward side normals = " << "\n" << initOutwardSideNormals << std::endl;
     msg << "invInitInPlaneSidesMat = " << "\n" << invInitSidesMat << std::endl;
-    msg << "Dialled in inverse of programmed metric = " << "\n" << programmedMetInv << std::endl;
+    msg << "Dialled in inverse of programmed metric = " << "\n" << dialled_metric_inverse << std::endl;
     msg << "detDialledInvProgMetric = " << "\n" << programmedMetInvDet << std::endl;
     msg << "Dialled in prog tau factor = " << dialledProgTau << std::endl;
-    msg << "Dialled in programmed second fundamental form = " << "\n" << programmedSecFF << std::endl;
+    msg << "Dialled in programmed second fundamental form = " << "\n" << dialled_second_fundamental_form << std::endl;
     msg << "Deformation gradient = " << "\n" << getDeformationGradient() << std::endl;
     msg << "metric = " << "\n" << getMetric() << std::endl;
     msg << "Det of inverse of Metric = " << "\n" << metInvDet << std::endl;
@@ -65,7 +65,7 @@ Eigen::Matrix2d Triangle::getMetric() const{
 Eigen::Matrix<double, 3, 2> Triangle::getHalfPK1Stress(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv, const Eigen::Matrix<double, 3, 2>&
                                                        deformationGradient) const {
     return deformationGradient * (stretchingPrefactor * dialledProgTau *
-        (programmedMetInv - (metInvDet / programmedMetInvDet) * metInv));
+        (dialled_metric_inverse - (metInvDet / programmedMetInvDet) * metInv));
 }
 
 Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces(
@@ -86,7 +86,7 @@ Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals(const Eigen::Matrix
 
 Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row, const Eigen::Vector3d& faceNormal, const Eigen::Matrix<double, 2, 2>
                                                           & energyDensityDerivWRTSecFF) const {
-    Eigen::Matrix<double, 2, 2> secFFDerivPreFacMat;
+    Eigen::Matrix2d secFFDerivPreFacMat;
 
     secFFDerivPreFacMat(0, 0) = matForPatchSecDerivs(row, 0);
     secFFDerivPreFacMat(0, 1) = matForPatchSecDerivs(row, 1);
@@ -102,7 +102,7 @@ Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d&
 }
 
 Eigen::Matrix<double, 3, 1> Triangle::getBendingForcePatch(int row, const Eigen::Vector3d& faceNormal, const Eigen::Matrix<double, 2, 2>& energyDensityDerivWRTSecFF) const {
-    Eigen::Matrix<double, 2, 2> secFFDerivPreFacMat;
+    Eigen::Matrix2d secFFDerivPreFacMat;
 
     secFFDerivPreFacMat(0, 0) = matForPatchSecDerivs(row, 0);
     secFFDerivPreFacMat(0, 1) = matForPatchSecDerivs(row, 1);
@@ -166,7 +166,7 @@ Eigen::Matrix<double, 3, 2> Triangle::getDeformationGradient() const {
 
 void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre_factor, double poisson_ratio, double stretching_prefactor) {
 /**
- * THIS FUNCTION IS INTENTIONALLY MESSY TO PREVENT
+ * This function has been rewritten for peformance. Please benchmark any changes to it.
  **/
     const Eigen::Vector3d p0 = *corner_nodes_pos[0];
     const Eigen::Vector3d p1 = *corner_nodes_pos[1];
@@ -181,11 +181,12 @@ void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre
     centroid.noalias() = (p0 + p1 + p2) / 3;
     faceNormal *= 0.5 * currAreaInv; // Normalising
 
-    Eigen::Matrix<double, 2, 2> met = defGradient.transpose() * defGradient;
-    Eigen::Matrix<double, 2, 2> metInv = met.inverse();
+    Eigen::Matrix2d met = defGradient.transpose() * defGradient;
+    Eigen::Matrix2d metInv = met.inverse();
     metInvDet = metInv.determinant();
 
-    Eigen::Matrix<double, 3, 3> patchSecDerivs = p0 * matForPatchSecDerivs.row(0)
+    Eigen::Matrix3d patchSecDerivs =
+        p0 * matForPatchSecDerivs.row(0)
      + p1 * matForPatchSecDerivs.row(1)
      + p2 * matForPatchSecDerivs.row(2)
      + *patch_nodes_pos[0] * matForPatchSecDerivs.row(3)
@@ -193,13 +194,13 @@ void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre
      + *patch_nodes_pos[2] * matForPatchSecDerivs.row(5);
 
     Eigen::Vector3d vectorOfSecFFComps = patchSecDerivs.transpose() * faceNormal;
-    Eigen::Matrix<double, 2, 2> secFF;
+    Eigen::Matrix2d secFF;
     secFF(0, 0) = vectorOfSecFFComps(0);
     secFF(0, 1) = vectorOfSecFFComps(1);
     secFF(1, 0) = vectorOfSecFFComps(1);
     secFF(1, 1) = vectorOfSecFFComps(2);
 
-    Eigen::Matrix<double, 2, 2> relativeSecFF = programmedMetInv * (secFF - programmedSecFF);
+    Eigen::Matrix2d relativeSecFF = dialled_metric_inverse * (secFF - dialled_second_fundamental_form);
     double areaMultiplier = bending_pre_factor * programmedMetInvDet;
     double J = areaMultiplier * j_pre_factor;
 
@@ -209,20 +210,21 @@ void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre
     double gentDerivFac = (1 + 2 * preGentBendEnergyDensity / J);
 
     /* Calculate the derivative of the bending energy density with respect to the secFF. */
-    Eigen::Matrix<double, 2, 2> energyDensityDerivWRTSecFF = gentDerivFac * 2 * areaMultiplier *
-    ((1 - poisson_ratio) * relativeSecFF * programmedMetInv +
-        poisson_ratio * relativeSecFF.trace() * programmedMetInv);
+    Eigen::Matrix2d energyDensityDerivWRTSecFF = gentDerivFac * 2 * areaMultiplier *
+    ((1 - poisson_ratio) * relativeSecFF * dialled_metric_inverse +
+        poisson_ratio * relativeSecFF.trace() * dialled_metric_inverse);
     bendEnergyDensity = gentDerivFac * preGentBendEnergyDensity;
 
-    Eigen::Matrix<double, 3, 3> stretchForces = getStretchingForces(stretching_prefactor, metInv, defGradient);
-    Eigen::Matrix<double, 3, 3> triangleEdgeNormals = getTriangleEdgeNormals(currSides, faceNormal);
-    Eigen::Matrix<double, 3, 3> normalDerivPiece =
+    Eigen::Matrix3d stretchForces = getStretchingForces(stretching_prefactor, metInv, defGradient);
+    Eigen::Matrix3d triangleEdgeNormals = getTriangleEdgeNormals(currSides, faceNormal);
+    Eigen::Matrix3d normalDerivPiece =
         0.5 * currAreaInv * (patchSecDerivs.transpose() * triangleEdgeNormals);
 
-    for (int n = 0; n < 3; ++n) {
+    for (int n = 0; n < 3; n++) {
         node_triangle_force[n]->noalias() = getBendingForceNode(normalDerivPiece.col(n), n, faceNormal, energyDensityDerivWRTSecFF) + stretchForces.col(n);
         node_triangle_force[n + 3]->noalias() = getBendingForcePatch(n + 3, faceNormal, energyDensityDerivWRTSecFF);
     }
+
 }
 
 
@@ -263,11 +265,11 @@ void Triangle::updateProgrammedMetricImplicit(double dirAngle, double lambda, do
     double lambdaToTheMinus2 = pow(lambda, -2);
     double lambdaToThe2Nu = pow(lambda, 2 * nu);
 
-    programmedMetInv(0, 0) = lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
-    programmedMetInv(0, 1) = (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
-    programmedMetInv(1, 0) = programmedMetInv(0, 1);
-    programmedMetInv(1, 1) = lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
-    programmedMetInvDet = programmedMetInv.determinant();
+    dialled_metric_inverse(0, 0) = lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
+    dialled_metric_inverse(0, 1) = (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
+    dialled_metric_inverse(1, 0) = dialled_metric_inverse(0, 1);
+    dialled_metric_inverse(1, 1) = lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
+    programmedMetInvDet = dialled_metric_inverse.determinant();
 }
 
 void Triangle::updateProgrammedMetricImplicit(int stage_counter, double dial_in_factor) {
@@ -286,7 +288,7 @@ void Triangle::updateProgrammedTensorsDynamically(int stage_counter, double dial
     Eigen::Vector3d metric_current =
         interpolate(programmed_metric_info, next_programmed_metric_info, dial_in_factor);
     Eigen::Matrix<double, 2, 2> bend_programmed =
-        interpolate(programmed_second_fundamental_form, next_programmed_second_fundamental_form,
+        interpolate(previous_second_fundamental_form, next_programmed_second_fundamental_form,
                     dial_in_factor);
 
     double dirAng = metric_current(0);
@@ -300,17 +302,17 @@ void Triangle::updateProgrammedTensorsDynamically(int stage_counter, double dial
     local_elongation = 1 - (1 - lambda) * local_magnitude;
 
     updateProgrammedMetricImplicit(dirAng, local_elongation, nu);
-    programmedSecFF = bend_programmed * (1 - local_magnitude);
+    dialled_second_fundamental_form = bend_programmed * (1 - local_magnitude);
     //    programmedSecFF = bend_programmed * local_magnitude;
 }
 
 void Triangle::updateProgrammedMetricExplicit(int stage_counter, double dial_in_factor) {
-    programmedMetInv = interpolate(programmed_metric_inv, next_programmed_metric_inv, dial_in_factor);
-    programmedMetInvDet = programmedMetInv.determinant();
+    dialled_metric_inverse = interpolate(previous_metric_inverse, next_programmed_metric_inv, dial_in_factor);
+    programmedMetInvDet = dialled_metric_inverse.determinant();
 }
 
 void Triangle::updateProgrammedSecondFundamentalForm(int stage_counter, double dial_in_factor_root) {
-    programmedSecFF = interpolate(programmed_second_fundamental_form,
+    dialled_second_fundamental_form = interpolate(previous_second_fundamental_form,
                                   next_programmed_second_fundamental_form, dial_in_factor_root);
 }
 
