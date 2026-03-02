@@ -192,17 +192,24 @@ void Node::addForce()
 void Node::advanceDynamics(double dt) {
     const Eigen::Vector3d acceleration = force / mass;
 
+    // Note: Specific algorithm does not make a significant impact on the
+    // runtime/convergence.
+
     // Symplectic Euler integration
     // velocity += dt * acceleration;
     // position += dt * velocity;
 
-    // Velocity-Verlet integration
-    // velocity += (force + prev_force) / (2 * mass) * dt;
-    // position += velocity * dt + 1 / 2 * acceleration * dt * dt;
+    // Symplectic Euler integration with acceleration (UNDERESTIMATES SPEED)
+    // velocity += dt * acceleration;
+    // position += dt * velocity + dt * dt * acceleration / 2;
+
+    // Velocity-Verlet integration (least stable)
+    // velocity += (force + prev_force) * dt / (2 * mass) ;
+    // position += velocity * dt + acceleration * dt * dt / 2;
     // prev_force = force;
 
     // Leapfrog integration:
-    velocity += 1 / 2 * acceleration;
-    position += velocity * dt + 1/2 * acceleration * dt * dt;
-    velocity += 1 / 2 * acceleration;
+    velocity += acceleration * dt / 2;
+    position += velocity * dt + acceleration * dt * dt / 2;
+    velocity += acceleration * dt / 2;
 }
