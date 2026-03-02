@@ -44,7 +44,7 @@ void configureNodeAdjacency(std::vector<Node> &nodes, const std::vector<Edge> &e
     for easy printing out to std::cout etc. */
 
     for (auto &edge: edges) {
-        nodes[edge.nodeLabels(0)].neighbourNodeLabels.emplace_back(edge.nodeLabels(1));
-        nodes[edge.nodeLabels(1)].neighbourNodeLabels.emplace_back(edge.nodeLabels(0));
+        nodes[edge.nodeLabels.first].neighbourNodeLabels.emplace_back(edge.nodeLabels.second);
+        nodes[edge.nodeLabels.second].neighbourNodeLabels.emplace_back(edge.nodeLabels.first);
     }
 }

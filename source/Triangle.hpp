@@ -92,7 +92,7 @@ initOutwardTriNormals.col(v) is opposite vertexLabels(v).*/
 
     /* Labels (and indices in the triangles' container vector) of the other
     triangles that share an edge with this triangle.*/
-    Eigen::VectorXi edgeSharingTriLabels;
+    std::vector<unsigned int> edgeSharingTriLabels;
 
     bool isOnBoundary;
 
@@ -139,7 +139,7 @@ public:
         label = -1;
         isOnBoundary = false;
         vertexLabels.fill(-1);
-        edgeLabels.fill(INT_MAX);
+        edgeLabels.fill(-1);
         initArea = DBL_MAX;
         currAreaInv = DBL_MAX;
         initOutwardSideNormals.fill(DBL_MAX);

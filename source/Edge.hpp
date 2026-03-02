@@ -43,22 +43,12 @@ public:
 
     /* Labels (and indexes in the nodes' container vector) of the nodes that the
     edge is defined to start and end at.*/
-    Eigen::Vector2i nodeLabels;
+    std::pair<unsigned int, unsigned int> nodeLabels;
 
     /* Labels (and indices in the triangles' container vector) of the (either 1 or
     2) triangles that this edge is an edge of. We term these triangles 'adjacent'
     to the edge.*/
-    Eigen::VectorXi adjTriLabels;
-
-    /* Labels (and indexes in the nodes' container vector) of the 'other' nodes
-    that the triangles left and right of the edge have as vertices (i.e. that
-    are not one of the edge nodes)*/
-    //int otherNodeLabel_L;
-    //int otherNodeLabel_R;
-
-    /* Boolean representing whether the edge is on the boundary of the sample
-    (true) or not (false).*/
-    bool isOnBoundary;
+    std::vector<unsigned int> adjTriLabels;
 
     /*Constructor, taking a single argument which is an output file name
     that gets the debugging display function to print to a particular file, as
@@ -67,18 +57,30 @@ public:
     for debugging. */
     Edge() {
         label = INT_MAX;
-        nodeLabels.fill(INT_MAX);
-        adjTriLabels.fill(INT_MAX);
-        //otherNodeLabel_L = -9876;
-        //otherNodeLabel_L = -4321;
-        isOnBoundary = false;
+        nodeLabels = {UINT_MAX, UINT_MAX};
     }
 
-    // Declare other member functions.
+    Edge(unsigned int edge_label, unsigned int first_node_label, unsigned int second_node_label, unsigned int triangle_label);
+
+    bool isBoundary();
 
     // Debugging function to display all member data.
     void display();
 
+    bool operator==(const Edge &rhs) const;
 };
+
+
+struct Hash {public:
+    std::size_t operator()(const Edge& edge) const {
+        return UINT32_MAX * static_cast<std::size_t>(edge.nodeLabels.first) + static_cast<std::size_t>(edge.nodeLabels.second) ;
+
+        return std::hash<unsigned int>()(edge.nodeLabels.first) ^ std::hash<unsigned int>()(edge.nodeLabels.second);
+        // std::size_t h1 = std::hash<unsigned int>{}(edge.nodeLabels.first);
+        // std::size_t h2 = std::hash<unsigned int>{}(edge.nodeLabels.first);
+        // return h1 ^ (h2 << 1); // or use boost::hash_combine (see Discussion) https://en.cppreference.com/w/Talk:cpp/utility/hash
+    }
+};
+
 
 #endif

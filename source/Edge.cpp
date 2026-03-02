@@ -31,11 +31,33 @@ left in the header file for clarity there*/
 
 //This is a debugging tool to display the edge's data
 void Edge::display() {
-    std::cout << "-----------------------------" << std::boolalpha << std::endl;
-    std::cout << "Edge " << label << ":" << std::endl;
-    std::cout << "Node labels " << nodeLabels.transpose() << std::endl;
-    std::cout << "Adjacent triangle labels: " << adjTriLabels.transpose() << std::endl;
-    //std::cout << "Left and Right 'other' (non-edge) node labels: " << otherNodeLabel_L << ", " << otherNodeLabel_R << std::endl;
-    std::cout << "Boundary indicator: " << isOnBoundary << std::endl;
-    std::cout << "-----------------------------" << std::endl;
+    // std::cout << "-----------------------------" << std::boolalpha << std::endl;
+    // std::cout << "Edge " << label << ":" << std::endl;
+    // std::cout << "Node labels " << nodeLabels.transpose() << std::endl;
+    // std::cout << "Adjacent triangle labels: " << adjTriLabels.transpose() << std::endl;
+    // //std::cout << "Left and Right 'other' (non-edge) node labels: " << otherNodeLabel_L << ", " << otherNodeLabel_R << std::endl;
+    // std::cout << "Boundary indicator: " << isOnBoundary << std::endl;
+    // std::cout << "-----------------------------" << std::endl;
+}
+
+bool Edge::operator==(const Edge& rhs) const {
+    return nodeLabels.first == rhs.nodeLabels.first && nodeLabels.second == rhs.nodeLabels.second;
+}
+
+bool operator==(const Edge& lhs, const Edge& rhs) {
+    return lhs.nodeLabels.first == rhs.nodeLabels.first && lhs.nodeLabels.second == rhs.nodeLabels.second;
+}
+
+Edge::Edge(unsigned int edge_label, unsigned int first_node_label, unsigned int second_node_label, unsigned int triangle_label) {
+    label = edge_label;
+    if (first_node_label < second_node_label) {
+        nodeLabels = {first_node_label, second_node_label};
+    } else {
+        nodeLabels = {second_node_label, first_node_label};
+    }
+    adjTriLabels.push_back(triangle_label);
+}
+
+bool Edge::isBoundary() {
+    return adjTriLabels.size() == 1;
 }

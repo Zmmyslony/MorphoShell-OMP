@@ -164,39 +164,39 @@ void Simulation::configure_topological_properties() {
     Also calculate the total initial perimeter of the sample, to be used as a
     characteristic sample length in estimating characteristic times, time steps
     etc.*/
-    int numBoundaryEdges = 0;
+    int boundary_edge_count = 0;
     std::vector<double> initBoundaryEdgeLengths(edges.size());
 
-#pragma omp parallel for
+#pragma omp parallel for reduction(+: boundary_edge_count)
     for (int i = 0; i < edges.size(); i++) {
-        if (edges[i].isOnBoundary) {
-            numBoundaryEdges += 1;
+        if (edges[i].isBoundary()) {
+            boundary_edge_count += 1;
 
-            nodes[edges[i].nodeLabels(0)].isOnBoundary = true;
-            nodes[edges[i].nodeLabels(1)].isOnBoundary = true;
+            nodes[edges[i].nodeLabels.first].isOnBoundary = true;
+            nodes[edges[i].nodeLabels.second].isOnBoundary = true;
 
             //If chosen in settings, clamp whole boundary in addition to clamp
             //indicators from data file.
             if (settings.getCore().isBoundaryClamped()) {
-                nodes[edges[i].nodeLabels(0)].clamp(settings.getCore());
-                nodes[edges[i].nodeLabels(1)].clamp(settings.getCore());
+                nodes[edges[i].nodeLabels.first].clamp(settings.getCore());
+                nodes[edges[i].nodeLabels.second].clamp(settings.getCore());
             }
 
             // Store initial length of this boundary edge
-            initBoundaryEdgeLengths[i] = (nodes[edges[i].nodeLabels(0)].position - nodes[edges[i].nodeLabels(1)].position).norm();
+            initBoundaryEdgeLengths[i] = (nodes[edges[i].nodeLabels.first].position - nodes[edges[i].nodeLabels.second].position).norm();
         }
     }
 
     double initPerimeter = kahanSum(initBoundaryEdgeLengths);
     characteristic_long_length = initPerimeter;
 
-    if (3 * triangles.size() != 2 * edges.size() - numBoundaryEdges) {
+    if (3 * triangles.size() != 2 * edges.size() - boundary_edge_count) {
         throw std::runtime_error(
             "Something has gone wrong in calculating triangle adjacencies and/or edges: the current edge and triangle counts violate a topological identity.");
     }
 
     std::cout << "Edges count = " << edges.size() << std::endl;
-    std::cout << "Boundary edges count = " << numBoundaryEdges << std::endl;
+    std::cout << "Boundary edges count = " << boundary_edge_count << std::endl;
 
     std::cout << std::endl;
     std::cout << "Initial perimeter = " << initPerimeter << std::endl;
