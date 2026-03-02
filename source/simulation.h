@@ -91,8 +91,11 @@ class Simulation
 
     // For LCE mode.
     double lambda = 1;
-
+#ifdef _WIN32
+    std::chrono::steady_clock::time_point start_time;
+#else
     std::chrono::system_clock::time_point start_time;
+#endif
 
     std::string settings_filename;
     std::string initialisation_filename;

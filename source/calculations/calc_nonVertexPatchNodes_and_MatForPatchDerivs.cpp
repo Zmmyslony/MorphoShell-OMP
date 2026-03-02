@@ -61,9 +61,13 @@ void validatePatchSearch(const std::vector<double> &patch_values, double patch_t
 
 void createNodePatches(const std::vector<Node> &nodes, std::vector<Triangle> &triangles, double patch_threshold) {
     std::vector<double> patch_values(triangles.size());
+    auto start = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for
     for (int i = 0; i < triangles.size(); i++) {
         patch_values[i] = triangles[i].updateMatForPatchDerivs(triangles, nodes);
     }
     validatePatchSearch(patch_values, patch_threshold);
+    auto duration = std::chrono::high_resolution_clock::now() - start;
+    // std::cout << "############## PATCH NODE CREATION " << std::chrono::duration_cast<std::chrono::microseconds>(duration).count() << std::endl;
+    // throw std::runtime_error("");
 }

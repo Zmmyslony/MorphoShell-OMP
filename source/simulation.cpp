@@ -39,7 +39,7 @@
 typedef teestream<char, std::char_traits<char>> basic_teestream;
 
 std::pair<double, double> mean_dev(const std::vector<int>& times) {
-    double mean = double(std::accumulate(times.begin(), times.end(), 0.0)) / double(times.size());
+    double mean = static_cast<double>(std::accumulate(times.begin(), times.end(), 0.0)) / static_cast<double>(times.size());
     double dev = 0;
     for (const auto& el : times) { dev += std::pow(el - mean, 2); }
     dev /= double(times.size());
@@ -113,7 +113,7 @@ void Simulation::read_vtk_data(const CoreConfig& config) {
                 initialisation_filename, initial_stage, dialInFactorToStartFrom, nodeAnsatzPositions, ansatz_filename,
                 config);
 
-    stage_count = (int)inverted_programmed_metrics.size();
+    stage_count = static_cast<int>(inverted_programmed_metrics.size());
     updateProgrammedValues(1);
 }
 
@@ -362,10 +362,6 @@ void Simulation::run_ansatz(int counter) {
         // updateSecondFundamentalForms(triangles, settings.getCore());
 
 
-        // Temp LU decomp of triangle metric, used to check invertibility.
-        Eigen::FullPivLU<Eigen::Matrix<double, 2, 2>> tempMetricDecomp;
-
-
         /* Alter inverted_programmed_metrics[initial_stage] and similar to change where
         the programmed quantities are dialling from.*/
 #pragma omp parallel for
@@ -373,7 +369,7 @@ void Simulation::run_ansatz(int counter) {
             // Test for invertibility of metric before taking inverse.
             Eigen::Matrix<double, 3, 2> deformationGradient = triangles[i].getDeformationGradient();
             Eigen::Matrix2d metric = deformationGradient.transpose() * deformationGradient;
-            tempMetricDecomp.compute(metric);
+            Eigen::FullPivLU<Eigen::Matrix<double, 2, 2>> tempMetricDecomp(metric);
             if (!tempMetricDecomp.isInvertible()) {
                 throw std::runtime_error(triangles[i].display().str() +
                     "At least one triangle [" + std::to_string(i) +
@@ -473,7 +469,6 @@ void Simulation::add_interaction_forces() {
     }
 
     double shared_interaction_force = 0;
-#pragma omp parallel for  reduction (+ : shared_interaction_force)
     for (auto& slide : slides) {
         shared_interaction_force = 0;
 #pragma omp parallel for reduction (+ : shared_interaction_force)

@@ -415,47 +415,48 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles,
         patchNodeDataMatrix.col(n) = patchColumn(candidatePatchNode, refCentroid);
     }
 
-    std::set<std::vector<int>> candidate_trios;
+    std::vector<std::array<uint, 3>> candidate_trios;
+    candidate_trios.reserve(pow(possiblePatchNodeLabels.size(), 3));
+
     for (unsigned int p : possiblePatchNodeLabels) {
         for (unsigned int q : possiblePatchNodeLabels) {
-            for (unsigned int r : possiblePatchNodeLabels) { candidate_trios.insert({(int)p, (int)q, (int)r}); }
+            for (unsigned int r : possiblePatchNodeLabels) {
+                candidate_trios.emplace_back(std::array<uint, 3>{p, q, r});
+            }
         }
     }
 
     auto patch_condition_number = DBL_MAX;
     for (auto& candidateIndices : candidate_trios) {
-        patchNodeDataMatrix.col(3) = patchColumn(nodes[candidateIndices[0]].position, refCentroid);
-        patchNodeDataMatrix.col(4) = patchColumn(nodes[candidateIndices[1]].position, refCentroid);
-        patchNodeDataMatrix.col(5) = patchColumn(nodes[candidateIndices[2]].position, refCentroid);
+        Eigen::Vector3d p0 = nodes[candidateIndices[0]].position;
+        Eigen::Vector3d p1 = nodes[candidateIndices[1]].position;
+        Eigen::Vector3d p2 = nodes[candidateIndices[2]].position;
 
-        Eigen::FullPivLU<Eigen::Matrix<double, 6, 6>> patchNodeDecomposition;
-        patchNodeDecomposition.compute(patchNodeDataMatrix);
-        if (!patchNodeDecomposition.isInvertible()) { continue; }
+        patchNodeDataMatrix.col(3) = patchColumn(p0, refCentroid);
+        patchNodeDataMatrix.col(4) = patchColumn(p1, refCentroid);
+        patchNodeDataMatrix.col(5) = patchColumn(p2, refCentroid);
 
-        double outer_patch_size = (nodes[candidateIndices[0]].position - refCentroid).squaredNorm() +
-            (nodes[candidateIndices[1]].position - refCentroid).squaredNorm() +
-            (nodes[candidateIndices[2]].position - refCentroid).squaredNorm();
+        // if (Eigen::FullPivLU<Eigen::Matrix<double, 6, 6>> patchNodeDecomposition(patchNodeDataMatrix); !patchNodeDecomposition.isInvertible()) { continue; }
+        if (patchNodeDataMatrix.determinant() == 0) { continue;}
 
-        double patch_size = sqrt((inner_patch_size + outer_patch_size) / 6);
-        Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
-        Eigen::Matrix<double, 6, 3> candidatePatchDiv;
-        candidatePatchDiv = invTempPatchNodeDataMatrix.block<6, 3>(0, 3);
+        const double outer_patch_size =
+            (p0 - refCentroid).squaredNorm() +
+            (p1 - refCentroid).squaredNorm() +
+            (p2 - refCentroid).squaredNorm();
 
-        Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD;
-        secDerivMatTempSVD.compute(candidatePatchDiv);
+        const double patch_size = sqrt((inner_patch_size + outer_patch_size) / 6);
+        Eigen::Matrix<double, 6, 3> candidatePatchDiv = patchNodeDataMatrix.inverse().block<6, 3>(0, 3);
+        Eigen::JacobiSVD<Eigen::Matrix<double, 6, 3>> secDerivMatTempSVD(candidatePatchDiv);
 
         double singular_values = secDerivMatTempSVD.singularValues()(0); // This has dimensions 1 / Length ^ 2.
         double current_condition_number = singular_values * pow(patch_size, 2);
 
         if (current_condition_number < patch_condition_number) {
             patch_condition_number = current_condition_number;
-            nonVertexPatchNodesLabels[0] = candidateIndices[0];
-            nonVertexPatchNodesLabels[1] = candidateIndices[1];
-            nonVertexPatchNodesLabels[2] = candidateIndices[2];
-
-            patch_nodes_pos[0] = &nodes[candidateIndices[0]].position;
-            patch_nodes_pos[1] = &nodes[candidateIndices[1]].position;
-            patch_nodes_pos[2] = &nodes[candidateIndices[2]].position;
+            for (int i = 0; i < 3; i++) {
+                nonVertexPatchNodesLabels[i] = candidateIndices[i];
+                patch_nodes_pos[i] = &nodes[candidateIndices[i]].position;
+            }
 
             matForPatchSecDerivs = candidatePatchDiv;
         }

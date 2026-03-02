@@ -40,12 +40,7 @@ having each triangle contribute 1/3 of its initial mass to each of its vertcies.
 void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                                          std::vector<Edge> &edges, const Settings &settings) {
 
-    // Temp matrix used to hold initial triangle sides.
-    Eigen::Matrix<double, 2, 2> initSidesMat;
-    // Temp LU decomp of the above, used to check invertibility.
-    Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > tempinitSidesMatDecomp;
-
-
+#pragma omp parallel for
     for (int i = 0; i < nodes.size(); ++i) {
         //Set all initial node velocities to zero
         nodes[i].velocity.fill(0);
@@ -56,9 +51,9 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
     //Resize the vector to hold the first ('trivial') programmed tensors, that
     //is populated in the next loop.
 
+#pragma omp parallel for
     for (int i = 0; i < triangles.size(); ++i) {
-        /*set triangle sides' initial in-plane x-y basis components.*/
-        initSidesMat = triangles[i].getCurrentSides().block<2, 2>(0, 0);
+        Eigen::Matrix<double, 2, 2> initSidesMat = triangles[i].getCurrentSides().block<2, 2>(0, 0);
 
         //Store initial (reference) area
         triangles[i].initArea = 0.5 * initSidesMat.determinant();
@@ -72,7 +67,8 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
                 -triangles[i].initOutwardSideNormals.col(1) - triangles[i].initOutwardSideNormals.col(2);
 
         // Now store inverse of initSidesMat permanently.
-        tempinitSidesMatDecomp.compute(initSidesMat);
+        Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > tempinitSidesMatDecomp(initSidesMat);
+
         if (!tempinitSidesMatDecomp.isInvertible()) {
             throw std::runtime_error(
                     "At least one triangle [" + std::to_string(i) + "] had a non-invertible initial sides matrix. \n"

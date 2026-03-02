@@ -204,16 +204,18 @@ void readVTKData(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
                 //                        lambdaToThe2Nu * cosDirAng * cosDirAng + lambdaToTheMinus2 * sinDirAng * sinDirAng;
             } else {
                 Eigen::Matrix<double, 2, 2> tempProgMetric;
-                Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > lu;
+
                 tempProgMetric(0, 0) = tempProgMetricInfo(0);
                 tempProgMetric(0, 1) = tempProgMetricInfo(1);
                 tempProgMetric(1, 0) = tempProgMetric(0, 1);
                 tempProgMetric(1, 1) = tempProgMetricInfo(2);
 
+                Eigen::FullPivLU<Eigen::Matrix<double, 2, 2> > lu(tempProgMetric);
+
                 /* We actually store the inverse programmed metric for efficiency
                 reasons, so invert the metric we just read in (after checking
                 that it is actually invertible): */
-                lu.compute(tempProgMetric);
+
                 if (!lu.isInvertible()) {
                     throw std::runtime_error(
                         "Error: One of the programmed metrics that was read in was not invertible. Aborting.");
