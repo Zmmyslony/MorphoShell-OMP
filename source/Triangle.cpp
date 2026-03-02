@@ -416,11 +416,13 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles,
     }
 
     std::vector<std::array<uint, 3>> candidate_trios;
-    candidate_trios.reserve(pow(possiblePatchNodeLabels.size(), 3));
 
-    for (unsigned int p : possiblePatchNodeLabels) {
-        for (unsigned int q : possiblePatchNodeLabels) {
-            for (unsigned int r : possiblePatchNodeLabels) {
+    for (unsigned int p : nodes[vertexLabels(0)].neighbourNodeLabels) {
+        if (p == vertexLabels(1) || p == vertexLabels(2)) { continue; }
+        for (unsigned int q : nodes[vertexLabels(1)].neighbourNodeLabels) {
+            if (q == vertexLabels(0) || q == vertexLabels(2)) { continue; }
+            for (unsigned int r : nodes[vertexLabels(2)].neighbourNodeLabels) {
+                if (r == vertexLabels(0) || r == vertexLabels(1)) { continue; }
                 candidate_trios.emplace_back(std::array<uint, 3>{p, q, r});
             }
         }
