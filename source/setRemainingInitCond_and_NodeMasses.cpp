@@ -41,7 +41,7 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
                                          std::vector<Edge> &edges, const Settings &settings) {
 
 #pragma omp parallel for
-    for (int i = 0; i < nodes.size(); ++i) {
+    for (int i = 0; i < nodes.size(); i++) {
         //Set all initial node velocities to zero
         nodes[i].velocity.fill(0);
         //Set all nodes masses to zero before calculating them next
@@ -52,7 +52,7 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
     //is populated in the next loop.
 
 #pragma omp parallel for
-    for (int i = 0; i < triangles.size(); ++i) {
+    for (int i = 0; i < triangles.size(); i++) {
         Eigen::Matrix<double, 2, 2> initSidesMat = triangles[i].getCurrentSides().block<2, 2>(0, 0);
 
         //Store initial (reference) area

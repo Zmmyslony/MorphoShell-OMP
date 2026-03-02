@@ -46,7 +46,7 @@ equilibriumCheck(const std::vector<Node> &nodes, const Settings &settings, const
     std::vector<double> velocity(nodes.size());
 
 #pragma omp parallel for
-    for (int i = 0; i < nodes.size(); ++i) {
+    for (int i = 0; i < nodes.size(); i++) {
         if (!settings.getCore().isGradientDescentDynamics()) {
             nodeNonDampingForce[i] = (nodes[i].force +
                                       (settings.getDampingFactor() * nodes[i].mass * nodes[i].velocity /

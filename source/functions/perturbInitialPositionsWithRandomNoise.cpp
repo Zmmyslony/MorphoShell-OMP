@@ -50,6 +50,7 @@ void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, double ele
     std::uniform_real_distribution<double> distr(-element_size * 0.001,
                                                  element_size * 0.001);
 
+#pragma omp parallel for
     for (auto & node : nodes) {
         for (int c = 0; c < 3; ++c) {
             node.position(c) += distr(aSimpleEngine);

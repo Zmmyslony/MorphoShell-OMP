@@ -27,13 +27,13 @@ Function to calculate the current force due to strain and bending on each
 
 
 #include <vector>
-
 #include "calcDeformationForces.hpp"
 
 
 void assignForceLocationsToNodes(std::vector<Triangle> &triangles, std::vector<Node> &nodes,
                                  std::vector<Eigen::Vector3d> &node_forces_data) {
     for (int i = 0; i < triangles.size(); i++) {
+#pragma omp parallel for
         for (int j = 0; j < 3; j++) {
             int vertex_label = triangles[i].vertexLabels[j];
             int patch_label = triangles[i].nonVertexPatchNodesLabels[j];

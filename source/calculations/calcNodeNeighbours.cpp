@@ -52,7 +52,8 @@ void configureNodeAdjacency(std::vector<Node> &nodes, const std::vector<Edge> &e
     /* Now we know each node's neighbours, we store their labels in node member
     data.*/
 
-    for(int n = 0; n < nodes.size(); ++n){
+#pragma omp parallel for
+    for(int n = 0; n < nodes.size(); n++){
         nodes[n].neighbourNodeLabels.resize(tempNeighbourNodeLabels[n].size());
 
         for(size_t m = 0; m < tempNeighbourNodeLabels[n].size(); ++m){

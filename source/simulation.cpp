@@ -63,7 +63,7 @@ void Simulation::setupLogging() {
 void Simulation::setup_filenames(int argc, char* argv[]) {
     init_string += "Simulation run began at: " + getRealTime() + "\n";
     init_string += "The command that was run was:\n";
-    for (int i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; i++) {
         init_string += argv[i];
         init_string += " ";
     }
@@ -134,6 +134,7 @@ void Simulation::configure_nodes() const {
     std::cout << "Triangle count = " << triangles.size() << std::endl;
 
     double average_node_index_distance = 0;
+#pragma omp parallel for reduction(+: average_node_index_distance)
     for (auto& triangle : triangles) {
         double max_distance = std::max(
             std::max(abs(triangle.vertexLabels[2] - triangle.vertexLabels[0]),
@@ -165,7 +166,8 @@ void Simulation::configure_topological_properties() {
     int numBoundaryEdges = 0;
     std::vector<double> initBoundaryEdgeLengths(edges.size());
 
-    for (int i = 0; i < edges.size(); ++i) {
+#pragma omp parallel for
+    for (int i = 0; i < edges.size(); i++) {
         if (edges[i].isOnBoundary) {
             numBoundaryEdges += 1;
 
@@ -203,7 +205,7 @@ void Simulation::configure_topological_properties() {
 void Simulation::configure_triangles() {
     int numBoundaryTriangles = 0;
 #pragma omp parallel for reduction(+ : numBoundaryTriangles)
-    for (int i = 0; i < triangles.size(); ++i) { if (triangles[i].isOnBoundary) { numBoundaryTriangles += 1; } }
+    for (int i = 0; i < triangles.size(); i++) { if (triangles[i].isOnBoundary) { numBoundaryTriangles += 1; } }
 
     std::cout << std::endl;
     std::cout << "Number of boundary triangles = " << numBoundaryTriangles << std::endl;
@@ -217,16 +219,12 @@ void Simulation::configure_triangles() {
     }
 }
 
-void Simulation::set_node_patches() {
-    createNodePatches(nodes, triangles, settings.getCore().getPatchMatrixThreshold());
-}
-
-
 void Simulation::orient_node_labels() {
     updateTriangleProperties(-10);
     Eigen::Vector3d tempZAxisVec;
     tempZAxisVec << 0.0, 0.0, 1.0;
-    for (int i = 0; i < triangles.size(); ++i) {
+#pragma omp parallel for
+    for (int i = 0; i < triangles.size(); i++) {
         auto sides = triangles[i].getCurrentSides();
         if (tempZAxisVec.dot(sides.col(0).cross(sides.col(1))) < 0) {
             int tempLabel = triangles[i].vertexLabels(2);
@@ -265,7 +263,8 @@ void Simulation::find_smallest_element() {
 
 void Simulation::setup_characteristic_scales() {
     std::vector<double> initAreas(triangles.size());
-    for (int i = 0; i < triangles.size(); ++i) { initAreas[i] = triangles[i].initArea; }
+#pragma omp parallel for
+    for (int i = 0; i < triangles.size(); i++) { initAreas[i] = triangles[i].initArea; }
     double initial_area = kahanSum(initAreas);
     settings.SetupCharacteristicSizes(initial_area, characteristic_short_length);
 }
@@ -315,7 +314,7 @@ void Simulation::init(int argc, char* argv[], int threads) {
     configure_topological_properties();
     configure_triangles();
     configureNodeAdjacency(nodes, edges);
-    set_node_patches();
+    createNodePatches(nodes, triangles, settings.getCore().getPatchMatrixThreshold());
 
     node_force_proxy = std::vector<Eigen::Vector3d>(triangles.size() * 6);
     assignForceLocationsToNodes(triangles, nodes, node_force_proxy);
@@ -340,7 +339,8 @@ void Simulation::init(int argc, char* argv[], int threads) {
 
 
 void Simulation::run_ansatz(int counter) {
-    for (int i = 0; i < nodes.size(); ++i) {
+#pragma omp parallel for
+    for (int i = 0; i < nodes.size(); i++) {
         nodes[i].position = nodeAnsatzPositions[i];
         nodes[i].prev_position = nodeAnsatzPositions[i];
     }
@@ -365,7 +365,7 @@ void Simulation::run_ansatz(int counter) {
         /* Alter inverted_programmed_metrics[initial_stage] and similar to change where
         the programmed quantities are dialling from.*/
 #pragma omp parallel for
-        for (int i = 0; i < triangles.size(); ++i) {
+        for (int i = 0; i < triangles.size(); i++) {
             // Test for invertibility of metric before taking inverse.
             Eigen::Matrix<double, 3, 2> deformationGradient = triangles[i].getDeformationGradient();
             Eigen::Matrix2d metric = deformationGradient.transpose() * deformationGradient;
@@ -384,7 +384,7 @@ void Simulation::run_ansatz(int counter) {
         }
     } else {
         dial_in_factor = dialInFactorToStartFrom;
-        for (int i = 0; i < dial_in_phases.size(); ++i) {
+        for (int i = 0; i < dial_in_phases.size(); i++) {
             if (dial_in_phases[i] < dial_in_factor) { phase_counter = i; }
         }
         double dial_in_since_last_phase = dial_in_factor - dial_in_phases[phase_counter];
@@ -393,7 +393,8 @@ void Simulation::run_ansatz(int counter) {
         time_phase = dial_in_since_last_phase / dial_in_phase_duration * settings.getDurationPhase();
 
         if (settings.getCore().isFirstTensorSkipped()) {
-            for (int i = 0; i < triangles.size(); ++i) {
+#pragma omp parallel for
+            for (int i = 0; i < triangles.size(); i++) {
                 triangles[i].programmed_metric_info = programmed_metric_infos[i][initial_stage + 1];
                 triangles[i].previous_second_fundamental_form = programmed_second_fundamental_forms[i][initial_stage + 1];
             }

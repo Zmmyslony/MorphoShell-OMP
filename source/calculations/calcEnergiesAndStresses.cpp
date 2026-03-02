@@ -38,7 +38,7 @@ stress stuff.
 #include "../Node.hpp"
 
 
-void calcEnergiesAndStresses(const std::vector<Node> &nodes, std::vector<Triangle> &triangles,
+void calcEnergiesAndStresses(const std::vector<Node> &nodes, const std::vector<Triangle>& triangles,
                              std::vector<double> &stretchEnergies, std::vector<double> &bendEnergies,
                              std::vector<double> &kineticEnergies, std::vector<double> &strainMeasures,
                              std::vector<Eigen::Vector2d> &cauchyStressEigenvals,
@@ -48,8 +48,8 @@ void calcEnergiesAndStresses(const std::vector<Node> &nodes, std::vector<Triangl
 
     // Loop over triangles and calculate potential energies and energy densities.
 #pragma omp parallel for
-    for (int i = 0; i < triangles.size(); ++i) {
-        Triangle *triangle = &triangles[i];
+    for (int i = 0; i < triangles.size(); i++) {
+        const Triangle *triangle = &triangles[i];
 
         stretchEnergies[i] = triangle->initArea * triangle->stretchEnergyDensity;
         bendEnergies[i] = triangle->initArea * triangle->bendEnergyDensity;

@@ -66,7 +66,8 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
     int e = 0; //Index for edges std::vector container
 
     // Begin main loop over triangles.
-    for (int i = 0; i < triangles.size(); ++i) {
+
+    for (int i = 0; i < triangles.size(); i++) {
 
         //Loop over vertices of this triangle
         for (int v = 0; v < 3; ++v) {
@@ -133,7 +134,7 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
     this whole operation only happens once and therefore life is too short to
     worry about such small optimisations. Also, readability is more important
     here anyway.*/
-    for (int i = 0; i < triangles.size(); ++i) {
+    for (int i = 0; i < triangles.size(); i++) {
 
         // i.e. if(this triangle has some boundary edges)...
         if (tempTriEdgeLabels[i].size() < 3) {
@@ -145,7 +146,7 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
             /*See whether each pair of vertices corresponds to one of the
             already-existing edges. If not, we create that edge. Each j value
             picks out a vertex pair using mod arithmetic. */
-            for (int j = 0; j < 3; ++j) {
+            for (int j = 0; j < 3; j++) {
 
                 /*These will correspond to each possible pair of 'i's vertices
                 in turn. */
@@ -200,15 +201,16 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
 
     We also calculate the indicesIntoEdgeSharingTriLabelsOfNeighbours member
     data for triangles here - see Triangle.hpp for explanation. */
-    for (int i = 0; i < triangles.size(); ++i) {
+#pragma omp parallel for
+    for (int i = 0; i < triangles.size(); i++) {
 
         triangles[i].edgeSharingTriLabels.resize(tempAdjTriLabels[i].size());
 
-        for (std::size_t j = 0; j < tempAdjTriLabels[i].size(); ++j) {
+        for (std::size_t j = 0; j < tempAdjTriLabels[i].size(); j++) {
             triangles[i].edgeSharingTriLabels(j) = tempAdjTriLabels[i][j];
         }
 
-        for (int j = 0; j < 3; ++j) {
+        for (int j = 0; j < 3; j++) {
             triangles[i].edgeLabels(j) = tempTriEdgeLabels[i][j];
         }
 
@@ -257,7 +259,8 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
     indicate a very concerning mesh where some triangles share no edges with
     other triangles. More checks would be possible here; some are better than
     none.*/
-    for (int i = 0; i < triangles.size(); ++i) {
+#pragma omp parallel for
+    for (int i = 0; i < triangles.size(); i++) {
         try {
             if (edges.size() != e) { throw std::runtime_error("incorrect edge size"); }
             if (triangles[i].edgeLabels.size() != 3) {
