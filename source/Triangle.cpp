@@ -415,7 +415,7 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles,
         patchNodeDataMatrix.col(n) = patchColumn(candidatePatchNode, refCentroid);
     }
 
-    std::vector<std::array<uint, 3>> candidate_trios;
+    std::vector<std::array<unsigned int, 3>> candidate_trios;
 
     for (unsigned int p : nodes[vertexLabels(0)].neighbourNodeLabels) {
         if (p == vertexLabels(1) || p == vertexLabels(2)) { continue; }
@@ -423,7 +423,7 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles,
             if (q == vertexLabels(0) || q == vertexLabels(2)) { continue; }
             for (unsigned int r : nodes[vertexLabels(2)].neighbourNodeLabels) {
                 if (r == vertexLabels(0) || r == vertexLabels(1)) { continue; }
-                candidate_trios.emplace_back(std::array<uint, 3>{p, q, r});
+                candidate_trios.emplace_back(std::array<unsigned int, 3>{p, q, r});
             }
         }
     }

@@ -135,7 +135,8 @@ void Simulation::configure_nodes() const {
 
     double average_node_index_distance = 0;
 #pragma omp parallel for reduction(+: average_node_index_distance)
-    for (auto& triangle : triangles) {
+    for (int i = 0; i < triangles.size(); i++) {
+        const Triangle &triangle = triangles[i];
         double max_distance = std::max(
             std::max(abs(triangle.vertexLabels[2] - triangle.vertexLabels[0]),
                      abs(triangle.vertexLabels[1] - triangle.vertexLabels[0])),

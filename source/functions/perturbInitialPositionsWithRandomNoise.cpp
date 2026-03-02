@@ -35,8 +35,7 @@ approximate smallest element size, to ensure the right kind of scale.*/
 #include "perturbInitialPositionsWithRandomNoise.hpp"
 #include "../Node.hpp"
 
-void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, double element_size) {
-
+void perturbInitialPositionsWithRandomNoise(std::vector<Node>& nodes, double element_size) {
     /*Set random number generator . A simple and common one is chosen here:
     there is little point worrying about obtaining extremely 'good' random
     numbers for such a simple task, in which the quality of randomness is
@@ -51,9 +50,7 @@ void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, double ele
                                                  element_size * 0.001);
 
 #pragma omp parallel for
-    for (auto & node : nodes) {
-        for (int c = 0; c < 3; ++c) {
-            node.position(c) += distr(aSimpleEngine);
-        }
+    for (int i = 0; i < nodes.size(); i++) {
+        for (int c = 0; c < 3; ++c) { nodes[i].position(c) += distr(aSimpleEngine); }
     }
 }
