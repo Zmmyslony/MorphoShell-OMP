@@ -42,11 +42,12 @@ bool isForceThresholdExceeded(const Node &node, const Settings &settings) {
 }
 
 
-void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, const Settings &settings) {
+void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, const Settings &settings, int step) {
     std::stringstream msg;
     msg << " ----------------------------------------" << std::endl;
     msg << " ------------CRASH REPORT----------------" << std::endl;
     msg << " ----------------------------------------" << std::endl;
+    msg << "Error occured at time step " << step << std::endl;
     msg << "First offending node and its incident triangles: " << std::endl;
 
     msg << node.display().str();
@@ -59,11 +60,12 @@ void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, con
 }
 
 
-void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, Settings &settings) {
+void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles, Settings &settings, int step) {
+    double dt = settings.getTimeStepSize();
 #pragma omp parallel for
     for (int i = 0; i < nodes.size(); ++i) {
         if (isForceThresholdExceeded(nodes[i], settings)) {
-            logForceThresholdExceeded(nodes[i], triangles, settings);
+            logForceThresholdExceeded(nodes[i], triangles, settings, step);
         }
         /*  Check the force is well-behaved. If not, throw error, and
             display offending nodes and its incident triangles.
@@ -74,24 +76,12 @@ void advanceDynamics(std::vector<Node> &nodes, std::vector<Triangle> &triangles,
         or Newtonian dynamics. Then advance positions accordingly. */
         if (settings.getCore().isGradientDescentDynamics()) {
             // Gradient Descent dynamics.
-            nodes[i].vel =
+            nodes[i].velocity =
                     settings.getCore().getDensity() * nodes[i].force / (settings.getDampingFactor() * nodes[i].mass);
 
-            nodes[i].pos += settings.getTimeStepSize() * nodes[i].vel;
+            nodes[i].position += settings.getTimeStepSize() * nodes[i].velocity;
         } else {
-            Eigen::Vector3d acceleration = nodes[i].force / nodes[i].mass;
-            double dt = settings.getTimeStepSize();
-            // Newtonian Dynamics.
-            /* Advance velocity and *then* position (Semi-Implicit Euler, also
-            called Symplectic Euler).*/
-            nodes[i].vel += dt * acceleration;
-            nodes[i].pos += dt * nodes[i].vel;
-
-            // Velocity-Verlet algorithm:
-//            Eigen::Vector3d current_pos = nodes[i].pos;
-//            nodes[i].pos = (2 * nodes[i].pos - nodes[i].prev_pos) + dt * dt * acceleration;
-//            nodes[i].prev_pos = current_pos;
-//            nodes[i].vel = (nodes[i].pos - nodes[i].prev_pos) / dt;
+            nodes[i].advanceDynamics(dt);
         }
 
         // Advance position.

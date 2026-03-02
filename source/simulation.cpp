@@ -180,7 +180,7 @@ void Simulation::configure_topological_properties() {
             }
 
             // Store initial length of this boundary edge
-            initBoundaryEdgeLengths[i] = (nodes[edges[i].nodeLabels(0)].pos - nodes[edges[i].nodeLabels(1)].pos).norm();
+            initBoundaryEdgeLengths[i] = (nodes[edges[i].nodeLabels(0)].position - nodes[edges[i].nodeLabels(1)].position).norm();
         }
     }
 
@@ -340,7 +340,10 @@ void Simulation::init(int argc, char* argv[], int threads) {
 
 
 void Simulation::run_ansatz(int counter) {
-    for (int i = 0; i < nodes.size(); ++i) { nodes[i].pos = nodeAnsatzPositions[i]; }
+    for (int i = 0; i < nodes.size(); ++i) {
+        nodes[i].position = nodeAnsatzPositions[i];
+        nodes[i].prev_position = nodeAnsatzPositions[i];
+    }
 
     time_equilibriation = 0;
     simulation_status = Dialling;
@@ -422,16 +425,16 @@ void Simulation::setup_imposed_seide_deformations(double& s1, int highest_node, 
         << intermLengthScaleUpper << ", " << intermLengthScaleLower << std::endl;
 
     for (int n = 0; n < nodes.size(); ++n) {
-        if (((nodes[highest_node].pos(2) - nodes[n].pos(2)) < intermLengthScaleUpper) ||
-            ((nodes[n].pos(2) - nodes[lowest_node].pos(2)) < intermLengthScaleLower)) {
+        if (((nodes[highest_node].position(2) - nodes[n].position(2)) < intermLengthScaleUpper) ||
+            ((nodes[n].position(2) - nodes[lowest_node].position(2)) < intermLengthScaleLower)) {
             nodes[n].isSeideDisplacementEnabled = true;
         }
     }
 
     // STORE PERFECT CONE ANSATZ
-    for (int n = 0; n < nodes.size(); ++n) { nodeUnstressedConePosits[n] = nodes[n].pos; }
-    s1 = sqrt(nodes[highest_node].pos(0) * nodes[highest_node].pos(0) +
-        nodes[highest_node].pos(1) * nodes[highest_node].pos(1)) / sin(cone_angle);
+    for (int n = 0; n < nodes.size(); ++n) { nodeUnstressedConePosits[n] = nodes[n].position; }
+    s1 = sqrt(nodes[highest_node].position(0) * nodes[highest_node].position(0) +
+        nodes[highest_node].position(1) * nodes[highest_node].position(1)) / sin(cone_angle);
 }
 
 
@@ -440,7 +443,7 @@ void Simulation::first_step_configuration() {
     cones = settings.getCones();
     std::vector<Eigen::Vector3d> node_positions(nodes.size());
 #pragma omp parallel for
-    for (int i = 0; i < nodes.size(); i++) { node_positions[i] = nodes[i].pos; }
+    for (int i = 0; i < nodes.size(); i++) { node_positions[i] = nodes[i].position; }
 
     for (auto& slide : slides) { slide.initialise(node_positions, settings.getDurationPhase()); }
     for (auto& cone : cones) { cone.initialise(node_positions, settings.getDurationPhase()); }
@@ -475,7 +478,7 @@ void Simulation::add_interaction_forces() {
         shared_interaction_force = 0;
 #pragma omp parallel for reduction (+ : shared_interaction_force)
         for (int i = 0; i < nodes.size(); i++) {
-            shared_interaction_force += slide.addInteractionForce(nodes[i].pos,
+            shared_interaction_force += slide.addInteractionForce(nodes[i].position,
                                                                   nodes[i].force,
                                                                   settings.getCore().getShearModulus(),
                                                                   settings.getCore().getThickness(),
@@ -488,7 +491,7 @@ void Simulation::add_interaction_forces() {
         shared_interaction_force = 0;
 #pragma omp parallel for reduction (+ : shared_interaction_force)
         for (int i = 0; i < nodes.size(); i++) {
-            shared_interaction_force += cone.addInteractionForce(nodes[i].pos,
+            shared_interaction_force += cone.addInteractionForce(nodes[i].position,
                                                                  nodes[i].force,
                                                                  settings.getCore().getShearModulus(),
                                                                  settings.getCore().getThickness());
@@ -760,7 +763,7 @@ void Simulation::run_tensor_increment(int stage_counter) {
             if (isDataPrinted()) { save_and_print_details(stage_counter, duration_us); }
             if (is_equilibrium_seeked) { equilibriumTest(stage_counter, duration_us); }
 
-            advanceDynamics(nodes, triangles, settings);
+            advanceDynamics(nodes, triangles, settings, step_count);
             advance_physics();
             advance_time();
         } catch (std::runtime_error& error) {

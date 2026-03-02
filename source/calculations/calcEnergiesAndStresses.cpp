@@ -81,7 +81,7 @@ void calcEnergiesAndStresses(const std::vector<Node> &nodes, std::vector<Triangl
 
 #pragma omp parallel for
     for (int n = 0; n < nodes.size(); ++n) {
-        kineticEnergies[n] = 0.5 * nodes[n].mass * nodes[n].vel.dot(nodes[n].vel);
+        kineticEnergies[n] = 0.5 * nodes[n].mass * nodes[n].velocity.dot(nodes[n].velocity);
     }
 }
 

@@ -32,6 +32,8 @@ left in the header file for clarity there.*/
 #include "configuration/gravity_config.h"
 
 #define GRAVITY_MAGNITUDE (9.80665 * 1e3)
+#define DYNAMICS_METHOD = 2;
+
 
 //This is a debugging tool to display the node's data
 std::stringstream Node::display()
@@ -41,8 +43,8 @@ std::stringstream Node::display()
     msg << "Node " << label << ":" << std::endl;
     msg << "Labels of incident triangles: " << "\n" << incidentTriLabels << std::endl;
     msg << "neighbourNodeLabels = " << "\n" << neighbourNodeLabels << std::endl;
-    msg << "Position = " << "\n" << pos << std::endl;
-    msg << "Velocity = " << "\n" << vel << std::endl;
+    msg << "Position = " << "\n" << position << std::endl;
+    msg << "Velocity = " << "\n" << velocity << std::endl;
     msg << "Force = " << "\n" << force << std::endl;
     msg << "Mass = " << mass << std::endl;
     msg << "Boundary indicator: " << isOnBoundary << std::endl;
@@ -67,9 +69,9 @@ double Node::add_damping(const Settings& settings_new)
 {
     if (settings_new.getCore().isGradientDescentDynamics()) { return 0; }
 
-    force += -settings_new.getDampingFactor() * mass * vel /
+    force += -settings_new.getDampingFactor() * mass * velocity /
         settings_new.getCore().getDensity();
-    return settings_new.getDampingFactor() * mass * pow(vel.norm(), 2) / settings_new.getCore().getDensity();
+    return settings_new.getDampingFactor() * mass * pow(velocity.norm(), 2) / settings_new.getCore().getDensity();
 }
 
 
@@ -142,17 +144,17 @@ void Node::apply_boundary_conditions()
     if (is_x_clamped)
     {
         force(0) = 0;
-        vel(0) = 0;
+        velocity(0) = 0;
     }
     if (is_y_clamped)
     {
         force(1) = 0;
-        vel(1) = 0;
+        velocity(1) = 0;
     }
     if (is_z_clamped)
     {
         force(2) = 0;
-        vel(2) = 0;
+        velocity(2) = 0;
     }
 }
 
@@ -185,4 +187,22 @@ void Node::addForce()
         force.noalias() += *pt;
         *pt = {0, 0, 0};
     }
+}
+
+void Node::advanceDynamics(double dt) {
+    const Eigen::Vector3d acceleration = force / mass;
+
+    // Symplectic Euler integration
+    // velocity += dt * acceleration;
+    // position += dt * velocity;
+
+    // Velocity-Verlet integration
+    // velocity += (force + prev_force) / (2 * mass) * dt;
+    // position += velocity * dt + 1 / 2 * acceleration * dt * dt;
+    // prev_force = force;
+
+    // Leapfrog integration:
+    velocity += 1 / 2 * acceleration;
+    position += velocity * dt + 1/2 * acceleration * dt * dt;
+    velocity += 1 / 2 * acceleration;
 }

@@ -52,7 +52,7 @@ void perturbInitialPositionsWithRandomNoise(std::vector<Node> &nodes, double ele
 
     for (auto & node : nodes) {
         for (int c = 0; c < 3; ++c) {
-            node.pos(c) += distr(aSimpleEngine);
+            node.position(c) += distr(aSimpleEngine);
         }
     }
 }

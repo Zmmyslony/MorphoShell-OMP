@@ -370,7 +370,7 @@ std::vector<std::pair<unsigned int, double>> assignDistanceFromCentroid(const st
                                                                         const Eigen::Vector3d& position) {
     std::vector<std::pair<unsigned int, double>> index_distance_pair;
     for (unsigned int index : node_indices) {
-        double distance = (nodes[index].pos - position).norm();
+        double distance = (nodes[index].position - position).norm();
         index_distance_pair.emplace_back(index, distance);
     }
     return index_distance_pair;
@@ -390,9 +390,9 @@ Eigen::Matrix<double, 6, 1> patchColumn(const Eigen::Vector3d& position, const E
 double Triangle::getHeight() const { return centroid(2); }
 
 double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles, const std::vector<Node>& nodes) {
-    Eigen::Vector3d refCentroid = (nodes[vertexLabels(0)].pos +
-        nodes[vertexLabels(1)].pos +
-        nodes[vertexLabels(2)].pos) / 3;
+    Eigen::Vector3d refCentroid = (nodes[vertexLabels(0)].position +
+        nodes[vertexLabels(1)].position +
+        nodes[vertexLabels(2)].position) / 3;
 
     std::vector<unsigned int> possiblePatchNodeLabels = getNeighbouringNodes(*this, triangles, nodes);
     std::vector<std::pair<unsigned int, double>> indexDistancePairs = assignDistanceFromCentroid(
@@ -405,13 +405,13 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles,
               });
 
     Eigen::Matrix<double, 6, 6> patchNodeDataMatrix;
-    double inner_patch_size = (nodes[vertexLabels(0)].pos - refCentroid).squaredNorm() +
-        (nodes[vertexLabels(1)].pos - refCentroid).squaredNorm() +
-        (nodes[vertexLabels(2)].pos - refCentroid).squaredNorm();
+    double inner_patch_size = (nodes[vertexLabels(0)].position - refCentroid).squaredNorm() +
+        (nodes[vertexLabels(1)].position - refCentroid).squaredNorm() +
+        (nodes[vertexLabels(2)].position - refCentroid).squaredNorm();
 
     for (int n = 0; n < 3; ++n) {
         Eigen::Vector3d candidatePatchNode;
-        candidatePatchNode = nodes[vertexLabels(n)].pos;
+        candidatePatchNode = nodes[vertexLabels(n)].position;
         patchNodeDataMatrix.col(n) = patchColumn(candidatePatchNode, refCentroid);
     }
 
@@ -424,17 +424,17 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles,
 
     auto patch_condition_number = DBL_MAX;
     for (auto& candidateIndices : candidate_trios) {
-        patchNodeDataMatrix.col(3) = patchColumn(nodes[candidateIndices[0]].pos, refCentroid);
-        patchNodeDataMatrix.col(4) = patchColumn(nodes[candidateIndices[1]].pos, refCentroid);
-        patchNodeDataMatrix.col(5) = patchColumn(nodes[candidateIndices[2]].pos, refCentroid);
+        patchNodeDataMatrix.col(3) = patchColumn(nodes[candidateIndices[0]].position, refCentroid);
+        patchNodeDataMatrix.col(4) = patchColumn(nodes[candidateIndices[1]].position, refCentroid);
+        patchNodeDataMatrix.col(5) = patchColumn(nodes[candidateIndices[2]].position, refCentroid);
 
         Eigen::FullPivLU<Eigen::Matrix<double, 6, 6>> patchNodeDecomposition;
         patchNodeDecomposition.compute(patchNodeDataMatrix);
         if (!patchNodeDecomposition.isInvertible()) { continue; }
 
-        double outer_patch_size = (nodes[candidateIndices[0]].pos - refCentroid).squaredNorm() +
-            (nodes[candidateIndices[1]].pos - refCentroid).squaredNorm() +
-            (nodes[candidateIndices[2]].pos - refCentroid).squaredNorm();
+        double outer_patch_size = (nodes[candidateIndices[0]].position - refCentroid).squaredNorm() +
+            (nodes[candidateIndices[1]].position - refCentroid).squaredNorm() +
+            (nodes[candidateIndices[2]].position - refCentroid).squaredNorm();
 
         double patch_size = sqrt((inner_patch_size + outer_patch_size) / 6);
         Eigen::Matrix<double, 6, 6> invTempPatchNodeDataMatrix = patchNodeDataMatrix.inverse();
@@ -453,9 +453,9 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles,
             nonVertexPatchNodesLabels[1] = candidateIndices[1];
             nonVertexPatchNodesLabels[2] = candidateIndices[2];
 
-            patch_nodes_pos[0] = &nodes[candidateIndices[0]].pos;
-            patch_nodes_pos[1] = &nodes[candidateIndices[1]].pos;
-            patch_nodes_pos[2] = &nodes[candidateIndices[2]].pos;
+            patch_nodes_pos[0] = &nodes[candidateIndices[0]].position;
+            patch_nodes_pos[1] = &nodes[candidateIndices[1]].position;
+            patch_nodes_pos[2] = &nodes[candidateIndices[2]].position;
 
             matForPatchSecDerivs = candidatePatchDiv;
         }
@@ -471,12 +471,12 @@ Triangle::Triangle(int label, int id_0, int id_1, int id_2, const std::vector<No
     vertexLabels(0) = id_0;
     vertexLabels(1) = id_1;
     vertexLabels(2) = id_2;
-    corner_nodes_pos[0] = &nodes[id_0].pos;
-    corner_nodes_pos[1] = &nodes[id_1].pos;
-    corner_nodes_pos[2] = &nodes[id_2].pos;
-    reference_node_positions[0] = nodes[id_0].pos;
-    reference_node_positions[1] = nodes[id_1].pos;
-    reference_node_positions[2] = nodes[id_2].pos;
+    corner_nodes_pos[0] = &nodes[id_0].position;
+    corner_nodes_pos[1] = &nodes[id_1].position;
+    corner_nodes_pos[2] = &nodes[id_2].position;
+    reference_node_positions[0] = nodes[id_0].position;
+    reference_node_positions[1] = nodes[id_1].position;
+    reference_node_positions[2] = nodes[id_2].position;
 }
 
 void Triangle::updateMagneticForce(const Eigen::Vector3d& magnetic_field) {

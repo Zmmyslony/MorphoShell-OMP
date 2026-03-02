@@ -132,9 +132,9 @@ writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &
 
     for (const auto &node: nodes) {
 #ifdef BINARY_EXPORT
-        double x = node.pos(0);
-        double y = node.pos(1);
-        double z = node.pos(2);
+        double x = node.position(0);
+        double y = node.position(1);
+        double z = node.position(2);
         SwapEnd(x);
         SwapEnd(y);
         SwapEnd(z);
@@ -143,7 +143,7 @@ writeVTKDataOutput(const std::vector<Node> &nodes, const std::vector<Triangle> &
         mesh_stream.write((const char *) &y, sizeof(double));
         mesh_stream.write((const char *) &z, sizeof(double));
 #else
-        mesh_stream << node.pos(0) << " " << node.pos(1) << " " << node.pos(2) << "\n";
+        mesh_stream << node.position(0) << " " << node.position(1) << " " << node.position(2) << "\n";
 #endif
     }
 

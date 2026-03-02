@@ -48,9 +48,9 @@ void setRemainingInitCond_and_NodeMasses(std::vector<Node> &nodes, std::vector<T
 
     for (int i = 0; i < nodes.size(); ++i) {
         //Set all initial node velocities to zero
-        nodes[i].vel.fill(0.0);
+        nodes[i].velocity.fill(0);
         //Set all nodes masses to zero before calculating them next
-        nodes[i].mass = 0.0;
+        nodes[i].mass = 0;
     }
 
     //Resize the vector to hold the first ('trivial') programmed tensors, that

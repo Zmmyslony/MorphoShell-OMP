@@ -49,7 +49,7 @@ equilibriumCheck(const std::vector<Node> &nodes, const Settings &settings, const
     for (int i = 0; i < nodes.size(); ++i) {
         if (!settings.getCore().isGradientDescentDynamics()) {
             nodeNonDampingForce[i] = (nodes[i].force +
-                                      (settings.getDampingFactor() * nodes[i].mass * nodes[i].vel /
+                                      (settings.getDampingFactor() * nodes[i].mass * nodes[i].velocity /
                                        settings.getCore().getDensity())).norm();
         } else {
             nodeNonDampingForce[i] = nodes[i].force.norm();
@@ -73,7 +73,7 @@ equilibriumCheck(const std::vector<Node> &nodes, const Settings &settings, const
             }
         }
 
-        velocity[i] = nodes[i].vel.norm();
+        velocity[i] = nodes[i].velocity.norm();
     }
 
     int max_non_damp_force_node =

@@ -79,13 +79,13 @@ public:
     bool isLoadForceEnabled = false;
 
     // Position vector (x, y and z coordinates).
-    Eigen::Vector3d pos;
+    Eigen::Vector3d position;
+    Eigen::Vector3d velocity = {0, 0, 0};
+    Eigen::Vector3d force = {0, 0, 0};
 
-    // Velocity vector.
-    Eigen::Vector3d vel;
-
-    // Force vector.
-    Eigen::Vector3d force;
+    Eigen::Vector3d prev_position;
+    Eigen::Vector3d prev_velocity = {0, 0, 0};
+    Eigen::Vector3d prev_force = {0, 0, 0};
 
     // Mass assigned to node.
     double mass = DBL_MAX;
@@ -101,19 +101,17 @@ public:
     incidentTriLabels and neighbourNodeLabels are left with zero size at
     initialisation. */
     Node() {
-        pos.fill(DBL_MAX);
-        vel.fill(DBL_MAX);
-        force.fill(DBL_MAX);
+        position.fill(DBL_MAX);
     }
 
     explicit Node(int n_label, const double positions[3]) {
         label = n_label;
-        pos(0) = positions[0];
-        pos(1) = positions[1];
-        pos(2) = positions[2];
-        vel.fill(DBL_MAX);
-        force.fill(DBL_MAX);
+        position(0) = positions[0];
+        position(1) = positions[1];
+        position(2) = positions[2];
     }
+
+    void advanceDynamics(double dt);
 
     // Declare other member functions.
 
