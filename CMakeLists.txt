@@ -27,8 +27,7 @@ set(SOURCE_FILES
         source/functions/getRealTime.hpp source/initialDirAndFileHandling.cpp source/initialDirAndFileHandling.hpp source/functions/kahanSum.cpp source/functions/kahanSum.hpp source/Node.cpp
         source/Node.hpp source/functions/perturbInitialPositionsWithRandomNoise.cpp source/functions/perturbInitialPositionsWithRandomNoise.hpp
         source/readVtk.cpp source/readVtk.hpp source/setRemainingInitCond_and_NodeMasses.cpp source/setRemainingInitCond_and_NodeMasses.hpp
-        source/SimulationStatus.hpp source/Triangle.cpp source/Triangle.hpp source/exportVtk.cpp source/exportVtk.hpp source/functions/zeroForces.cpp
-        source/functions/zeroForces.hpp
+        source/SimulationStatus.hpp source/Triangle.cpp source/Triangle.hpp source/exportVtk.cpp source/exportVtk.hpp
         source/simulation.cpp
         source/simulation.h
         source/configuration/gravity_config.cpp

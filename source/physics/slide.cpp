@@ -20,6 +20,7 @@ void Slide::initialise(const std::vector<Eigen::Vector3d> &node_pos, double dial
     if (!is_origin_provided) {
         position = {0, 0, 0};
         double furthest_distance = DBL_MAX;
+#pragma omp parallel for reduction(min: furthest_distance)
         for (auto &pos: node_pos) {
             double current_distance = distance(pos);
             if (current_distance < furthest_distance) { furthest_distance = current_distance; }

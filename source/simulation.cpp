@@ -247,12 +247,10 @@ void Simulation::find_smallest_element() {
                                                    [](Triangle& first, Triangle& second) {
                                                        return first.getLinearSize() < second.getLinearSize();
                                                    })->getLinearSize();
-    // This is slightly incorrect as it takes the smallest element and largest tau, instead of taking
-    // smallest ratio of size to tau, though it is just erring on the side of caution.
-    std::vector<double> largest_tau_vector(stage_count);
     auto largest_tau = DBL_MIN;
-    for (auto& triangle_taus : programmed_taus) {
-        for (auto& tau : triangle_taus) { if (tau < largest_tau) { largest_tau = tau; } }
+#pragma omp parallel for reduction(max: largest_tau)
+    for (int i = 0; i < programmed_taus.size(); i++) {
+        for (auto& tau : programmed_taus[i]) { if (tau < largest_tau) { largest_tau = tau; } }
     }
     characteristic_length_over_tau = characteristic_short_length / sqrt(largest_tau);
 

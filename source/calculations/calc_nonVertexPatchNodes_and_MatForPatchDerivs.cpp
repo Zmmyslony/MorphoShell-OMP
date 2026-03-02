@@ -46,8 +46,9 @@ void validatePatchSearch(const std::vector<double> &patch_values, double patch_t
     if (*max_iterator < patch_threshold) { return ;}
 
     int wrong_triangle_count = 0;
-    for (auto patch_value : patch_values) {
-        if (patch_value >= patch_threshold) { wrong_triangle_count++ ;}
+#pragma omp parallel for reduction(+: wrong_triangle_count)
+    for (int i = 0; i < patch_values.size(); i++) {
+        if (patch_values[i] >= patch_threshold) { wrong_triangle_count++ ;}
     }
     long worst_offender_index = std::distance(patch_values.begin(), max_iterator);
 

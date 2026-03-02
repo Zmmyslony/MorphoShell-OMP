@@ -124,6 +124,7 @@ void calcCurvatures(
         separately.*/
         int idxInto_interiorNodeAngleDeficits = 0;
         int idxInto_boundaryNodeAngleDeficits = 0;
+#pragma omp parallel for
         for (int n = 0; n < nodes.size(); ++n) {
 
             if (!nodes[n].isOnBoundary) {
