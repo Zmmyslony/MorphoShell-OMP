@@ -76,6 +76,8 @@ public:
 
     double getTimeBetweenEquilibriumChecks() const;
     void setThreads(int threads);
+
+    double getDampingMultiplier() const;
 };
 
 

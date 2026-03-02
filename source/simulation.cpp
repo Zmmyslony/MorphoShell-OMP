@@ -564,11 +564,13 @@ void Simulation::updateTriangleProperties(int counter) {
 
 void Simulation::add_node_forces() {
     double shared_interaction_force = 0;
-#pragma omp parallel for  reduction (+ : shared_interaction_force)
+    GravityConfig gravity = settings.getGravity();
+    const double damping_multiplier = settings.getDampingMultiplier();
+#pragma omp parallel for  reduction (+ : shared_interaction_force) shared(gravity)
     for (int i = 0; i < nodes.size(); i++) {
         nodes[i].updateForce();
-        shared_interaction_force += nodes[i].add_damping(settings);
-        nodes[i].add_gravity(settings.getGravity());
+        shared_interaction_force += nodes[i].add_damping(damping_multiplier);
+        nodes[i].add_gravity(gravity);
         nodes[i].apply_boundary_conditions();
     }
     damping_power_loss = shared_interaction_force;

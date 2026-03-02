@@ -42,23 +42,9 @@ void configureNodeAdjacency(std::vector<Node> &nodes, const std::vector<Edge> &e
     Eigen::VectorXd eventually just because it i) provides an easy way to turn
     bounds checking on and off, and ii) already has overloaded functions set up
     for easy printing out to std::cout etc. */
-    std::vector< std::vector<int> > tempNeighbourNodeLabels(nodes.size());
 
     for (auto &edge: edges) {
-        tempNeighbourNodeLabels[edge.nodeLabels(0)].push_back(edge.nodeLabels(1));
-        tempNeighbourNodeLabels[edge.nodeLabels(1)].push_back(edge.nodeLabels(0));
+        nodes[edge.nodeLabels(0)].neighbourNodeLabels.emplace_back(edge.nodeLabels(1));
+        nodes[edge.nodeLabels(1)].neighbourNodeLabels.emplace_back(edge.nodeLabels(0));
     }
-
-    /* Now we know each node's neighbours, we store their labels in node member
-    data.*/
-
-#pragma omp parallel for
-    for(int n = 0; n < nodes.size(); n++){
-        nodes[n].neighbourNodeLabels.resize(tempNeighbourNodeLabels[n].size());
-
-        for(size_t m = 0; m < tempNeighbourNodeLabels[n].size(); ++m){
-            nodes[n].neighbourNodeLabels(m) = tempNeighbourNodeLabels[n][m];
-        }
-    }
-
 }

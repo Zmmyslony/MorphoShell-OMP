@@ -62,7 +62,7 @@ Eigen::Matrix2d Triangle::getMetric() const{
     return deformationGradient.transpose() * deformationGradient;
 }
 
-Eigen::Matrix<double, 3, 2> Triangle::getHalfPK1Stress(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv, const Eigen::Matrix<double, 3, 2>&
+Eigen::Matrix<double, 3, 2> Triangle::getHalfPK1Stress(const double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv, const Eigen::Matrix<double, 3, 2>&
                                                        deformationGradient) const {
     return deformationGradient * (stretchingPrefactor * dialledProgTau *
         (dialled_metric_inverse - (metInvDet / programmedMetInvDet) * metInv));
@@ -75,7 +75,7 @@ Eigen::Matrix<double, 3, 3> Triangle::getStretchingForces(
 }
 
 // Returns vectors that normal to triangle edges and point outward
-Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals(const Eigen::Matrix<double, 3, 2>& current_sides, const Eigen::Vector3d& face_normal) const {
+Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals(const Eigen::Matrix<double, 3, 2>& current_sides, const Eigen::Vector3d& face_normal) {
     Eigen::Matrix<double, 3, 3> triangleEdgeNormals;
 
     triangleEdgeNormals.col(1).noalias() = face_normal.cross(current_sides.col(1));
@@ -84,7 +84,7 @@ Eigen::Matrix<double, 3, 3> Triangle::getTriangleEdgeNormals(const Eigen::Matrix
     return triangleEdgeNormals;
 }
 
-Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d& normalDerivatives, int row, const Eigen::Vector3d& faceNormal, const Eigen::Matrix<double, 2, 2>
+Eigen::Matrix<double, 3, 1> Triangle::getBendingForceNode(const Eigen::Vector3d& normalDerivatives, const int row, const Eigen::Vector3d& faceNormal, const Eigen::Matrix<double, 2, 2>
                                                           & energyDensityDerivWRTSecFF) const {
     Eigen::Matrix2d secFFDerivPreFacMat;
 
@@ -160,11 +160,10 @@ Eigen::Matrix<double, 3, 2> Triangle::getDeformationGradient() const {
     Eigen::Matrix<double, 3, 2> currSides;
     currSides.col(0).noalias() = p1 - p0;
     currSides.col(1).noalias() = p2 - p0;
-    Eigen::Vector3d faceNormal = currSides.col(0).cross(currSides.col(1));
     return  currSides * invInitSidesMat;
 }
 
-void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre_factor, double poisson_ratio, double stretching_prefactor) {
+void Triangle::updateGeometricProperties(const double bending_pre_factor, const double j_pre_factor, const double poisson_ratio, const double stretching_prefactor) {
 /**
  * This function has been rewritten for peformance. Please benchmark any changes to it.
  **/
@@ -181,8 +180,8 @@ void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre
     centroid.noalias() = (p0 + p1 + p2) / 3;
     faceNormal *= 0.5 * currAreaInv; // Normalising
 
-    Eigen::Matrix2d met = defGradient.transpose() * defGradient;
-    Eigen::Matrix2d metInv = met.inverse();
+    // Eigen::Matrix2d met = defGradient.transpose() * defGradient;
+    const Eigen::Matrix2d metInv = (defGradient.transpose() * defGradient).inverse();
     metInvDet = metInv.determinant();
 
     Eigen::Matrix3d patchSecDerivs =
@@ -200,23 +199,23 @@ void Triangle::updateGeometricProperties(double bending_pre_factor, double j_pre
     secFF(1, 0) = vectorOfSecFFComps(1);
     secFF(1, 1) = vectorOfSecFFComps(2);
 
-    Eigen::Matrix2d relativeSecFF = dialled_metric_inverse * (secFF - dialled_second_fundamental_form);
-    double areaMultiplier = bending_pre_factor * programmedMetInvDet;
-    double J = areaMultiplier * j_pre_factor;
+    const Eigen::Matrix2d relativeSecFF = dialled_metric_inverse * (secFF - dialled_second_fundamental_form);
+    const double areaMultiplier = bending_pre_factor * programmedMetInvDet;
+    const double J = areaMultiplier * j_pre_factor;
 
     // Now calculate bending energy density for this
-    double preGentBendEnergyDensity = areaMultiplier * ((1 - poisson_ratio) * (relativeSecFF * relativeSecFF).trace() +
+    const double preGentBendEnergyDensity = areaMultiplier * ((1 - poisson_ratio) * (relativeSecFF * relativeSecFF).trace() +
         poisson_ratio * relativeSecFF.trace() * relativeSecFF.trace());
-    double gentDerivFac = (1 + 2 * preGentBendEnergyDensity / J);
+    const double gentDerivFac = (1 + 2 * preGentBendEnergyDensity / J);
 
     /* Calculate the derivative of the bending energy density with respect to the secFF. */
-    Eigen::Matrix2d energyDensityDerivWRTSecFF = gentDerivFac * 2 * areaMultiplier *
+    const Eigen::Matrix2d energyDensityDerivWRTSecFF = gentDerivFac * 2 * areaMultiplier *
     ((1 - poisson_ratio) * relativeSecFF * dialled_metric_inverse +
         poisson_ratio * relativeSecFF.trace() * dialled_metric_inverse);
     bendEnergyDensity = gentDerivFac * preGentBendEnergyDensity;
 
     Eigen::Matrix3d stretchForces = getStretchingForces(stretching_prefactor, metInv, defGradient);
-    Eigen::Matrix3d triangleEdgeNormals = getTriangleEdgeNormals(currSides, faceNormal);
+    const Eigen::Matrix3d triangleEdgeNormals = getTriangleEdgeNormals(currSides, faceNormal);
     Eigen::Matrix3d normalDerivPiece =
         0.5 * currAreaInv * (patchSecDerivs.transpose() * triangleEdgeNormals);
 
@@ -249,9 +248,9 @@ double Triangle::getLinearSize() const {
     double second_side_length = currSides.col(1).norm();
     double third_side_length = (currSides.col(0) - currSides.col(1)).norm();
 
-    double longest_side = std::max({first_side_length, second_side_length, third_side_length});
+    const double longest_side = std::max({first_side_length, second_side_length, third_side_length});
+    const double shortest_altitude = 2 * initArea / longest_side;
 
-    double shortest_altitude = 2 * initArea / longest_side;
     return shortest_altitude;
 }
 
@@ -259,11 +258,11 @@ template <typename T> T interpolate(const T& previous, const T& next, double rat
     return (1 - ratio) * previous + ratio * next;
 }
 
-void Triangle::updateProgrammedMetricImplicit(double dirAngle, double lambda, double nu) {
-    double cosDirAng = cos(dirAngle);
-    double sinDirAng = sin(dirAngle);
-    double lambdaToTheMinus2 = pow(lambda, -2);
-    double lambdaToThe2Nu = pow(lambda, 2 * nu);
+void Triangle::updateProgrammedMetricImplicit(const double dirAngle, const double lambda, const double nu) {
+    const double cosDirAng = cos(dirAngle);
+    const double sinDirAng = sin(dirAngle);
+    const double lambdaToTheMinus2 = pow(lambda, -2);
+    const double lambdaToThe2Nu = pow(lambda, 2 * nu);
 
     dialled_metric_inverse(0, 0) = lambdaToTheMinus2 * cosDirAng * cosDirAng + lambdaToThe2Nu * sinDirAng * sinDirAng;
     dialled_metric_inverse(0, 1) = (lambdaToTheMinus2 - lambdaToThe2Nu) * sinDirAng * cosDirAng;
@@ -276,9 +275,9 @@ void Triangle::updateProgrammedMetricImplicit(int stage_counter, double dial_in_
     Eigen::Vector3d metric_current =
         interpolate(programmed_metric_info, next_programmed_metric_info, dial_in_factor);
 
-    double dirAng = metric_current(0);
-    double lambda = metric_current(1);
-    double nu = metric_current(2);
+    const double dirAng = metric_current(0);
+    const double lambda = metric_current(1);
+    const double nu = metric_current(2);
 
     updateProgrammedMetricImplicit(dirAng, lambda, nu);
 }
@@ -287,13 +286,13 @@ void Triangle::updateProgrammedTensorsDynamically(int stage_counter, double dial
                                                   double min_height, double max_height) {
     Eigen::Vector3d metric_current =
         interpolate(programmed_metric_info, next_programmed_metric_info, dial_in_factor);
-    Eigen::Matrix<double, 2, 2> bend_programmed =
+    const Eigen::Matrix<double, 2, 2> bend_programmed =
         interpolate(previous_second_fundamental_form, next_programmed_second_fundamental_form,
                     dial_in_factor);
 
-    double dirAng = metric_current(0);
-    double lambda = metric_current(1);
-    double nu = metric_current(2);
+    const double &dirAng = metric_current(0);
+    const double &lambda = metric_current(1);
+    const double &nu = metric_current(2);
 
     double normalized_height = (getHeight() - min_height) / (max_height - min_height);
     if (fabs(max_height - min_height) < 1e-6) { normalized_height = 0; }
@@ -389,12 +388,12 @@ Eigen::Matrix<double, 6, 1> patchColumn(const Eigen::Vector3d& position, const E
 
 double Triangle::getHeight() const { return centroid(2); }
 
-double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles, const std::vector<Node>& nodes) {
-    Eigen::Vector3d refCentroid = (nodes[vertexLabels(0)].position +
+double Triangle::updatePatchDerivativeMatrix(const std::vector<Triangle>& triangles, const std::vector<Node>& nodes) {
+    const Eigen::Vector3d refCentroid = (nodes[vertexLabels(0)].position +
         nodes[vertexLabels(1)].position +
         nodes[vertexLabels(2)].position) / 3;
 
-    std::vector<unsigned int> possiblePatchNodeLabels = getNeighbouringNodes(*this, triangles, nodes);
+    const std::vector<unsigned int> possiblePatchNodeLabels = getNeighbouringNodes(*this, triangles, nodes);
     std::vector<std::pair<unsigned int, double>> indexDistancePairs = assignDistanceFromCentroid(
         possiblePatchNodeLabels, nodes, refCentroid);
 
@@ -405,7 +404,7 @@ double Triangle::updateMatForPatchDerivs(const std::vector<Triangle>& triangles,
               });
 
     Eigen::Matrix<double, 6, 6> patchNodeDataMatrix;
-    double inner_patch_size = (nodes[vertexLabels(0)].position - refCentroid).squaredNorm() +
+    const double inner_patch_size = (nodes[vertexLabels(0)].position - refCentroid).squaredNorm() +
         (nodes[vertexLabels(1)].position - refCentroid).squaredNorm() +
         (nodes[vertexLabels(2)].position - refCentroid).squaredNorm();
 

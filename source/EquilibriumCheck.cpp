@@ -64,10 +64,10 @@ equilibriumCheck(const std::vector<Node> &nodes, const Settings &settings, const
         when they are combined to find the distance to move a node by. So only
         their combination is non-arbitrary in size.*/
 
-        incidentProgTau[i] = triangles[nodes[i].incidentTriLabels(0)].dialledProgTau;
+        incidentProgTau[i] = triangles[nodes[i].incidentTriLabels[0]].dialledProgTau;
 
         for (int t = 1; t < nodes[i].incidentTriLabels.size(); ++t) {
-            double currentProgTau = triangles[nodes[i].incidentTriLabels(t)].dialledProgTau;
+            double currentProgTau = triangles[nodes[i].incidentTriLabels[t]].dialledProgTau;
             if (incidentProgTau[i] > currentProgTau) {
                 incidentProgTau[i] = currentProgTau;
             }

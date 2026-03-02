@@ -75,6 +75,11 @@ void Settings::setThreads(int threads)
     }
 }
 
+double Settings::getDampingMultiplier() const {
+    if (getCore().isGradientDescentDynamics()) {return 0;}
+    return getDampingFactor() / getCore().getDensity();
+}
+
 const GravityConfig &Settings::getGravity() const {
     return gravity;
 }

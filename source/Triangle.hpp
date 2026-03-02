@@ -119,7 +119,7 @@ private:
     Eigen::Matrix<double, 3, 3> getStretchingForces(double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv, const Eigen::Matrix<double, 3, 2>&
                                                     deformationGradient) const;
 
-    Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals(const Eigen::Matrix<double, 3, 2>& current_sides, const Eigen::Vector3d& face_normal) const;
+    static Eigen::Matrix<double, 3, 3> getTriangleEdgeNormals(const Eigen::Matrix<double, 3, 2>& current_sides, const Eigen::Vector3d& face_normal);
 
 public:
     Eigen::Matrix<double, 3, 2> getCurrentSides() const;
@@ -164,7 +164,7 @@ public:
 
     void updateAngleDeficits(std::vector<double> &angleDeficits) const;
 
-    double updateMatForPatchDerivs(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes);
+    double updatePatchDerivativeMatrix(const std::vector<Triangle> &triangles, const std::vector<Node> &nodes);
 
     /**
      * Returns the linear size of the triangle calculated as the shortest triangle altitude.

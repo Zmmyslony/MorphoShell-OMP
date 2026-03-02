@@ -52,7 +52,7 @@ void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, con
 
     msg << node.display().str();
     for (int t = 0; t < node.incidentTriLabels.size(); ++t) {
-        msg << triangles[node.incidentTriLabels(t)].display().str();
+        msg << triangles[node.incidentTriLabels[t]].display().str();
     }
     std::cout << msg.str();
     throw std::runtime_error(msg.str() + "Suspiciously high force at node " + std::to_string(node.label) + std::string(" (") +

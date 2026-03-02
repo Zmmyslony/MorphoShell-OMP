@@ -41,8 +41,12 @@ std::stringstream Node::display()
     std::stringstream msg;
     msg << "-----------------------------" << std::setprecision(15) << std::boolalpha << std::endl;
     msg << "Node " << label << ":" << std::endl;
-    msg << "Labels of incident triangles: " << "\n" << incidentTriLabels << std::endl;
-    msg << "neighbourNodeLabels = " << "\n" << neighbourNodeLabels << std::endl;
+    msg << "Labels of incident triangles: " << "\n";
+    for (auto neighbour_label: incidentTriLabels) { msg << neighbour_label << ","; }
+    msg << std::endl;
+    msg << "neighbourNodeLabels = " << "\n";
+    for (auto neighbour_label: neighbourNodeLabels) { msg << neighbour_label << ","; }
+    msg << std::endl;
     msg << "Position = " << "\n" << position << std::endl;
     msg << "Velocity = " << "\n" << velocity << std::endl;
     msg << "Force = " << "\n" << force << std::endl;
@@ -65,13 +69,10 @@ void Node::add_gravity(const GravityConfig& config)
 }
 
 
-double Node::add_damping(const Settings& settings_new)
+double Node::add_damping(double damping_multiplier)
 {
-    if (settings_new.getCore().isGradientDescentDynamics()) { return 0; }
-
-    force += -settings_new.getDampingFactor() * mass * velocity /
-        settings_new.getCore().getDensity();
-    return settings_new.getDampingFactor() * mass * pow(velocity.norm(), 2) / settings_new.getCore().getDensity();
+    force -= damping_multiplier * mass * velocity;
+    return damping_multiplier * mass * pow(velocity.norm(), 2);
 }
 
 

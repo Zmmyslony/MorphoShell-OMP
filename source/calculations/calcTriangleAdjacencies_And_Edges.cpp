@@ -80,7 +80,7 @@ int calcTriangleAdjacencies_And_Edges(const std::vector<Node> &nodes, std::vecto
             adjacent (:= edge sharing) triangles.*/
             for (int t = 0; t < nodes[vertLabel].incidentTriLabels.size(); ++t) {
 
-                int incidentTriLabel = nodes[vertLabel].incidentTriLabels(t);
+                int incidentTriLabel = nodes[vertLabel].incidentTriLabels[t];
 
                 if (incidentTriLabel != i) {
 

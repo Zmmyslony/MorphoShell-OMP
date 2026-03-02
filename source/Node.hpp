@@ -49,11 +49,11 @@ public:
 
     /* Labels of the triangles with this node as a vertex ('incident triangles').
     Ordering is arbitrary.*/
-    Eigen::VectorXi incidentTriLabels;
+    std::vector<unsigned int> incidentTriLabels;
 
     /* Labels of this node's neighbours, i.e. those nodes connected to this node
     by triangle edges. Ordering is arbitrary.*/
-    Eigen::VectorXi neighbourNodeLabels;
+    std::vector<unsigned int> neighbourNodeLabels;
 
     // Label of this node, (also its index in the nodes' container vector).
     int label = INT_MAX;
@@ -128,10 +128,10 @@ public:
     /**
      * Adds damping force that is proportional to the velocity and numerical damping factor and returns the power loss:
      * F = - a * v * m / rho
-     * @param settings_new
+     * @param damping_multiplier
      * @return power loss
      */
-    double add_damping(const Settings &settings_new);
+    double add_damping(double damping_multiplier);
 
     /** Perturbing 'prod' force, to prompt the sheet to buckle in the upward
     *  direction, and ensure evolution actually begins. The particular shape
