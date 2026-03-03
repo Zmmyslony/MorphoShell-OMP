@@ -5,6 +5,7 @@
 #ifndef MORPHOSHELL_SETTINGS_NEW_H
 #define MORPHOSHELL_SETTINGS_NEW_H
 
+#include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
 
 #include "configuration/core_config.h"

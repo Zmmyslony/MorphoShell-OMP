@@ -1,18 +1,18 @@
 cmake_minimum_required(VERSION 3.30)
 project(Morphoshell)
 set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_CXX_FLAGS_RELEASE_INIT "-fno-math-errno -march=native -mfma")
+set(CMAKE_CXX_FLAGS_RELEASE_INIT "-fno-math-errno -march=native -mfma")
 
-IF (WIN32)
-    set(CMAKE_CXX_FLAGS -openmp:llvm)
+IF (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS "-openmp:llvm")
 ENDIF ()
 
 find_package(OpenMP REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system filesystem iostreams)
+find_package(Boost REQUIRED CONFIG COMPONENTS system filesystem iostreams)
 include_directories(${Boost_INCLUDE_DIRS})
+
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(VTK REQUIRED )
-find_package(MKL)
 
 
 set(SOURCE_FILES
@@ -23,7 +23,7 @@ set(SOURCE_FILES
         source/calculations/calcTriangleAdjacencies_And_Edges.cpp
         source/calculations/calcTriangleAdjacencies_And_Edges.hpp
         source/calculations/calcTrianglesIncidentOnNodes.cpp source/calculations/calcTrianglesIncidentOnNodes.hpp source/Edge.cpp
-        source/Edge.hpp source/EquilibriumCheck.cpp source/EquilibriumCheck.hpp source/functions/extract_Just_Filename.cpp source/functions/extract_Just_Filename.hpp source/functions/getRealTime.cpp
+        source/Edge.hpp source/functions/extract_Just_Filename.cpp source/functions/extract_Just_Filename.hpp source/functions/getRealTime.cpp
         source/functions/getRealTime.hpp source/initialDirAndFileHandling.cpp source/initialDirAndFileHandling.hpp source/functions/kahanSum.cpp source/functions/kahanSum.hpp source/Node.cpp
         source/Node.hpp source/functions/perturbInitialPositionsWithRandomNoise.cpp source/functions/perturbInitialPositionsWithRandomNoise.hpp
         source/readVtk.cpp source/readVtk.hpp source/setRemainingInitCond_and_NodeMasses.cpp source/setRemainingInitCond_and_NodeMasses.hpp
@@ -52,11 +52,21 @@ set(SOURCE_FILES
 
 add_executable(Morphoshell ${SOURCE_FILES})
 
-target_link_libraries(Morphoshell PRIVATE ${Boost_LIBRARIES})
-target_link_libraries(Morphoshell PRIVATE OpenMP::OpenMP_CXX)
-target_link_libraries(Morphoshell PRIVATE Eigen3::Eigen)
-target_link_libraries(Morphoshell PRIVATE ${VTK_LIBRARIES})
-target_link_libraries(Morphoshell PRIVATE MKL::MKL)
+target_link_libraries(Morphoshell PRIVATE
+        ${Boost_FILESYSTEM_LIBRARY}
+        ${Boost_SYSTEM_LIBRARY}
+        ${Boost_LIBRARIES}
+        OpenMP::OpenMP_CXX
+        Eigen3::Eigen
+        ${VTK_LIBRARIES}
+)
+
+IF (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+
+ELSE()
+    find_package(MKL)
+    target_link_libraries(Morphoshell PRIVATE MKL::MKL)
+ENDIF()
 
 vtk_module_autoinit(
         TARGETS Morphoshell

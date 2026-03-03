@@ -91,7 +91,7 @@ class Simulation
 
     // For LCE mode.
     double lambda = 1;
-#ifdef _WIN32
+#ifdef _MSC_VER
     std::chrono::steady_clock::time_point start_time;
 #else
     std::chrono::system_clock::time_point start_time;
@@ -106,6 +106,7 @@ class Simulation
     std::vector<Triangle> triangles;
     std::vector<Edge> edges;
     int stage_count = 0;
+    double stage_stretching_wave_speed = DBL_MAX;
 
     SimulationStatus simulation_status = WaitingForEquilibrium;
 
@@ -253,6 +254,8 @@ class Simulation
     void begin_equilibrium_search(int counter);
 
     void check_for_equilibrium();
+    void configure_smallest_tau();
+    SimulationStatus equilibrium_check();
 
     void error_large_force(int counter);
 

@@ -656,12 +656,82 @@ void Simulation::check_for_equilibrium() {
     std::cout << log_prefix() << "Checking for equilibrium. "
         << std::endl;
 
-    simulation_status = equilibriumCheck(nodes, settings, triangles);
+    simulation_status = equilibrium_check();
     time_equilibriation = 0.0;
 
-    calcEnergiesAndStresses(nodes, triangles,
-                            stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
-                            cauchyStressEigenvals, cauchyStressEigenvecs, settings.getCore());
+    // calcEnergiesAndStresses(nodes, triangles,
+    //                         stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
+    //                         cauchyStressEigenvals, cauchyStressEigenvecs, settings.getCore());
+}
+
+void Simulation::configure_smallest_tau() {
+    double current_smallest_tau = DBL_MAX;
+#pragma omp parallel for reduction(min: current_smallest_tau)
+    for (int i = 0; i < triangles.size(); i++) {
+        if (triangles[i].dialledProgTau < current_smallest_tau) {
+            current_smallest_tau = triangles[i].next_programmed_tau;
+        }
+    }
+    stage_stretching_wave_speed = sqrt(current_smallest_tau * settings.getCore().getShearModulus() /
+                                        settings.getCore().getDensity());
+}
+
+std::pair<double, int> pair_min(const std::pair<double, int> &lhs, const std::pair<double, int> &rhs) {
+    return lhs.first < rhs.first ? lhs : rhs;
+}
+
+std::pair<double, int> pair_max(const std::pair<double, int> &lhs, const std::pair<double, int> &rhs) {
+    return lhs.first > rhs.first ? lhs : rhs;
+}
+
+#pragma omp declare reduction(pair_max: std::pair<double, int>: omp_out=pair_max(omp_out, omp_in))\
+initializer(omp_priv={DBL_MIN, 0})
+
+SimulationStatus Simulation::equilibrium_check() {
+    std::pair<double, int> velocity_pair = {DBL_MIN, -1};
+    std::pair<double, int> force_pair = {DBL_MIN, -1};
+
+#pragma omp parallel for reduction(pair_max: velocity_pair, force_pair)
+    for (int i = 0; i < nodes.size(); i++) {
+        double non_damping_force;
+        if (!settings.getCore().isGradientDescentDynamics()) {
+            non_damping_force = (nodes[i].force +
+                                      (settings.getDampingFactor() * nodes[i].mass * nodes[i].velocity /
+                                       settings.getCore().getDensity())).norm();
+        } else {
+            non_damping_force = nodes[i].force.norm();
+        }
+        std::pair<double, int> current_velocity_pair = {nodes[i].velocity.norm(), i};
+        std::pair<double, int> current_force_pair = {non_damping_force, i};
+
+        velocity_pair = pair_max(velocity_pair, current_velocity_pair);
+        force_pair = pair_max(force_pair, current_force_pair);
+    }
+
+    double max_non_damp_force = force_pair.first;
+    int max_non_damp_force_node = force_pair.second;
+
+    int max_relative_speed_node = velocity_pair.second;
+    double max_relative_speed = velocity_pair.first / stage_stretching_wave_speed;
+
+    SimulationStatus status;
+    if (max_non_damp_force < settings.getForceScale()
+        && max_relative_speed < settings.getCore().getEquilibriumSpeedScale()) {
+
+        std::cout << "\tEquilibrium reached." << std::endl;
+        status = EquilibriumReached;
+    } else {
+        std::cout << "\tEquilibrium not reached." << std::endl;
+        status = WaitingForEquilibrium;
+    }
+    std::cout << "\tRatio of max non-damping force to characteristic force = "
+              << max_non_damp_force / settings.getForceScale()
+              << " (node " << max_non_damp_force_node << ")." << std::endl
+              << "\tRatio of max node speed to local stretching wave speed = "
+              << max_relative_speed / settings.getCore().getEquilibriumSpeedScale()
+              << " (node " << max_relative_speed_node << ")." << std::endl;
+
+    return status;
 }
 
 void Simulation::setup_reached_equilibrium() {
@@ -745,6 +815,7 @@ void Simulation::equilibriumTest(int stage_counter, long long duration_us) {
 void Simulation::run_tensor_increment(int stage_counter) {
     setup_tensor_increment(stage_counter);
     updateProgrammedValues(stage_counter + 1);
+    configure_smallest_tau();
 
     std::cout << "\nBeginning dynamical evolution.\n" << std::endl;
 

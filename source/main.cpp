@@ -69,8 +69,10 @@ maxima (over the mesh) of non-dimensionalised node speed and elastic force.
 #define EIGEN_DONT_PARALLELIZE
 #endif
 
+#ifndef __MINGW64__
 #ifndef EIGEN_USE_MKL_ALL
 #define EIGEN_USE_MKL_ALL
+#endif
 #endif
 
 #define _USE_MATH_DEFINES
@@ -152,7 +154,7 @@ void benchmark_multithreading(int argc, char* argv[], unsigned short max_thread_
 
 int main(int argc, char* argv[])
 {
-    Simulation simulation(argc, argv, -1);
-    return simulation.run_simulation();
-    // benchmark_multithreading(argc, argv, 8);
+    // Simulation simulation(argc, argv, -1);
+    // return simulation.run_simulation();
+    benchmark_multithreading(argc, argv, 8);
 }
