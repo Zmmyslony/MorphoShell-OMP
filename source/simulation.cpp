@@ -24,16 +24,73 @@
 #include "setRemainingInitCond_and_NodeMasses.hpp"
 #include "functions/perturbInitialPositionsWithRandomNoise.hpp"
 #include "calculations/calcEnergiesAndStresses.hpp"
-#include "EquilibriumCheck.hpp"
 #include "calculations/calcCurvatures.hpp"
-#include "advanceDynamics.hpp"
 #include "exportVtk.hpp"
 #include "calculations/calcDeformationForces.hpp"
 #include "physics/cone.h"
 
-#ifndef TIMING
-#define TIMING
+// #ifndef TIMING
+// #define TIMING
+// #endif
+
+double getMinimumTriangleHeight(const std::vector<Triangle>& triangles) {
+    double min_value = DBL_MAX;
+#pragma omp parallel for reduction(min: min_value)
+    for (int i = 0; i < triangles.size(); i++) {
+        min_value = triangles[i].getHeight() ? (triangles[i].getHeight() < min_value) : min_value;
+    }
+
+    return min_value;
+}
+
+// Gets the height of the highest triangle
+
+double getMaximumTriangleHeight(const std::vector<Triangle>& triangles) {
+    double max_value = DBL_MIN;
+#pragma omp parallel for reduction(max: max_value)
+    for (int i = 0; i < triangles.size(); i++) {
+        max_value = triangles[i].getHeight() ? (triangles[i].getHeight() < max_value) : max_value;
+    }
+    return max_value;
+}
+ 
+#if _MSC_VER
+#else
+std::pair<double, int> pair_min(const std::pair<double, int> &lhs, const std::pair<double, int> &rhs) {
+    return lhs.first < rhs.first ? lhs : rhs;
+}
+
+std::pair<double, int> pair_max(const std::pair<double, int> &lhs, const std::pair<double, int> &rhs) {
+    return lhs.first > rhs.first ? lhs : rhs;
+}
+
+#pragma omp declare reduction(pair_max: std::pair<double, int>: omp_out=pair_max(omp_out, omp_in))\
+initializer(omp_priv={DBL_MIN, 0})
 #endif
+
+
+
+bool isForceThresholdExceeded(const Node &node, double force_limit) {
+    return node.force.norm() >= force_limit;
+}
+
+
+void logForceThresholdExceeded(Node &node, std::vector<Triangle> &triangles, const Settings &settings, int step) {
+    std::stringstream msg;
+    msg << " ----------------------------------------" << std::endl;
+    msg << " ------------CRASH REPORT----------------" << std::endl;
+    msg << " ----------------------------------------" << std::endl;
+    msg << "Error occured at time step " << step << std::endl;
+    msg << "First offending node and its incident triangles: " << std::endl;
+
+    msg << node.display().str();
+    for (int t = 0; t < node.incidentTriLabels.size(); ++t) {
+        msg << triangles[node.incidentTriLabels[t]].display().str();
+    }
+    std::cout << msg.str();
+    throw std::runtime_error(msg.str() + "Suspiciously high force at node " + std::to_string(node.label) + std::string(" (") +
+                             std::to_string(node.force.norm() / 1e5 * settings.getForceScale()) + " of limit).");
+}
 
 
 typedef teestream<char, std::char_traits<char>> basic_teestream;
@@ -508,30 +565,6 @@ void Simulation::add_interaction_forces() {
 }
 
 
-// Gets the height of the lowest triangle
-
-double getMinimumTriangleHeight(const std::vector<Triangle>& triangles) {
-    double min_value = DBL_MAX;
-#pragma omp parallel for reduction(min: min_value)
-    for (int i = 0; i < triangles.size(); i++) {
-        min_value = triangles[i].getHeight() ? (triangles[i].getHeight() < min_value) : min_value;
-    }
-
-    return min_value;
-}
-
-// Gets the height of the highest triangle
-
-double getMaximumTriangleHeight(const std::vector<Triangle>& triangles) {
-    double max_value = DBL_MIN;
-#pragma omp parallel for reduction(max: max_value)
-    for (int i = 0; i < triangles.size(); i++) {
-        max_value = triangles[i].getHeight() ? (triangles[i].getHeight() < max_value) : max_value;
-    }
-    return max_value;
-}
-
-
 void Simulation::updateTriangleProperties(int counter) {
     const double dial_in_factor_root = sqrt(dial_in_factor);
     const bool is_LCE_metric_used = settings.getCore().isLceModeEnabled();
@@ -653,15 +686,9 @@ void Simulation::error_large_force(int counter) {
 }
 
 void Simulation::check_for_equilibrium() {
-    std::cout << log_prefix() << "Checking for equilibrium. "
-        << std::endl;
-
+    std::cout << log_prefix() << "Checking for equilibrium. " << std::endl;
     simulation_status = equilibrium_check();
     time_equilibriation = 0.0;
-
-    // calcEnergiesAndStresses(nodes, triangles,
-    //                         stretchEnergies, bendEnergies, kineticEnergies, strainMeasures,
-    //                         cauchyStressEigenvals, cauchyStressEigenvecs, settings.getCore());
 }
 
 void Simulation::configure_smallest_tau() {
@@ -676,22 +703,16 @@ void Simulation::configure_smallest_tau() {
                                         settings.getCore().getDensity());
 }
 
-std::pair<double, int> pair_min(const std::pair<double, int> &lhs, const std::pair<double, int> &rhs) {
-    return lhs.first < rhs.first ? lhs : rhs;
-}
-
-std::pair<double, int> pair_max(const std::pair<double, int> &lhs, const std::pair<double, int> &rhs) {
-    return lhs.first > rhs.first ? lhs : rhs;
-}
-
-#pragma omp declare reduction(pair_max: std::pair<double, int>: omp_out=pair_max(omp_out, omp_in))\
-initializer(omp_priv={DBL_MIN, 0})
-
 SimulationStatus Simulation::equilibrium_check() {
+#if _MSC_VER
+    double max_velocity = DBL_MIN;
+    double max_force = DBL_MIN;
+#pragma omp parallel for reduction(max: max_velocity, max_force)
+#else
     std::pair<double, int> velocity_pair = {DBL_MIN, -1};
     std::pair<double, int> force_pair = {DBL_MIN, -1};
-
 #pragma omp parallel for reduction(pair_max: velocity_pair, force_pair)
+#endif
     for (int i = 0; i < nodes.size(); i++) {
         double non_damping_force;
         if (!settings.getCore().isGradientDescentDynamics()) {
@@ -703,17 +724,28 @@ SimulationStatus Simulation::equilibrium_check() {
         }
         std::pair<double, int> current_velocity_pair = {nodes[i].velocity.norm(), i};
         std::pair<double, int> current_force_pair = {non_damping_force, i};
-
+#if _MSC_VER
+        max_velocity = std::max(max_velocity, current_velocity_pair.first);
+		max_force = std::max(max_force, current_force_pair.first);
+#else
         velocity_pair = pair_max(velocity_pair, current_velocity_pair);
         force_pair = pair_max(force_pair, current_force_pair);
+#endif
     }
 
+#if _MSC_VER
+    double max_non_damp_force = -1;
+    int max_non_damp_force_node = max_force;
+
+    int max_relative_speed_node = -1;
+    double max_relative_speed = max_velocity / stage_stretching_wave_speed;
+#else
     double max_non_damp_force = force_pair.first;
     int max_non_damp_force_node = force_pair.second;
 
     int max_relative_speed_node = velocity_pair.second;
     double max_relative_speed = velocity_pair.first / stage_stretching_wave_speed;
-
+#endif
     SimulationStatus status;
     if (max_non_damp_force < settings.getForceScale()
         && max_relative_speed < settings.getCore().getEquilibriumSpeedScale()) {
@@ -808,6 +840,28 @@ void Simulation::equilibriumTest(int stage_counter, long long duration_us) {
     }
 }
 
+void Simulation::advance_dynamics() {
+    const double dt = settings.getTimeStepSize();
+    const double gradient_descent_multiplier =  settings.getCore().getDensity() / settings.getDampingFactor();
+    const double force_limit = 1e5 * settings.getForceScale();
+#pragma omp parallel for
+    for (int i = 0; i < nodes.size(); i++) {
+        if (isForceThresholdExceeded(nodes[i], force_limit)) {
+            logForceThresholdExceeded(nodes[i], triangles, settings, step_count);
+        }
+
+        /* Set velocities based on either Gradient Descent (over dampened) dynamics
+        or Newtonian dynamics. Then advance positions accordingly. */
+        if (!settings.getCore().isGradientDescentDynamics())  {
+            nodes[i].advanceDynamics(dt);
+        } else {
+            // Gradient Descent dynamics.
+            nodes[i].velocity = gradient_descent_multiplier * nodes[i].force / nodes[i].mass;
+            nodes[i].position += dt * nodes[i].velocity;
+        }
+    }
+}
+
 /**
  * Runs a single tensor increment based on tensors provided in the input file.
  * @param stage_counter
@@ -823,17 +877,27 @@ void Simulation::run_tensor_increment(int stage_counter) {
 
     while (phase_counter < dial_in_phases.size() - 1) {
         try {
+            // std::vector<std::chrono::system_clock::time_point> timestamps = {std::chrono::high_resolution_clock::now()};
             if (step_count == 0) { first_step_configuration(); }
             check_if_equilibrium_search_begun(stage_counter);
             if (simulation_status == Dialling) { update_dial_in_factor(); }
             long long duration_us = progress_single_step(stage_counter);
 
+            // timestamps.push_back(std::chrono::high_resolution_clock::now());
             if (isDataPrinted()) { save_and_print_details(stage_counter, duration_us); }
             if (is_equilibrium_seeked) { equilibriumTest(stage_counter, duration_us); }
 
-            advanceDynamics(nodes, triangles, settings, step_count);
+            // timestamps.push_back(std::chrono::high_resolution_clock::now());
+            advance_dynamics();
+            // timestamps.push_back(std::chrono::high_resolution_clock::now());
             advance_physics();
             advance_time();
+            // timestamps.push_back(std::chrono::high_resolution_clock::now());
+            // std::cout << std::endl << "Timings for step " << step_count << std::endl;
+            // for (int i = 0; i < timestamps.size() - 1; i++) {
+            //     std::cout << "d" << i + 1 << ": " << std::chrono::duration_cast<std::chrono::microseconds>(timestamps[i+1] - timestamps[i]).count() << "us" << std::endl;
+            // }
+            // if (step_count == 30) throw std::runtime_error("timing complete");
         } catch (std::runtime_error& error) {
             std::cout << "Error occurred at step " << step_count << ". Saving the output and stopping." << std::endl;
             save_and_print_details(stage_counter, 0);

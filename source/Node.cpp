@@ -190,7 +190,7 @@ void Node::addForce()
     }
 }
 
-void Node::advanceDynamics(double dt) {
+void Node::advanceDynamics(const double dt) {
     const Eigen::Vector3d acceleration = force / mass;
 
     // Note: Specific algorithm does not make a significant impact on the

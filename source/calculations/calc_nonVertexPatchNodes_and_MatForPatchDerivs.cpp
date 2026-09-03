@@ -36,6 +36,7 @@ later.
 #include <stdexcept>
 #include <iostream>
 #include <string>
+#include <chrono>
 
 #include "calc_nonVertexPatchNodes_and_MatForPatchDerivs.hpp"
 #include "../Node.hpp"

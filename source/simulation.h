@@ -293,6 +293,7 @@ public :
     int run_simulation();
 
     void equilibriumTest(int stage_counter, long long int duration_us);
+    void advance_dynamics();
     long long benchmarking_mechanics_duration = 0;
     long long benchmarking_export_duration = 0;
     long long benchmarking_full_duration = 0;

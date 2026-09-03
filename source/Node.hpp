@@ -35,6 +35,15 @@ containing the node's position, velocity etc.*/
 #include "settings.h"
 
 class Node {
+public:
+    // Mass assigned to node.
+    double mass = DBL_MAX;
+    // Position vector (x, y and z coordinates).
+    Eigen::Vector3d position;
+    Eigen::Vector3d velocity = {0, 0, 0};
+    Eigen::Vector3d force = {0, 0, 0};
+
+private:
     /// Pointers to a field in a triangles which correspond to this node.
     std::vector<Eigen::Vector3d *> force_pointers;
 public:
@@ -78,17 +87,9 @@ public:
     general loading, and then how to put it in data format, code etc.*/
     bool isLoadForceEnabled = false;
 
-    // Position vector (x, y and z coordinates).
-    Eigen::Vector3d position;
-    Eigen::Vector3d velocity = {0, 0, 0};
-    Eigen::Vector3d force = {0, 0, 0};
-
     Eigen::Vector3d prev_position;
     Eigen::Vector3d prev_velocity = {0, 0, 0};
     Eigen::Vector3d prev_force = {0, 0, 0};
-
-    // Mass assigned to node.
-    double mass = DBL_MAX;
 
     // Area calculated from the mass
     double area = DBL_MAX;
