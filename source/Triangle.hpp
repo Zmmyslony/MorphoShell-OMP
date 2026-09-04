@@ -174,6 +174,8 @@ public:
 
     double getHeight() const;
 
+    double getStretchingEnergyDensity(const double stretchingPrefactor) const;
+
     void setLocalElongation(double local_elongation);
 
     void updateProgrammedQuantities(int stage_counter, double dial_in_factor, double dial_in_factor_root,
