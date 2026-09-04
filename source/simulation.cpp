@@ -629,6 +629,12 @@ void Simulation::update_dial_in_factor() {
 }
 
 long long int Simulation::export_vtk(int counter) {
+    double stretch_prefactor = 0.5 * settings.getCore().getThickness() * settings.getCore().getShearModulus();
+    for (int i = 0; i < triangles.size(); i++) {
+        stretchEnergyDensities[i] = triangles[i].getStretchingEnergyDensity(stretch_prefactor);
+        stretchEnergies[i] = stretchEnergyDensities[i] * triangles[i].initArea;
+    }
+
     return ::writeVTKDataOutput(nodes, triangles, step_count, time_global, dial_in_factor, counter,
                                 gaussCurvatures, meanCurvatures, angleDeficits, interiorNodeAngleDeficits,
                                 boundaryNodeAngleDeficits,
