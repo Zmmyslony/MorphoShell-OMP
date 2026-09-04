@@ -14,7 +14,7 @@ add_compile_options("$<$<CONFIG:RELEASE>:-fno-math-errno;-march=native;-mfma>")
 
 find_package(OpenMP REQUIRED)
 find_package(Boost REQUIRED CONFIG COMPONENTS system filesystem iostreams)
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(VTK REQUIRED)
 
 set(SOURCE_FILES
