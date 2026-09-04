@@ -174,7 +174,7 @@ public:
 
     double getHeight() const;
 
-    double getStretchingEnergyDensity(const double stretchingPrefactor) const;
+    void updateStretchingEnergyDensity(const double stretchingPrefactor);
 
     void setLocalElongation(double local_elongation);
 

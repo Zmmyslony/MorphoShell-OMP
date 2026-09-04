@@ -63,9 +63,9 @@ Eigen::Matrix2d Triangle::getMetric() const{
 }
 
 /* Neo-Hookean stretch energy density. Stretching prefactor is 1/2 * thickness * shear_modulus. */
-double Triangle::getStretchingEnergyDensity(const double stretchingPrefactor) const {
+void Triangle::updateStretchingEnergyDensity(const double stretchingPrefactor)  {
     const Eigen::Matrix2d elastic_metric = getMetric() * dialled_metric_inverse;
-    return stretchingPrefactor * (elastic_metric.trace() - 1 / elastic_metric.determinant() - 3);
+    stretchEnergyDensity = stretchingPrefactor * (elastic_metric.trace() + 1 / elastic_metric.determinant() - 3);
 }
 
 Eigen::Matrix<double, 3, 2> Triangle::getHalfPK1Stress(const double stretchingPrefactor, const Eigen::Matrix<double, 2, 2>& metInv, const Eigen::Matrix<double, 3, 2>&
